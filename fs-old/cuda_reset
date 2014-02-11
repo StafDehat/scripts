@@ -1,0 +1,14 @@
+#!/bin/bash
+
+#cd /usr/local/nagios/etc/monitoring/static
+#for x in `find . -name localcheck_email_loop.stat`; do
+#  sed -i /^LI/d $x
+#done
+
+cd /usr/local/nagios/etc/monitoring/slaves
+for x in *; do
+  ssh $x "sed -i /^LI/d /tmp/*email_loop.stat"
+done
+
+echo "Lost emails have been cleared from the records"
+

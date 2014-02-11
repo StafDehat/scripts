@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd /usr/local/nagios/etc/monitoring/slaves
+for x in *
+do
+    echo $x :
+    ssh $x uptime
+    echo -n " "
+    ssh $x /etc/snmp/check_slave_nagios.sh
+    echo " `find $x -type d | wc -l` hosts monitored"
+done
+

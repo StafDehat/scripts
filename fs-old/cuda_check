@@ -1,0 +1,29 @@
+#!/bin/bash
+
+echo "The following emails have been marked LOST:"
+
+#cd /usr/local/nagios/etc/monitoring/static
+#for x in `find . -name localcheck_email_loop.stat`; do
+#    if [ `grep LI $x | wc -l` -gt 0 ]; then
+#        echo ""
+#        echo ===== `echo $x | sed s/^"\.\/"// | sed s/"\/".*$//` =====
+#    fi
+#    for y in `grep LI $x | awk -F \# '{print $2}'`; do
+#        /usr/bin/cuda_time --id=$y
+#    done
+#done
+
+
+cd /usr/local/nagios/etc/monitoring/slaves
+for x in `find . -name cuda.cfg`; do
+  SLAVE=`echo $x | awk -F / '{print $2}'`
+  CUDA=`echo $x | awk -F / '{print $3}'`
+
+  if [ `ssh $SLAVE "grep -E '^LI' /tmp/${CUDA}_email_loop.stat" | wc -l` -gt 0 ]; then
+    echo -e "\n===== $CUDA ====="
+    for y in `ssh $SLAVE "grep -E '^LI' /tmp/${CUDA}_email_loop.stat" | awk -F \# '{print $2}'`; do
+      /usr/bin/cuda_time --id=$y
+    done
+  fi
+done
+

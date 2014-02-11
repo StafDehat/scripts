@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#title :ATON.sh
+#description :Convert integer-format IP address to dotted quad format.
+#author :Andrew Howard(Rackspace)
+#date :20130118
+#version :1.20130118-1011
+#usage :bash Usage: ATON.sh LongIP
+
+
+#
+# Usage statement
+function usage {
+  echo ""
+  echo "Convert integer-format IP address to dotted quad format."
+  echo "Usage: $0 LongIP"
+  echo ""
+  echo "Example: $0 1008153148"
+  echo "> 60.23.50.60"
+  echo ""
+  echo "Options:"
+  echo "  -h Print this help menu"
+  exit
+}
+
+#
+# Parse command-line arguments
+while getopts ":h" arg
+do
+  case $arg in
+    h  ) # Print help
+         usage
+         exit 1;;
+    *  ) # Default
+         usage
+         exit 1;;
+  esac
+done
+shift $(($OPTIND - 1))
+
+#
+# Verify exactly 1 argument, and that it's numerical, and within valid IP range
+if [ $# -ne 1 ]; then
+  echo "ERROR: Must pass exactly 1 (one) argument"
+  usage
+  exit 1
+elif [[ ! $1 =~ ^[0-9]+$ ||
+        $1 -gt 4294967295 ]]; then
+  echo "ERROR: Argument must be an integer >=0 and <=4294967295"
+  usage
+  exit 1
+fi
+
+#
+# Do the calculations
+IPNUM=$1
+
+AMASK=16777216
+BMASK=65536
+CMASK=256
+
+AQUAD=$(( $IPNUM / $AMASK ))
+BQUAD=$(( $(( $IPNUM % AMASK )) / $BMASK ))
+CQUAD=$(( $(( $IPNUM % BMASK )) / $CMASK ))
+DQUAD=$(( $IPNUM % $CMASK ))
+
+IPADDR=$AQUAD.$BQUAD.$CQUAD.$DQUAD
+
+echo $IPADDR
+

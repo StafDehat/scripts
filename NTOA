@@ -1,0 +1,20 @@
+#!/bin/bash
+
+IPADDR=$1
+
+AMASK=16777216
+BMASK=65536
+CMASK=256
+
+AQUAD=`echo $IPADDR | cut -d\. -f1`
+BQUAD=`echo $IPADDR | cut -d\. -f2`
+CQUAD=`echo $IPADDR | cut -d\. -f3`
+DQUAD=`echo $IPADDR | cut -d\. -f4`
+
+IPNUM=$(( $DQUAD ))
+IPNUM=$(( $IPNUM + $CQUAD * $CMASK ))
+IPNUM=$(( $IPNUM + $BQUAD * $BMASK ))
+IPNUM=$(( $IPNUM + $AQUAD * $AMASK ))
+
+echo $IPNUM
+

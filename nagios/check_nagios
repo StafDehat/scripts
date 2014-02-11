@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "Checking for syntax errors..."
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+echo "Checking for misplaced monitors..."
+cd /usr/local/nagios/etc/monitoring/monitors
+grep -R host_name * | while read line; do
+  CONFHOST=`echo $line | sed 's/^.*host_name\s*//'`
+  echo $line | awk -F : '{print $1}' | grep -v $CONFHOST
+done
+
