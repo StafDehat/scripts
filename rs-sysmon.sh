@@ -2,17 +2,17 @@
 
 # Force non-concurrency
 LOCK_FILE=/tmp/`basename $0`.lock
-(set -C; : > $LOCK_FILE) 2> /dev/null
-if [ $? != "0" ]; then
- echo "Lock File exists - exiting"
- exit 1
-fi
 function cleanup {
  echo "Caught exit signal - deleting trap file"
  rm -f $LOCK_FILE
  exit 2
 }
-trap 'cleanup' 1 2 9 15 17 19 23
+trap 'cleanup' 1 2 9 15 17 19 23 EXIT
+(set -C; : > $LOCK_FILE) 2> /dev/null
+if [ $? != "0" ]; then
+ echo "Lock File exists - exiting"
+ exit 1
+fi
 
 
 # LOGDIR must end in "/rs-sysmon"
@@ -81,7 +81,4 @@ else
   find $LOGDIR -maxdepth 1 -type f -mtime +$(( $HOURRETENTION / 24 )) -exec rm -f {} \;
 fi
 
-
-# Remove non-concurrency lock file
-trap 'rm -f $LOCK_FILE' EXIT
 
