@@ -1,0 +1,18 @@
+#!/bin/bash
+
+cd /usr/local/nagios/sbin
+
+LS_OUT=$(ls -l .htaccess)
+TARGET=${LS_OUT#*-> }
+
+
+if [ $TARGET = ".htaccess.tacacs" ]; then
+    rm -f .htaccess
+    ln -s .htaccess.backup .htaccess
+    echo Backup authentication now in use
+else
+    rm -f .htaccess
+    ln -s .htaccess.tacacs .htaccess
+    echo TACACS authentication now in use
+fi
+

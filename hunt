@@ -1,0 +1,3 @@
+#!/bin/bash
+SEARCH=`echo $@ | sed 's/\*/.*/g' | sed 's/\ /.*/g'`
+curl -s http://myhuntgroups.rackspace.com/geographic_locations/USA/business_units/all.xml | egrep -i "<title>.*${SEARCH}.*<\/title>" | sed -n 's/.*<title>\(.*\)<\/title>.*/\1/p'
