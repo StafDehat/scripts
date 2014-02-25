@@ -1,0 +1,29 @@
+#!/bin/bash
+
+TO="inbox@fqdn"
+FROM="inbox@fqdn"
+SUBJECT="R1Soft: Yesterday's errors, today!"
+
+/usr/sbin/sendmail -t -f$FROM <<EOF
+To: $TO
+Reply-to: $FROM
+From: $FROM
+Subject: $SUBJECT
+
+Each host runs multiple backup tasks per day.  This message lists each host that had at least one task fail, followed by a list of all that host's tasks that did fail.  Hosts with no failures are not listed, and tasks that succeeded are not listed.
+
+The easy way to do this is like so:
+# debug.sh tid:657291
+That will drop you into a 'less' session with only the relevant log entries
+
+Format of this email is as follows:
+(Hostname):  (tid:TaskID) (tid:TaskID) ...
+
+`/root/r1soft-error-report.sh`
+
+Contact Andrew Howard with questions.
+.
+EOF
+
+
+
