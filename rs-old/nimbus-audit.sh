@@ -7,7 +7,7 @@
 
 
 
-awk '/^\ *835973-/{n++} {print >"out"n".txt"}' blah
+awk '/^\ *######-/{n++} {print >"out"n".txt"}' blah
 rm -f blah
 
 for x in out*; do
