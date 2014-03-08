@@ -7,13 +7,24 @@ service xinetd stop
 cd /var/qmail/queue
 
 echo Deleting all messages from bounce ...
-rm -f bounce/*
+find bounce -type f -exec rm -f {} \;
 echo Done
 for dir in info intd local mess remote todo; do
   echo Deleting all messages from "$dir" ...
-  rm -rf $dir/*
+  find $dir -type f -exec rm -f {} \;
   echo Done
 done
+
+echo "Running qfixq to ensure queue health and cleanup any remnants."
+wget -O /root/qfixq http://qmail.jms1.net/scripts/qfixq
+chmod +x /root/qfixq
+/root/qfixq live empty
+
+echo "Restarting services"
+service qmail start
+service xinetd start
+
+exit 0
 
 for x in `seq 0 22`; do
   echo "Recreating "info" structure"
