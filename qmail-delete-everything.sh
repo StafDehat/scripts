@@ -33,7 +33,7 @@ chmod 700 $LIVEQ/info
 for x in `seq 0 22`; do
   echo "Recreating "info" structure"
   mkdir info/$x
-  chmod 750 info/$x
+  chmod 700 info/$x
   chown qmails:qmail info/$x
 done
 
@@ -53,7 +53,7 @@ chmod 700 $LIVEQ/local
 for x in `seq 0 22`; do
   echo "Recreating "local" structure"
   mkdir local/$x
-  chmod 750 local/$x
+  chmod 700 local/$x
   chown qmails:qmail local/$x
 done
 
@@ -73,7 +73,7 @@ chmod 700 $LIVEQ/remote
 for x in `seq 0 22`; do
   echo "Recreating "remote" structure"
   mkdir remote/$x
-  chmod 750 remote/$x
+  chmod 700 remote/$x
   chown qmails:qmail remote/$x
 done
 
