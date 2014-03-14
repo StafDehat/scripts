@@ -24,7 +24,10 @@ for DIR in info intd local mess remote todo; do
     mv $x $LIVEQ/$x
   done
 done
-qfixq live
+
+wget -O /root/qfixq http://qmail.jms1.net/scripts/qfixq
+chmod +x /root/qfixq
+/root/qfixq live 
 
 service qmail start
 service xinetd start
