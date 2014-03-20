@@ -1,8 +1,9 @@
 #!/bin/bash
 
 cd /home/ahoward/scripts
+#find . | xargs git add -A
+git add -A
 git pull
-find . | xargs git add
 git commit
 git push
 
