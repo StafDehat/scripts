@@ -2,7 +2,7 @@
 
 cd /home/ahoward/scripts
 git add -A
-git pull
 git commit
+git pull
 git push
 
