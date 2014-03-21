@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 IPADDR=$1
 
 AMASK=16777216

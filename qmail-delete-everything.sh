@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 DATE=`date +%F`
 #NUMDIRS=`/var/qmail/bin/qmail-showctl | grep "subdirectory split" | awk '{print $NF}' | sed 's/\.//g'`
 NUMDIRS=23

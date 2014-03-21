@@ -1,3 +1,5 @@
+# Author: Andrew Howard
+
 /usr/local/apache/domlogs/*.ac
 /usr/local/apache/domlogs/*.ad
 /usr/local/apache/domlogs/*.ae

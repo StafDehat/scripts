@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 ( echo "PID Mem(kB) Binary"
 for x in `ls /proc/ | grep -e '^[0-9][0-9]*$'`; do
   PID=$x

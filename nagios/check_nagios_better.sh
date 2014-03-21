@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Author: Andrew Howard
+
 NAGIOSBIN=/usr/bin/nagios
 NAGIOSCONF=/etc/nagios/nagios.cfg
 MONDIR=/home/nagios/monitors

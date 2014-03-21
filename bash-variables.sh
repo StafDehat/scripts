@@ -1,3 +1,5 @@
+# Author: Andrew Howard
+
 $$	Process ID (PID) of the script itself.
 $#	Number of arguments passed to this process
 $0	Full path to currently-running executable

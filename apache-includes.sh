@@ -1,4 +1,6 @@
 #!/bin/bash
+
+# Author: Andrew Howard
  
 APACHEDIR=/etc/httpd
 TMPDIR=/tmp/conflist

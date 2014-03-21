@@ -1,5 +1,6 @@
 #!/usr/bin/php
 <?php
+# Author: Unknown
 if ( $_SERVER['argc'] != 2 ) {
   print "Error: Incorrect number of arguments\n";
   print "Usage: ./time.php _TIME_\n";

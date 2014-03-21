@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 function usage {
   echo "Usage: $0 [SEED [SALT]]"
   echo "  SEED: Default is the date (YYYYMM)."

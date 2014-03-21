@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 #TO="inbox@fqdn"
 TO="inbox@fqdn"
 FROM="inbox@fqdn"

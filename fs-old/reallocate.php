@@ -4,6 +4,8 @@ GRANT SELECT ON intranet.ipallocate TO reallocate@localhost IDENTIFIED BY '...';
 GRANT SELECT ON intranet.server TO reallocate@localhost IDENTIFIED BY '...';
 -->
 <?php
+# Author: Andrew Howard
+
   function errorOut($message) {
     echo "<hr />\n";
     exit($message);

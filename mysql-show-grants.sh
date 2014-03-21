@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 mysql mysql --skip-column-names -e "select Host, User from user;" | while read x; do
  HOST=`echo $x | awk '{print $1}'`
  USER=`echo $x | awk '{print $2}'`

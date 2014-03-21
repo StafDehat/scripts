@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 USERNAME=andr4596
 SSHKEY=/home/ahoward/.ssh/cloud-2013-rsa
 

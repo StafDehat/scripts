@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Crypto-currency mining script
 #
 # chkconfig: 2345 99 01

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 echo "Please copy/paste the error message from backstage/ohthree"
 echo "Example: HOST_NOT_ENOUGH_FREE_MEMORY: 8662286336; 8434565120"
 echo

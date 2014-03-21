@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Only tested on CentOS-6 
 
 # Pre-req packages

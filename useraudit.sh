@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 (
 echo "User ID | Username | Groups | Active? | Last login | Created"
 for x in `cat /etc/passwd | awk -F : '$3 > 500 {print $1}'`; do

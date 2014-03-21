@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 if [ -z $1 ]; then
   echo "Usage: $0 MAX"
   echo "  MAX: Ceiling value under which to calculate primes"

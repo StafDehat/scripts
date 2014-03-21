@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 #
 # Replace any occurrence of an IP in /var/named/*.db with another IP.
 # 

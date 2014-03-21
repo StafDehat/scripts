@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Force non-concurrency
 LOCK_FILE=/tmp/`basename $0`.lock
 function cleanup {

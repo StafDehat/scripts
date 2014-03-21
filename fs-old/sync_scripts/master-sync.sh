@@ -1,6 +1,8 @@
 #!/bin/bash
 # This script is for the backend database server.  The sed_balance script is DEPRECATED.
 # The frontends should not have ssh-key access to the db server, but the db server requires ssh-key access to all the frontends.
+# Author: Andrew Howard
+
 
 EMG="\033[1;32m"
 NORMAL=`tput sgr0 2> /dev/null`

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 source ~/idle-constants.sh
 
 if [ $# -ge 1 ]; then

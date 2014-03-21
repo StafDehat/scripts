@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Author: Unknown
+
 function usage {
   echo "Usage: $0 [-h] [-H server-ip] [-p server-port]"
   echo "  -h  Display this help"

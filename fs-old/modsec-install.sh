@@ -1,5 +1,6 @@
 #!/bin/bash
 ################################################################################
+# Author: Andrew Howard
 #                                                                              #
 # After this has executed, the following file paths will be true:              #
 #   /etc/httpd/conf.d/modsec.conf               -Main Config, Plesk            #

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 TO="inbox@fqdn"
 FROM="inbox@fqdn"
 SUBJECT="R1Soft: Yesterday's errors, today!"

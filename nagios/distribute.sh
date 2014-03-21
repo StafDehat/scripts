@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Brandon Ewing
+
 LOCK_FILE=/var/lock/distribute
 SLAVEDIR=/usr/local/nagios/etc/monitoring/slaves
 MONDIR=/usr/local/nagios/etc/monitoring/dynamic

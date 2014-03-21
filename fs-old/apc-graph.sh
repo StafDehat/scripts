@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 function usage {
   echo "Usage: $0 [-l LOGFILE] [-s SCALE] [-t TRUNCATE] DEVICE"
   echo "  -l LOGFILE"

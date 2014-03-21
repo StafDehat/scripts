@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Pull the full report for all relevant devices from ssportal
 # http://ssportal.rackspace.com/Nimbus/Reports.aspx
 # Copy/paste that crap into a file named 'blah' in an empty directory

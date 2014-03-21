@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 MODEL=501
 
 echo "Welcome!  Let's configure a pix501!"

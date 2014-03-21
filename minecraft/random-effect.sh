@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 PLAYERS=`/sbin/service minecraft command /list | tail -n +3 | cut -d\  -f4- | sed 's/,//g'`
 EFFECT=`echo $(( $RANDOM % 19 + 1 ))`
 DURATION=60

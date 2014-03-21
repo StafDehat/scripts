@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # For nagios clusters, push monitoring config for a specific host out to the polling slave.
 
 usage () {

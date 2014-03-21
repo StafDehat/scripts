@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 echo "The following emails have been marked LOST:"
 
 #cd /usr/local/nagios/etc/monitoring/static

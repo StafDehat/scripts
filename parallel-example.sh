@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 prog1 () { echo Program 1; }
 prog2 () { echo Program 2; }
 prog3 () { echo Program 3; }

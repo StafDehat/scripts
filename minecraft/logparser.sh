@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 DATE=`date +"%F-%T"`
 LIVELOG=/home/minecraft/server.log
 SERVERLOG=/home/minecraft/logs/server.log.$DATE

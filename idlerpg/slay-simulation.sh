@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 ROLLS=10000
 MEDUSAWINS=0
 MEDUSALOSS=0

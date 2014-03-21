@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+# Author: Andrew Howard
+
 echo -n "  Installing SNMP..."
 if [[ `rpm -q net-snmp | grep -v "not installed" | wc -l` -gt 0 ]]; then
 	echo "SNMP already installed!"

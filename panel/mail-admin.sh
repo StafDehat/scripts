@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 VIRTUALDOMAINS=/etc/postfix/virtualdomains
 FORWARDERS=/etc/postfix/forwarders
 PASSWORDS=/etc/dovecot/virtual.passwd

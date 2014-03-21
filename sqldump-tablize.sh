@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 mkdir $1.tables
 awk '/-- Table structure for table/{n++} {print >"'$1'.tables/out"n".txt"}' $1
 cd $1.tables

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 FROMDB=$1
 TODB=$2
 DATE=`date +%Y%m%d-%T`

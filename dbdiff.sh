@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Colours!
 K="\033[0;30m"    # black
 R="\033[0;31m"    # red

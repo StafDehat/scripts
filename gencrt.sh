@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Messiah did it
+# Author: Andrew Howard
+
 
 # All files will be stored relative to this directory:
 CERTROOT=$HOME/ssl

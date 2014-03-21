@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Unknown
+
 # Originally for Nintendo DS roms
 # Trims sparse padding off the tail of a file
 

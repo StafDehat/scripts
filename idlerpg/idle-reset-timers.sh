@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 HOMEDIR=~
 source ~/idle-constants.sh
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 DBS=`echo "show databases\G" | mysql | grep Database | sed -e 's/Database: //'`
 
 for DB in $DBS; do

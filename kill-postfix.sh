@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Start a process to kill postfix forcefully in 5 minutes
 PID=`cat /var/spool/postfix/pid/master.pid`
 ChildPIDS=$(pgrep -P $PID)

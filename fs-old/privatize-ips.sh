@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 while read LINE; do
   for ALLOCATION in $LINE; do
     CIDR=`echo $ALLOCATION | cut -d/ -f2`

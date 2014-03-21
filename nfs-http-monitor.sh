@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 DATE=`date +"%F-%T"`
 LOGFILE=/var/log/status.log
 

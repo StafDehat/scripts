@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # This version of the reinject script is to be used when the messages in the BKUPQ directory
 # no longer have their original inode number, and/or are not on the same filesystem as the
 # LIVEQ directory.

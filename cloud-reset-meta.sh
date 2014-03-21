@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 echo
 echo "This system is exclusively for resetting the meta data on cloud servers"
 echo "  that have failed post-build automation scripts.  Before proceeding,"

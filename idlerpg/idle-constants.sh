@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 PLAYERNAME=
 PASSWORD=
 SCREENNAME=multirpg

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # This version only works if, in the process of removing mail from the queue, you did
 # NOT change the inode number of the messages.  $BKUPQ/mess/XX/YYYYYY must be inode
 # YYYYYY.  For example:

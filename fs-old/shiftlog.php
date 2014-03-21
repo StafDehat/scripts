@@ -1,4 +1,5 @@
 <?php
+# Author: Andrew Howard
   if (isset($_POST['submit'])) {
     $label      = $_POST["label"];
     $startday   = $_POST["startday"];

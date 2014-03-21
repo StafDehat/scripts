@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 service minecraft command "/effect $1 1 300 $2" # speed
 service minecraft command "/effect $1 3 300 $2" # haste digging
 service minecraft command "/effect $1 5 300 $2" # strength

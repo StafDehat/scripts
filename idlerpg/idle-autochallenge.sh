@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Pass number of minutes to sleep initially as an argument:
 # ./idle-autochallenge.sh 24
 # Run in background and disown the process:

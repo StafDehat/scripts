@@ -1,4 +1,6 @@
 #!/bin/bash
+# Author: Andrew Howard
+
 
 MODEL=5505
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 
 LOCK_FILE=/tmp/`basename $0`.lock
 (set -C; : > $LOCK_FILE) 2> /dev/null

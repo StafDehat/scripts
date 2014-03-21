@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Author: Andrew Howard
+
 echo "Checking for syntax errors..."
 /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
 

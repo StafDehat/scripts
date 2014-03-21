@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 source ~/average.sh
 
 MOBS=`tail -n +2 ~/monsters | awk '{print $1}'`

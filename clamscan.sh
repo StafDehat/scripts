@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 TO='"Andrew Howard" <andrew.howard@rackspace.com>, "Andrew Again" <stafdehat@gmail.com>'
 FROM="clamscan@`hostname`"
 SUBJECT="ClamAV scan results for `hostname`"

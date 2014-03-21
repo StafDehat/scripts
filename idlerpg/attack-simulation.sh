@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 source ~/idle-constants.sh
 if [ $# -gt 0 ]; then
   PLAYERNAME=$1

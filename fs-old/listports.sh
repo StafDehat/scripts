@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 GETTCP=0
 GETUDP=0
 while getopts ":tuh" arg

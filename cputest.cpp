@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// Author: Troy Engel, I think?  Maybe Keith Fralick.
+// Not Andrew Howard, is the point here.
+
 double CpuFrequency=3601.0; // CPU frequency in MHz
 
 pthread_cond_t cv;

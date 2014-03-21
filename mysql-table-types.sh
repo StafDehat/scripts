@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Unknown
+
 # This script prints all InnoDB tables in the form:
 # [database] [table]
 # To see just the databases containing InnoDB tables, run this script

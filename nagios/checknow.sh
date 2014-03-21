@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 #
 # Usage: checknow.sh config-file-1 config-file-2 ...
 

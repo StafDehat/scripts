@@ -1,5 +1,7 @@
 #!/bin/bash
 PATH=/root/scripts:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:/usr/local/nagios/libexec
+# Author: Andrew Howard
+
 
 ####################################################
 ##  Backup the contents of /usr/local/nagios/etc  ##

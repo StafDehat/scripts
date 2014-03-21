@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 cd /home/ahoward/scripts
 git add -A
 git commit

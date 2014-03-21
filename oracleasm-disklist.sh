@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 for DISKNAME in `/etc/init.d/oracleasm listdisks`; do
   DISKID=`oracleasm querydisk -d $DISKNAME | perl -pe 's/^.*\[(.*)\].*$/\1/'`
   ID1=`echo $DISKID | cut -d, -f1`

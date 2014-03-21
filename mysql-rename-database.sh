@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 function usage {
   echo "Usage: $0 OldName NewName"
   echo "Note:  This script assumes you have ~/.my.cnf configured correctly."

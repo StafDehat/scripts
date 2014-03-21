@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 ########## Helper Functions ##########
 ####### Yes bash has functions #######
 

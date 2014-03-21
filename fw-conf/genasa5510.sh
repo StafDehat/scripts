@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 MODEL=5510
 
 echo "Welcome!  Let's configure an asa5510!"

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 cd /usr/local/nagios/etc/monitoring/slaves
 for x in *
 do

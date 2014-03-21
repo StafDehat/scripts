@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Author: Andrew Howard
 # Work in progress.  Goal is to print all cronjobs, sorted by times they fire.
 
 cat \

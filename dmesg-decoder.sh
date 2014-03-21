@@ -4,6 +4,8 @@
 # 2) Rename /bin/dmesg to /bin/dmesg.orig
 # 3) Place this script at /bin/dmesg and make it executable.
 
+# Author: Andrew Howard
+
 dmesg.orig $@ | \
 while read LINE; do
   if [[ "$LINE" =~ ^\[[0-9][0-9]*\.[0-9][0-9]*\] ]]; then

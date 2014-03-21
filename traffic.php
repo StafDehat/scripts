@@ -1,6 +1,7 @@
 #!/usr/local/bin/php
 
 <?php
+# Author: Unknown
 
 $eth = $argv[1];
 if( !isset($eth) ) $eth = "eth0";

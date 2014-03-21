@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 read -p "What server are you trying to reach? " IP
 read -p "What user will you login as? " USER
 read -p "What port do you want to reach remotely? " REMPORT

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 source ~/idle-constants.sh
 
 LOCK_FILE=/tmp/`basename $0`.lock

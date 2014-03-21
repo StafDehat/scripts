@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 #cd /usr/local/nagios/etc/monitoring/static
 #for x in `find . -name localcheck_email_loop.stat`; do
 #  sed -i /^LI/d $x

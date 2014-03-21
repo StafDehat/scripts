@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Author: Andrew Howard
 
 read -p "Old/Current IP: " OLDIP
 read -p "Old/Current Hostname: " OLDNAME

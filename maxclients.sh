@@ -1,5 +1,7 @@
 #!/bin/bash
  
+# Author: Andrew Howard
+
 PARENTPIDS=`comm -12 <(ps -C httpd -C apache2 -o ppid | sort -u) <(ps -C httpd -C apache2 -o pid | sort -u)`
  
 for ParPID in $PARENTPIDS; do

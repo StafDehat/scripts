@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 SUM=0
 for x in `slabtop -s c -o | tail -n +8 | awk '{print $7}' | sed 's/K//'`; do
   SUM=$(( $SUM + $x ))

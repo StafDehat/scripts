@@ -1,5 +1,7 @@
 #!/bin/bash
  
+# Author: Andrew Howard
+
 DIRECTORY=/
 getfacl --no-effective --recursive --skip-base --absolute-names $DIRECTORY | while read LINE; do
   if [ `echo "$LINE" | grep -ce '^# file'` -gt 0 ]; then

@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+# Author: Unknown
+#
 require 'ipaddr'
 require 'socket'
 
