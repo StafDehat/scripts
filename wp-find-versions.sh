@@ -18,4 +18,5 @@ while read x; do
   egrep '^\s*\$wp_version\s*=' "$x" | cut -d\' -f2
 done | column -t -s :
 
-
+# For a list of just the outdated ones, grep out the current version like so:
+# grep -vE '\s3\.8\.1\s*$'
