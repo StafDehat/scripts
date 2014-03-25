@@ -16,4 +16,6 @@ locate wp-includes/version.php | \
 while read x; do 
   echo -n "$x : "
   egrep '^\s*\$wp_version\s*=' "$x" | cut -d\' -f2
-done | column -t -s : > wp-versions
+done | column -t -s :
+
+
