@@ -2,6 +2,8 @@
 
 # Author: Andrew Howard
 # Desc: Find wordpress installs on this system and print the version
+# For info on what version is the current version, go here:
+#  https://codex.wordpress.org/WordPress_Versions
 
 if [ `id -u` -ne 0 ]; then
   echo "Must run as root"
