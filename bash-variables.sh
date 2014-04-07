@@ -11,3 +11,4 @@ $@	A quoted string, not eval'd, of all my arguments
 $-	Flags passed to this script.  In "echo -n blah", it would be "-n".
 $!	PID of last job running in background.
 $?	Exit status of most recently-completed child process
+${!x}	Indirect reference.  y=2; x=y; echo ${!x};
