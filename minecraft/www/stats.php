@@ -53,9 +53,11 @@ SELECT id,
 FROM (SELECT p.id,
              p.name,
              p.realname,
-             (SELECT COUNT(*) FROM playerdeaths d WHERE d.playerid = p.id) as deaths,
-             (SELECT SUM(TIME_TO_SEC(TIMEDIFF(logout, login))) FROM sessions s WHERE s.playerid = p.id) as playtime
-      FROM players p GROUP BY p.id) as lives
+             SUM(TIME_TO_SEC(TIMEDIFF(s.logout, s.login))) as playtime,
+             (SELECT COUNT(*) FROM playerdeaths d WHERE d.playerid = p.id) as deaths
+      FROM players p 
+      INNER JOIN sessions s ON s.playerid = p.id
+      GROUP BY p.id) as lives
 ORDER BY avglife DESC;";
 $result = mysql_query($query) or die(mysql_error());
 while ($row = mysql_fetch_assoc($result)) {
