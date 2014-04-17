@@ -2,8 +2,7 @@
 
 # Author: Andrew Howard
 
-USERNAME=andr4596
-SSHKEY=/home/ahoward/.ssh/cloud-2013-rsa
+source /home/ahoward/.tier2-creds
 
 function ng {
   echo "You'll need your SSO password"
