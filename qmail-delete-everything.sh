@@ -92,7 +92,7 @@ for x in `seq 0 22`; do
 done
 
 echo "Running qfixq to ensure queue health and cleanup any remnants."
-wget -O /root/qfixq http://qmail.jms1.net/scripts/qfixq
+wget --no-check-certificate -O /root/qfixq https://qmail.jms1.net/scripts/qfixq
 chmod +x /root/qfixq
 #/root/qfixq live
 /root/qfixq live empty

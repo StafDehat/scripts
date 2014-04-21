@@ -43,4 +43,6 @@ if [ "$1" -gt "499" ] ; then
 ssh iback$1-$2-dfw2.slicehost.com -i $SSHKEY -p 314
 fi
 }
-
+function cloudlogs {
+  ssh $USERNAME@syslogsearch.support.ohthree.com
+}
