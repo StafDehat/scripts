@@ -5,7 +5,7 @@
 # is going to over-report its resident memory usage. This means you could 
 # have a 4GB system that appears to have 6GB RAM in-use by apache. There's 
 # no known way to get a precise value of actual RAM used by an apache 
-# process (if you know one, please email andrew.howard@rackspace.com).  
+# process (if you know one, please lodge a git issue).
 # However, since the error is on both sides of the division, it cancels out. 
 # This means the error only comes into effect in calculating how many 
 # processes will use up the remaining, unused RAM, which means we'll err on 
