@@ -1,6 +1,8 @@
 #!/bin/bash
-
 # Author: Andrew Howard
+# This script prints the absolute path to every file that's included in the
+# apache config.  It assumes that the apache_root is /etc/httpd.
+# Note: In debian-based systems the apache root is /etc/apache2
  
 APACHEDIR=/etc/httpd
 TMPDIR=/tmp/conflist
