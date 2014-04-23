@@ -1,6 +1,12 @@
 #!/bin/bash
-
 # Author: Andrew Howard
+# "Renames" a database in MySQL.
+# In reality there is no rename function for a database, so what this script actually
+# does is create a new database with the desired name, move all tables into the new
+# database from the old, then generates a list of all GRANTs relevant to the old
+# database and runs their equivalent for the new.
+# For safety reasons, the script does not delete anything - you'll have to delete
+# the old DB yourself.
 
 function usage {
   echo "Usage: $0 OldName NewName"
