@@ -1,6 +1,7 @@
 #!/bin/bash
-
 # Author: Andrew Howard
+# Displays the processes currently using swap memory, sorted by how much
+# swap memory they're using.
 
 ( echo "PID Mem(kB) Binary"
 for x in `ls /proc/ | grep -e '^[0-9][0-9]*$'`; do
