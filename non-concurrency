@@ -1,6 +1,7 @@
 #!/bin/bash
- 
 # Author: Andrew Howard
+# A race-condition-safe bash script wrapper that will ensure this script
+# runs non-concurrently with other instances of itself.
 
 LOCK_FILE=/tmp/`basename $0`.lock
 function cleanup {
