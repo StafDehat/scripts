@@ -33,3 +33,8 @@ curl --write-out \\n%{http_code} --silent --output - \
      -X PUT \
      -H "X-Auth-Token: $BRC_AUTHTOKEN" \
      -H "X-Object-Manifest: $CONTAINER/${CFNAME}-"
+
+# Now you'll likely want to delete all those segment files
+cd ../
+rm -rf temp-filesplit
+
