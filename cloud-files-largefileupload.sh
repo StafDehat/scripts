@@ -17,7 +17,7 @@ LOCALDIR=$( dirname $LOCALFILE )
 LOCALFILE=$( basename $LOCALFILE )
 mkdir $LOCALDIR/temp-filesplit
 cd $LOCALDIR/temp-filesplit
-mv ../$LOCALFILE temp-filesplit/
+mv ../$LOCALFILE .
 split -d -b 1073741824 $LOCALFILE ${LOCALFILE}-
 mv $LOCALFILE ../
 
