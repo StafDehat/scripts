@@ -24,6 +24,7 @@ mv $LOCALFILE ../
 # At this point the easiest way is to use Dave Kludt's cfiles script.
 # I've updated it to include all regions:
 # https://raw.githubusercontent.com/StafDehat/scripts/master/cloud-files.sh
+# When it asks for the Local Path, use $LOCALDIR/temp-filesplit
 
 # Create a dynamic manifest file:
 curl --write-out \\n%{http_code} --silent --output - \
