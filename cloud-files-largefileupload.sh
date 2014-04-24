@@ -18,7 +18,7 @@ LOCALFILE=$( basename $LOCALFILE )
 mkdir $LOCALDIR/temp-filesplit
 cd $LOCALDIR/temp-filesplit
 mv ../$LOCALFILE .
-split -d -b 1073741824 $LOCALFILE ${LOCALFILE}-
+split -d -b 1073741824 $LOCALFILE ${CFNAME}-
 mv $LOCALFILE ../
 
 # At this point the easiest way is to use Dave Kludt's cfiles script.
