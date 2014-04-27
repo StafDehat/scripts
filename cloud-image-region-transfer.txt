@@ -1,0 +1,120 @@
+root@andr4596-img-transfer[~]# ./img-transfer.sh -h
+Usage: img-transfer.sh [-h] -S -A AUTHTOKEN -T TENANTID \
+                       -s SRCRGN -d DSTRGN -i IMGID
+Example:
+  # img-transfer.sh -A 7a9d3410cd7d11e3a8bfabb5e3025477 \
+                    -T 123456 \
+                    -s dfw \
+                    -d iad \
+                    -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f
+Arguments:
+  -A X  API authentication token.
+  -d X  Destination region (DFW/ORD/IAD/etc).
+  -h    Print this help
+  -i X  Image ID.  Find in MyCloud by hovering over image name.
+  -s X  Source region (DFW/ORD/IAD/etc)
+  -S    Use ServiceNet for download (Must run this script in same
+        region as defined for SRCRGN).
+  -T X  Tenant ID (DDI).
+root@andr4596-img-transfer[~]# 
+
+root@andr4596-img-transfer[~]# ./img-transfer.sh -A 22a8e3b6cdb511e3901610bf4840bf8d -T 123456 -s iad -d dfw -i b7fce74d-6cd9-4586-887f-d075dfa36599
+Attempting to authenticate against Identity API.
+Successfully authenticated using provided AUTHTOKEN and TENANTID.
+
+Attempting to identify Image API endpoints.
+Identified Images API endpoints:
+Source:      https://iad.images.api.rackspacecloud.com/v2/123456
+Destination: https://dfw.images.api.rackspacecloud.com/v2/123456
+
+Verifying image exists.
+Image successfully located in region 'iad'.
+Image name: andr4596-test
+
+Creating Cloud Files container (andr4596-test-2014-04-27-01:51:32) to house exported image.
+Successully created container in region 'iad'.
+
+Attempting to confirm Cloud Files container does now exist.
+Existence confirmed.
+
+Attempting to export image to Cloud Files.
+Successully initiated an image export task in region 'iad'.
+Task ID: d5aa46a6-6499-4323-b6bc-89d32c12955d
+
+2014-04-27 01:51:34 Waiting for completion - will check every 60 seconds.
+2014-04-27 01:52:35 Waiting for completion - will check every 60 seconds.
+2014-04-27 01:53:36 Waiting for completion - will check every 60 seconds.
+Export task completed successfully.
+
+Creating Cloud Files container (andr4596-test-2014-04-27-01:51:32) to image for import.
+Successully created container in region 'dfw'.
+
+Attempting to confirm Cloud Files container does now exist.
+Existence confirmed.
+
+Attempting to enumerate all file segments exported to Cloud Files.
+Successfully retrieved container listing.
+md5sum                            filename
+4dc75132a25e955e9560cb2c4e3dd033  b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00001
+730d79e63d3c5413bf2d24c4a8b5b827  b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00002
+da571067104acc8b93638ddd1342194f  b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00003
+
+(1/3) Downloading segment: b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00001
+(1/3) Download complete.  Verifying integrity.
+(1/3) Local copy matches md5sum of Cloud Files object in iad.
+(1/3) Uploading segment to dfw.
+(1/3) Segment uploaded successfully.
+(1/3) Checksum validated.
+(1/3) Local copy of segment deleted.
+(2/3) Downloading segment: b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00002
+(2/3) Download complete.  Verifying integrity.
+(2/3) Local copy matches md5sum of Cloud Files object in iad.
+(2/3) Uploading segment to dfw.
+(2/3) Segment uploaded successfully.
+(2/3) Checksum validated.
+(2/3) Local copy of segment deleted.
+(3/3) Downloading segment: b7fce74d-6cd9-4586-887f-d075dfa36599.vhd-00003
+(3/3) Download complete.  Verifying integrity.
+(3/3) Local copy matches md5sum of Cloud Files object in iad.
+(3/3) Uploading segment to dfw.
+(3/3) Segment uploaded successfully.
+(3/3) Checksum validated.
+(3/3) Local copy of segment deleted.
+
+Deleting content of container andr4596-test-2014-04-27-01:51:32 from iad.
+Contents successfully deleted from iad.
+
+Deleting container andr4596-test-2014-04-27-01:51:32 from iad.
+Container deleted successfully.
+
+Creating dynamic manifest file b7fce74d-6cd9-4586-887f-d075dfa36599.vhd
+Manifest file created successfully.
+
+Initiating import task in dfw.
+Successully initiated an image import task in region 'dfw'.
+Task ID: c1fe24ea-1850-46a5-a03f-682127ca51ae
+
+2014-04-27 02:13:08 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:14:08 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:15:09 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:16:09 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:17:10 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:18:11 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:19:11 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:20:12 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:21:12 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:22:13 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:23:13 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:24:13 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:25:14 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:26:14 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:27:15 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:28:15 Waiting for completion - will check every 60 seconds.
+2014-04-27 02:29:16 Waiting for completion - will check every 60 seconds.
+Export task completed successfully.
+
+Transfer complete.
+Image ID b7fce74d-6cd9-4586-887f-d075dfa36599 copied from iad to dfw.
+Cloud Files content in iad was auto-deleted.
+Cloud Files content in dfw left in place - delete manually if necessary.
+root@andr4596-img-transfer[~]# 
