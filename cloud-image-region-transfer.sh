@@ -18,7 +18,7 @@ DATE=$( date +%F-%T )
 
 #
 # Verify the existence of pre-req's
-PREREQS="curl grep sed date cut tr echo column"
+PREREQS="curl grep sed date cut tr echo column nc"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ >/dev/null
