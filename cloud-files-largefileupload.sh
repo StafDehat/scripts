@@ -1,6 +1,10 @@
 #!/bin/bash
 echo "This script is not meant to be run directly"
 echo "It's intended as a reference only - read it, don't run it."
+echo
+echo "Actually, this script is deprecated now."
+echo "Use this instead - it's better:"
+echo "https://github.com/StafDehat/scripts/blob/master/cloud-image-region-transfer.sh"
 exit 0
 
 # These are the variables you'll need to set
