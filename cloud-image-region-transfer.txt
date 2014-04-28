@@ -20,7 +20,7 @@ Arguments:
 
 
 
-[root@server ~]# ./cloud-image-region-transfer.sh -A c5a661facefb11e380c60f387d2322f2 -T 123456 -s dfw -d ord -i 3755c8f0-128c-47e9-8749-960d87a6d37a -S
+[root@server ~]# ./cloud-image-region-transfer.sh -A c5a661facefb11e380c60f387d2322f2 -T 123456 -s dfw -d ord -i 10d9ebc4-cefc-11e3-9307-9310e64db14e -S
 Attempting to authenticate against Identity API.
 Successfully authenticated using provided AUTHTOKEN and TENANTID.
 
@@ -68,27 +68,27 @@ Attempting to enumerate all file segments exported to Cloud Files.
 Successfully retrieved container listing.
 md5sum                            filename
 c6d156daa57d91770c22a01e0a1d2ab2
-3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00001
+10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00001
 730d79e63d3c5413bf2d24c4a8b5b827
-3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00002
+10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00002
 0015251e77481d90778b8916be109aa6
-3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00003
+10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00003
 
-(1/3) Downloading segment: 3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00001
+(1/3) Downloading segment: 10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00001
 (1/3) Download complete.  Verifying integrity.
 (1/3) Local copy matches md5sum of Cloud Files object in dfw.
 (1/3) Uploading segment to ord.
 (1/3) Segment uploaded successfully.
 (1/3) Checksum validated.
 (1/3) Local copy of segment deleted.
-(2/3) Downloading segment: 3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00002
+(2/3) Downloading segment: 10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00002
 (2/3) Download complete.  Verifying integrity.
 (2/3) Local copy matches md5sum of Cloud Files object in dfw.
 (2/3) Uploading segment to ord.
 (2/3) Segment uploaded successfully.
 (2/3) Checksum validated.
 (2/3) Local copy of segment deleted.
-(3/3) Downloading segment: 3755c8f0-128c-47e9-8749-960d87a6d37a.vhd-00003
+(3/3) Downloading segment: 10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd-00003
 (3/3) Download complete.  Verifying integrity.
 (3/3) Local copy matches md5sum of Cloud Files object in dfw.
 (3/3) Uploading segment to ord.
@@ -102,7 +102,7 @@ Contents successfully deleted from dfw.
 Deleting container testimage-2014-04-28-17:12:32 from dfw.
 Container deleted successfully.
 
-Creating dynamic manifest file 3755c8f0-128c-47e9-8749-960d87a6d37a.vhd
+Creating dynamic manifest file 10d9ebc4-cefc-11e3-9307-9310e64db14e.vhd
 Manifest file created successfully.
 
 Initiating import task in ord.
@@ -117,7 +117,7 @@ Monitoring status of image import.
 Export task completed successfully.
 
 Transfer complete.
-Image ID 3755c8f0-128c-47e9-8749-960d87a6d37a copied from dfw to ord.
+Image ID 10d9ebc4-cefc-11e3-9307-9310e64db14e copied from dfw to ord.
 Cloud Files content in dfw was auto-deleted.
 Cloud Files content in ord left in place - delete manually if necessary.
 [root@server ~]# 
