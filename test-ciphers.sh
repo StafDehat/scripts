@@ -6,7 +6,7 @@ function usage {
   echo "Usage: $0 [-h] [-H server-ip] [-p server-port]"
   echo "  -h  Display this help"
   echo "  -H  The IP/hostname of server to test (default localhost)"
-  echo "  -T  The port on the server to test (default 443)"
+  echo "  -P  The port on the server to test (default 443)"
 }
 
 # OpenSSL requires the port number.
@@ -40,7 +40,7 @@ for cipher in ${ciphers[@]}
 do
 echo -n Testing $cipher...
 result=$(echo -n | openssl s_client -cipher "$cipher" -connect $SERVER:$PORT 2>&1)
-if [[ "$result" =~ "Cipher is " ]] ; then
+if [[ "$result" =~ "$cipher" ]] ; then
   echo YES
 else
   if [[ "$result" =~ ":error:" ]] ; then
