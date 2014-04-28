@@ -262,14 +262,14 @@ esac
 # Confirm connectivity to servicenet, if necessary
 if [ $SNET -eq 1 ]; then
   SNETHOST=$( echo "$SRCFILEURL" | cut -d/ -f3 )
-  echo "Testing connectivity to $SNETHOST."
-  nc -w 5 -z $SNETHOST 80
+  echo "Testing connectivity to $SNETHOST on tcp/443."
+  nc -w 5 -z $SNETHOST 443 &>/dev/null
   if [ $? -ne 0 ]; then
     echo "Error: Unable to reach Cloud Files API over ServiceNet."
     echo "You may have to use public traffic instead."
     exit 1
   fi
-  echo "Connection to $SNETHOST:80 successful."
+  echo "Connection to ServiceNet successful."
   echo
 fi
 
