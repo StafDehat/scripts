@@ -21,7 +21,7 @@ DATE=$( date +%F-%T )
 PREREQS="curl grep sed date cut tr echo column nc"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
-  which $PREREQ >/dev/null
+  which $PREREQ &>/dev/null
   if [ $? -ne 0 ]; then
     echo "Error: Gotta have '$PREREQ' binary to run."
     PREREQFLAG=1
