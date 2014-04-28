@@ -6,7 +6,7 @@ function usage {
   echo "Usage: $0 [-h] [-H server-ip] [-p server-port]"
   echo "  -h  Display this help"
   echo "  -H  The IP/hostname of server to test (default localhost)"
-  echo "  -P  The port on the server to test (default 443)"
+  echo "  -p  The port on the server to test (default 443)"
 }
 
 # OpenSSL requires the port number.
@@ -19,17 +19,11 @@ ciphers=$(openssl ciphers 'ALL:eNULL' | sed -e 's/:/ /g')
 while getopts ":H:p:h" ARG
 do
   case $ARG in
-    H  ) SERVER=$OPTARG
-         ;;
-    p  ) PORT=$OPTARG
-         ;;
-    # Help menu
-    h  ) usage
-         exit 1;;
-    # Catch-all, error message
+    H  ) SERVER=$OPTARG;;
+    p  ) PORT=$OPTARG;;
+    h  ) usage && exit 1;;
     *  ) echo "Unknown argument: $OPTARG"
-         usage
-         exit 1;;
+         usage && exit 1;;
   esac
 done
 
