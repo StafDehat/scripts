@@ -46,8 +46,10 @@ SAVELOCAL=0
 #
 # Define a clean-up function and catch exit signals
 function cleanup {
+  echo "----------------------------------------"
   echo "Script exited prematurely."
   echo "You may need to manually delete the following:"
+  echo "----------------------------------------"
   if [ $MADESRCCONT -ne 0 ]; then
     echo "Container $CONTAINER in Cloud Files region $SRCRGN"
   fi
@@ -56,7 +58,7 @@ function cleanup {
   fi
   if [ $EXPORTED -ne 0 ]; then
     echo "Export task $SRCTASKID in region $SRCRGN"
-    echo "Really though, just confirm it's done and delete the files in $CONTAINER"
+    echo "  -Really though, just confirm it's done and delete the files in $CONTAINER"
   fi
   if [ $IMPORTED -ne 0 ]; then
     echo "Import task $DSTTASKID in region $DSTRGN"
@@ -65,6 +67,7 @@ function cleanup {
   if [ $SAVELOCAL -ne 0 ]; then
     echo "Folder and contents on local storage: /tmp/$CONTAINER"
   fi
+  echo "----------------------------------------"
   exit 1
 }
 trap 'cleanup' 1 2 9 15 17 19 23
@@ -258,9 +261,9 @@ esac
 #
 # Confirm connectivity to servicenet, if necessary
 if [ $SNET -eq 1 ]; then
-  echo "Testing connectivity to ServiceNet."
+  echo "Testing connectivity to $SNETHOST."
   SNETHOST=$( echo "$SRCFILEURL" | cut -d/ -f3 )
-  nc -w 5 -z snet-storage101.iad3.clouddrive.com 80
+  nc -w 5 -z $SNETHOST 80
   if [ $? -ne 0 ]; then
     echo "Error: Unable to reach Cloud Files API over ServiceNet."
     echo "You may have to use public traffic instead."
