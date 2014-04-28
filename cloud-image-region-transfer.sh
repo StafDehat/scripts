@@ -1,5 +1,6 @@
 #!/bin/bash
 #
+# Author: Andrew Howard
 # This script will copy an image from one region to another.
 # BE AWARE: This will incur charges for the customer.  These charges
 # can be minimized by using ServiceNet for the download and by choosing
@@ -76,14 +77,14 @@ trap 'cleanup' 1 2 9 15 17 19 23
 #
 # Usage statement
 function usage() {
-  echo "Usage: img-transfer.sh [-h] -S -A AUTHTOKEN -T TENANTID \\"
-  echo "                       -s SRCRGN -d DSTRGN -i IMGID"
+  echo "Usage: cloud-image-region-transfer.sh [-h] -S -A AUTHTOKEN -T TENANTID \\"
+  echo "                                      -s SRCRGN -d DSTRGN -i IMGID"
   echo "Example:"
-  echo "  # img-transfer.sh -A 7a9d3410cd7d11e3a8bfabb5e3025477 \\"
-  echo "                    -T 123456 \\"
-  echo "                    -s dfw \\"
-  echo "                    -d iad \\"
-  echo "                    -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f"
+  echo "  # cloud-image-region-transfer.sh -A 7a9d3410cd7d11e3a8bfabb5e3025477 \\"
+  echo "                                   -T 123456 \\"
+  echo "                                   -s dfw \\"
+  echo "                                   -d iad \\"
+  echo "                                   -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f"
   echo "Arguments:"
   echo "  -A X  API authentication token."
   echo "  -d X  Destination region (DFW/ORD/IAD/etc)."
