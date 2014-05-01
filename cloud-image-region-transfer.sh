@@ -223,6 +223,17 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
+# Check if image is sufficient size
+MINDISK=$( echo "$DATA" | tr ',' '\n' | grep '"min_disk":' | awk '{print $NF}' )
+if [ $MINDISK -gt 40 ]; then
+  echo "Error: You won't be able to import this image at the destination,"
+  echo "  because it was taken of a server with >40G OS disk.  You'll need"
+  echo "  to build a Standard NextGen server from this image at the source"
+  echo "  region, resize it to <=2G RAM (<=40G disk), then take a new image"
+  echo "  and transfer that new image instead."
+  echo 
+  exit 1
+fi
 IMGNAME=$( echo "$DATA" | tr ',' '\n' | grep '"name":' | cut -d'"' -f4 )
 echo "Image successfully located in region '$SRCRGN'."
 echo "Image name: $IMGNAME"
