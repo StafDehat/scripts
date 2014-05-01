@@ -223,6 +223,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
+echo "Image successfully located in region '$SRCRGN'."
 # Check if image is sufficient size
 MINDISK=$( echo "$DATA" | tr ',' '\n' | grep '"min_disk":' | awk '{print $NF}' )
 if [ $MINDISK -gt 40 ]; then
@@ -232,10 +233,13 @@ if [ $MINDISK -gt 40 ]; then
   echo "  region, resize it to <=2G RAM (<=40G disk), then take a new image"
   echo "  and transfer that new image instead."
   echo 
+  echo "Ref:"
+  echo "http://www.rackspace.com/knowledge_center/article/preparing-an-image-for-import-into-the-rackspace-open-cloud"
   exit 1
+else
+  echo "Confirmed image has min_disk <= 40GB."
 fi
 IMGNAME=$( echo "$DATA" | tr ',' '\n' | grep '"name":' | cut -d'"' -f4 )
-echo "Image successfully located in region '$SRCRGN'."
 echo "Image name: $IMGNAME"
 echo
 
