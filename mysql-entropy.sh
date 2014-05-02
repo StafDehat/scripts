@@ -7,8 +7,9 @@ PORT=3306
 USER=root
 PASS=Cnw49uNyVp
 FREQ=5
-MYSQL="mysql --skip-column-names --protocol=TCP -h $HOST -P $PORT -u$USER -p$PASS"
 TOGGLE=/home/lab/entropy
+
+MYSQL="mysql --skip-column-names --protocol=TCP -h $HOST -P $PORT -u$USER -p$PASS"
 
 # Pause:    echo 0 > $TOGGLE
 # Run live: echo 1 > $TOGGLE
