@@ -8,7 +8,7 @@ $2	Second argument passed to this process, etc for $3...
 $_	Final argument passed to previous command
 $*	An eval'd string of all my arguments.  You probably wanted $@.
 $@	A quoted string, not eval'd, of all my arguments
-$-	Flags passed to this script.  In "echo -n blah", it would be "-n".
+$-	Flags passed to this script.  In "echo -n blah", it would be "n".
 $!	PID of last job running in background.
 $?	Exit status of most recently-completed child process
 ${!x}	Indirect reference.  y=2; x=y; echo ${!x};
