@@ -496,6 +496,18 @@ mkdir /tmp/$CONTAINER
 
 
 #
+# Sleep to make sure the Source Container is populated.
+# This shouldn't be necessary, but we're playing it safe.
+echo "We're gonna wait 5 minutes now, just to make sure Cloud Files"
+echo "  has enough time to populate its folder.  In some cases, we've"
+echo "  seen Cloud Files give an incomplete container list - this is"
+echo "  a kludgy way of trying to work around that problem."
+sleep 300
+echo "Okay, done sleeping.  Continuing now."
+echo
+
+
+#
 # Pull a list of all image segment files
 echo "Attempting to enumerate all file segments exported to Cloud Files."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
