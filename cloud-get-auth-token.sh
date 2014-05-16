@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 read -p "What's the username for your cloud account? " CLOUD_USERNAME
 read -p "And now enter your API key (not token): " CLOUD_API_KEY
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
