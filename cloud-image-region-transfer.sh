@@ -708,7 +708,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
                      "import_from": "'$CONTAINER'/'$IMGID'.vhd",
                      "import_from_format": "vhd", 
                      "image_properties": {
-                       "name": "'$IMGNAME'" } } }' \
+                       "name": "'"$IMGNAME"'" } } }' \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
