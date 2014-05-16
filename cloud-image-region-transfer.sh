@@ -14,7 +14,7 @@
 #
 # Hard-coded variabled
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
-DATE=$( date +%F-%T )
+DATE=$( date +"%F_%H-%M-%S" )
 
 
 #
@@ -292,7 +292,8 @@ fi
 
 #
 # Create a container in which to save the exported image
-CONTAINER="$IMGNAME-$DATE"
+#CONTAINER="$IMGNAME-$DATE"
+CONTAINER="$DATE"
 echo "Creating Cloud Files container ($CONTAINER) to house exported image."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER \
@@ -435,7 +436,8 @@ echo
 
 #
 # Create container at destination to store image segments
-CONTAINER="$IMGNAME-$DATE"
+#CONTAINER="$IMGNAME-$DATE"
+CONTAINER="$DATE"
 echo "Creating Cloud Files container ($CONTAINER) to image for import."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $DSTFILEURL/$CONTAINER \
