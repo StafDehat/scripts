@@ -436,10 +436,10 @@ while true; do
                -X GET \
                -H "Accept: application/json" \
                -H "Content-Type: application/json" \
-               -H "X-Auth-Token: $AUTHTOKEN" \
-               -H "X-Auth-Project-Id: $TENANTID" \
-               -H "X-Tenant-Id: $TENANTID" \
-               -H "X-User-Id: $TENANTID" \
+               -H "X-Auth-Token: $SRCAUTHTOKEN" \
+               -H "X-Auth-Project-Id: $SRCTENANTID" \
+               -H "X-Tenant-Id: $SRCTENANTID" \
+               -H "X-User-Id: $SRCTENANTID" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
