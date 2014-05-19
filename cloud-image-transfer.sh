@@ -160,14 +160,14 @@ DSTRGN=$( echo $DSTRGN | tr 'A-Z' 'a-z' )
 #
 # Auth against API, both to confirm DDI/Token, and to get
 #   endpoints & Cloud Files Vault ID
-echo "Attempting to authenticate against Identity API."
+echo "Attempting to authenticate against Identity API with source account info."
 DATA=$(curl --write-out \\n%{http_code} --silent --output - \
             $IDENTITY_ENDPOINT/tokens \
             -H "Content-Type: application/json" \
             -d '{ "auth": {
-                    "tenantId": "'$TENANTID'",
+                    "tenantId": "'$SRCTENANTID'",
                     "token": {
-                      "id": "'$AUTHTOKEN'" } } }' \
+                      "id": "'$SRCAUTHTOKEN'" } } }' \
          2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -175,29 +175,61 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to authenticate against API using AUTHTOKEN and TENANTID"
+  echo "Error: Unable to authenticate against API using SRCAUTHTOKEN and SRCTENANTID"
   echo "  provided.  Raw response data from API was the following:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
-echo "Successfully authenticated using provided AUTHTOKEN and TENANTID."
+echo "Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID."
 echo
-TOKEN=$( echo "$DATA" | head -n -1 )
+SRCTOKEN=$( echo "$DATA" | head -n -1 )
+
+
+#
+# Auth against DST API if necessary
+if [ "$ONEACCOUNT" -eq 1 ]; then
+  DSTTOKEN="$SRCTOKEN"
+else
+  echo "Attempting to authenticate against Identity API with destination account info."
+  DATA=$(curl --write-out \\n%{http_code} --silent --output - \
+              $IDENTITY_ENDPOINT/tokens \
+              -H "Content-Type: application/json" \
+              -d '{ "auth": {
+                      "tenantId": "'$DSTTENANTID'",
+                      "token": {
+                        "id": "'$DSTAUTHTOKEN'" } } }' \
+           2>/dev/null )
+  RETVAL=$?
+  CODE=$( echo "$DATA" | tail -n 1 )
+  # Check for failed API call
+  if [ $RETVAL -ne 0 ]; then
+    echo "Unknown error encountered when trying to run curl command." && cleanup
+  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+    echo "Error: Unable to authenticate against API using DSTAUTHTOKEN and DSTTENANTID"
+    echo "  provided.  Raw response data from API was the following:"
+    echo
+    echo "Response code: $CODE"
+    echo "$DATA" | head -n -1 && cleanup
+  fi
+  echo "Successfully authenticated using provided DSTAUTHTOKEN and DSTTENANTID."
+  echo
+  DSTTOKEN=$( echo "$DATA" | head -n -1 )
+fi
 
 
 #
 # Find the Images endpoints
 echo "Attempting to identify Image API endpoints."
 if [ "$SRCRGN" == "lon" ]; then
-  SRCIMGURL="https://lon.images.api.rackspacecloud.com/v2/$TENANTID"
+  SRCIMGURL="https://lon.images.api.rackspacecloud.com/v2/$SRCTENANTID"
 else
-  SRCIMGURL=$( echo "$TOKEN" | tr '"' '\n' | grep "$SRCRGN.images.api.rackspacecloud.com" | tr -d '\\' )
+  SRCIMGURL=$( echo "$SRCTOKEN" | tr '"' '\n' | grep "$SRCRGN.images.api.rackspacecloud.com" | tr -d '\\' )
 fi
 if [ "$DSTRGN" == "lon" ]; then
-  DSTIMGURL="https://lon.images.api.rackspacecloud.com/v2/$TENANTID"
+  DSTIMGURL="https://lon.images.api.rackspacecloud.com/v2/$DSTTENANTID"
 else
-  DSTIMGURL=$( echo "$TOKEN" | tr '"' '\n' | grep "$DSTRGN.images.api.rackspacecloud.com" | tr -d '\\' )
+  DSTIMGURL=$( echo "$DSTTOKEN" | tr '"' '\n' | grep "$DSTRGN.images.api.rackspacecloud.com" | tr -d '\\' )
 fi
 echo "Identified Images API endpoints:"
 echo "Source:      $SRCIMGURL"
