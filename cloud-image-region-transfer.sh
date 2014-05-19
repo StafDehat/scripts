@@ -50,7 +50,6 @@ function cleanup {
   echo "----------------------------------------"
   echo "Script exited prematurely."
   echo "You may need to manually delete the following:"
-  echo "----------------------------------------"
   if [ $MADESRCCONT -ne 0 ]; then
     echo "Container $CONTAINER in Cloud Files region $SRCRGN"
   fi
@@ -59,11 +58,9 @@ function cleanup {
   fi
   if [ $EXPORTED -ne 0 ]; then
     echo "Export task $SRCTASKID in region $SRCRGN"
-    echo "  -Really though, just confirm it's done and delete the files in $CONTAINER"
   fi
   if [ $IMPORTED -ne 0 ]; then
     echo "Import task $DSTTASKID in region $DSTRGN"
-    echo "Really though, just confirm it's done and delete the image."
   fi
   if [ $SAVELOCAL -ne 0 ]; then
     echo "Folder and contents on local storage: /tmp/$CONTAINER"
