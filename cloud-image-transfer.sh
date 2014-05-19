@@ -75,7 +75,7 @@ trap 'cleanup' 1 2 9 15 17 19 23
 # Usage statement
 function usage() {
   echo "Usage: cloud-image-region-transfer.sh [-h] -s -1 \\"
-  echo "                                      -i IMGID \\"
+  echo "                                      -i SRCIMGID \\"
   echo "                                      -a SRCAUTHTOKEN -A DSTAUTHTOKEN \\"
   echo "                                      -t SRCTENANTID  -T DSTTENANTID \\"
   echo "                                      -r SRCRGN       -R DSTRGN"
@@ -122,7 +122,7 @@ while getopts ":1a:A:hi:r:R:st:T:" arg; do
     a) SRCAUTHTOKEN=$OPTARG;;
     A) DSTAUTHTOKEN=$OPTARG;;
     h) usage && exit 0;;
-    i) IMGID=$OPTARG;;
+    i) SRCIMGID=$OPTARG;;
     r) SRCRGN=$OPTARG;;
     R) DSTRGN=$OPTARG;;
     s) SNET=1;;
@@ -139,7 +139,7 @@ if [ "$ONEACCOUNT" -eq 1 ]; then
   DSTAUTHTOKEN="$SRCAUTHTOKEN"
   DSTTENANTID="$SRCTENANTID"
 fi
-ARGUMENTS="SRCAUTHTOKEN DSTAUTHTOKEN SRCTENANTID DSTTENANTID SRCRGN DSTRGN IMGID"
+ARGUMENTS="SRCAUTHTOKEN DSTAUTHTOKEN SRCTENANTID DSTTENANTID SRCRGN DSTRGN SRCIMGID"
 for ARGUMENT in $ARGUMENTS; do
   if [ -z "${!ARGUMENT}" ]; then
     echo "ERROR: Must define $ARGUMENT as argument."
@@ -238,10 +238,10 @@ echo
 
 
 #
-# Verify IMGID exists in SRCRGN
+# Verify SRCIMGID exists in SRCRGN
 echo "Verifying image exists."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-             $SRCIMGURL/images/$IMGID \
+             $SRCIMGURL/images/$SRCIMGID \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
@@ -401,7 +401,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -H "X-User-Id: $SRCTENANTID" \
              -d '{ "type": "export",
                    "input": {
-                     "image_uuid": "'$IMGID'",
+                     "image_uuid": "'$SRCIMGID'",
                      "receiving_swift_container": "'$CONTAINER'" } }' \
           2>/dev/null )
 RETVAL=$?
@@ -582,7 +582,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "$DATA" | head -n -1 && cleanup
 fi
 SEGMENTS=$( echo "$DATA" | tr ',' '\n' | grep '"name":\|"hash":' | 
-              cut -d'"' -f4 | sed 'N;s/\n/:/' | grep "$IMGID.vhd-" )
+              cut -d'"' -f4 | sed 'N;s/\n/:/' | grep "$SRCIMGID.vhd-" )
 echo "Successfully retrieved container listing."
 (
   echo "md5sum:filename" 
@@ -687,7 +687,7 @@ for SEGMENT in $SEGMENTS; do
 done
 # Delete the manifest file
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-             $SRCFILEURL/$CONTAINER/$IMGID.vhd \
+             $SRCFILEURL/$CONTAINER/$SRCIMGID.vhd \
              -X DELETE \
              -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
@@ -696,7 +696,7 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to delete $IMGID.vhd from $CONTAINER in $SRCRGN on account $SRCTENANTID"
+  echo "Error: Unable to delete $SRCIMGID.vhd from $CONTAINER in $SRCRGN on account $SRCTENANTID"
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
@@ -732,13 +732,13 @@ echo
 
 #
 # Create a dynamic manifest object
-echo "Creating dynamic manifest file $IMGID.vhd on account $DSTTENANTID"
+echo "Creating dynamic manifest file $SRCIMGID.vhd on account $DSTTENANTID"
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-             $DSTFILEURL/$CONTAINER/$IMGID.vhd \
+             $DSTFILEURL/$CONTAINER/$SRCIMGID.vhd \
              -T /dev/null \
              -X PUT \
              -H "X-Auth-Token: $DSTAUTHTOKEN" \
-             -H "X-Object-Manifest: $CONTAINER/${IMGID}.vhd-" \
+             -H "X-Object-Manifest: $CONTAINER/${SRCIMGID}.vhd-" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -769,7 +769,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -H "X-User-Id: $DSTTENANTID" \
              -d '{ "type": "import",
                    "input": {
-                     "import_from": "'$CONTAINER'/'$IMGID'.vhd",
+                     "import_from": "'$CONTAINER'/'$SRCIMGID'.vhd",
                      "import_from_format": "vhd", 
                      "image_properties": {
                        "name": "'"$IMGNAME"'" } } }' \
@@ -847,7 +847,7 @@ echo
 #
 # Report success
 echo "Transfer complete."
-echo "Image ID $IMGID copied from $SRCRGN on account $SRCTENANTID to $DSTRGN on account $DSTTENANTID."
+echo "Image ID $SRCIMGID copied from $SRCRGN on account $SRCTENANTID to $DSTRGN on account $DSTTENANTID."
 echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
 echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
 exit 0
