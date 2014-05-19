@@ -158,20 +158,6 @@ DSTRGN=$( echo $DSTRGN | tr 'A-Z' 'a-z' )
 
 
 #
-# TENANTID and AUTHTOKEN can't work in both LON and any other region,
-#   so if either is LON then this script can't quite work.  Maybe in
-#   a future version.  I'd have to prompt for both SRC and DST auth
-#   tokens & DDIs though.
-if [[ "$SRCRGN" == "lon" ||
-      "$DSTRGN" == "lon" ]]; then
-  echo "Sorry kids, this script can't work with LON yet."
-  echo "Maybe in a future version."
-  echo "Read the source and you might be able to sqeak by."
-  exit 1
-fi
-
-
-#
 # Auth against API, both to confirm DDI/Token, and to get
 #   endpoints & Cloud Files Vault ID
 echo "Attempting to authenticate against Identity API."
