@@ -245,10 +245,10 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
-             -H "X-Auth-Project-Id: $TENANTID" \
-             -H "X-Tenant-Id: $TENANTID" \
-             -H "X-User-Id: $TENANTID" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
+             -H "X-Auth-Project-Id: $SRCTENANTID" \
+             -H "X-Tenant-Id: $SRCTENANTID" \
+             -H "X-User-Id: $SRCTENANTID" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -263,7 +263,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
-echo "Image successfully located in region '$SRCRGN'."
+echo "Image successfully located in region '$SRCRGN' on account $SRCTENANTID."
 # Check if image is sufficient size
 MINDISK=$( echo "$DATA" | tr ',' '\n' | grep '"min_disk":' | awk '{print $NF}' )
 if [ $MINDISK -gt 40 ]; then
@@ -288,28 +288,28 @@ echo
 # Determine the Cloud Files endpoints
 # I am, unfortunately, forced to hard-code these URLs since the TOKEN
 #   does not include Cloud Files URLs - only the Vault ID.
-VAULTID=$( echo "$TOKEN" | tr '"' '\n' | grep MossoCloudFS )
+SRCVAULTID=$( echo "$SRCTOKEN" | tr '"' '\n' | grep MossoCloudFS )
 if [ "$SNET" -eq 1 ]; then
   SRCFILEURL="https://snet-"
 else 
   SRCFILEURL="https://"
 fi
 case $SRCRGN in
-  ord) SRCFILEURL="${SRCFILEURL}storage101.ord1.clouddrive.com/v1/$VAULTID";;
-  dfw) SRCFILEURL="${SRCFILEURL}storage101.dfw1.clouddrive.com/v1/$VAULTID";;
-  hkg) SRCFILEURL="${SRCFILEURL}storage101.hkg1.clouddrive.com/v1/$VAULTID";;
-  lon) SRCFILEURL="${SRCFILEURL}storage101.lon3.clouddrive.com/v1/$VAULTID";;
-  iad) SRCFILEURL="${SRCFILEURL}storage101.iad3.clouddrive.com/v1/$VAULTID";;
-  syd) SRCFILEURL="${SRCFILEURL}storage101.syd2.clouddrive.com/v1/$VAULTID";;
+  ord) SRCFILEURL="${SRCFILEURL}storage101.ord1.clouddrive.com/v1/$SRCVAULTID";;
+  dfw) SRCFILEURL="${SRCFILEURL}storage101.dfw1.clouddrive.com/v1/$SRCVAULTID";;
+  hkg) SRCFILEURL="${SRCFILEURL}storage101.hkg1.clouddrive.com/v1/$SRCVAULTID";;
+  lon) SRCFILEURL="${SRCFILEURL}storage101.lon3.clouddrive.com/v1/$SRCVAULTID";;
+  iad) SRCFILEURL="${SRCFILEURL}storage101.iad3.clouddrive.com/v1/$SRCVAULTID";;
+  syd) SRCFILEURL="${SRCFILEURL}storage101.syd2.clouddrive.com/v1/$SRCVAULTID";;
     *) echo "ERROR: Unrecognized REGION code." && cleanup;;
 esac
 case $DSTRGN in
-  ord) DSTFILEURL="https://storage101.ord1.clouddrive.com/v1/$VAULTID";;
-  dfw) DSTFILEURL="https://storage101.dfw1.clouddrive.com/v1/$VAULTID";;
-  hkg) DSTFILEURL="https://storage101.hkg1.clouddrive.com/v1/$VAULTID";;
-  lon) DSTFILEURL="https://storage101.lon3.clouddrive.com/v1/$VAULTID";;
-  iad) DSTFILEURL="https://storage101.iad3.clouddrive.com/v1/$VAULTID";;
-  syd) DSTFILEURL="https://storage101.syd2.clouddrive.com/v1/$VAULTID";;
+  ord) DSTFILEURL="https://storage101.ord1.clouddrive.com/v1/$DSTVAULTID";;
+  dfw) DSTFILEURL="https://storage101.dfw1.clouddrive.com/v1/$DSTVAULTID";;
+  hkg) DSTFILEURL="https://storage101.hkg1.clouddrive.com/v1/$DSTVAULTID";;
+  lon) DSTFILEURL="https://storage101.lon3.clouddrive.com/v1/$DSTVAULTID";;
+  iad) DSTFILEURL="https://storage101.iad3.clouddrive.com/v1/$DSTVAULTID";;
+  syd) DSTFILEURL="https://storage101.syd2.clouddrive.com/v1/$DSTVAULTID";;
     *) echo "ERROR: Unrecognized REGION code." && cleanup;;
 esac
 
