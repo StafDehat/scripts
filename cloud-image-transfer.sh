@@ -516,13 +516,13 @@ echo
 
 #
 # Confirm the existence of Destination Cloud Files container
-echo "Attempting to confirm Cloud Files container does now exist."
+echo "Attempting to confirm Cloud Files container does now exist on account $DSTTENANTID."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $DSTFILEURL/$CONTAINER \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $DSTAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -566,7 +566,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -604,7 +604,7 @@ for SEGMENT in $SEGMENTS; do
   while true; do
     curl $SRCFILEURL/$CONTAINER/$OBJECT \
          -X GET \
-         -H "X-Auth-Token: $AUTHTOKEN" \
+         -H "X-Auth-Token: $SRCAUTHTOKEN" \
       >/tmp/$CONTAINER/$OBJECT 2>/dev/null
     echo "($COUNT/$TOTAL) Download complete.  Verifying integrity."
     if [ -f /tmp/$CONTAINER/$OBJECT ]; then
@@ -626,7 +626,7 @@ for SEGMENT in $SEGMENTS; do
                  $DSTFILEURL/$CONTAINER/$OBJECT \
                  -T /tmp/$CONTAINER/$OBJECT \
                  -X PUT \
-                 -H "X-Auth-Token: $AUTHTOKEN" \
+                 -H "X-Auth-Token: $DSTAUTHTOKEN" \
                  -H "ETag: $MD5SUM" \
               2>/dev/null )
     RETVAL=$?
@@ -663,14 +663,14 @@ echo
 
 #
 # Delete Cloud Files objects & container at $SRCRGN
-echo "Deleting content of container $CONTAINER from $SRCRGN."
+echo "Deleting content of container $CONTAINER from $SRCRGN on account $SRCTENANTID."
 for SEGMENT in $SEGMENTS; do
   # Delete all the segments
   OBJECT=$( echo $SEGMENT | cut -d: -f2- )
   DATA=$( curl --write-out \\n%{http_code} --silent --output - \
                $SRCFILEURL/$CONTAINER/$OBJECT \
                -X DELETE \
-               -H "X-Auth-Token: $AUTHTOKEN" \
+               -H "X-Auth-Token: $SRCAUTHTOKEN" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
@@ -688,37 +688,37 @@ done
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER/$IMGID.vhd \
              -X DELETE \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to delete $IMGID.vhd from $CONTAINER in $SRCRGN"
+  echo "Error: Unable to delete $IMGID.vhd from $CONTAINER in $SRCRGN on account $SRCTENANTID"
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
-echo "Contents successfully deleted from $SRCRGN."
+echo "Contents successfully deleted from $SRCRGN on account $SRCTENANTID."
 echo
 
 
 #
 # Delete the $SRCRGN container
-echo "Deleting container $CONTAINER from $SRCRGN."
+echo "Deleting container $CONTAINER from $SRCRGN on account $SRCTENANTID."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER \
              -X DELETE \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to delete container in $SRCRGN"
+  echo "Error: Unable to delete container in $SRCRGN on account $SRCTENANTID"
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
@@ -731,12 +731,12 @@ echo
 
 #
 # Create a dynamic manifest object
-echo "Creating dynamic manifest file $IMGID.vhd"
+echo "Creating dynamic manifest file $IMGID.vhd on account $DSTTENANTID"
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $DSTFILEURL/$CONTAINER/$IMGID.vhd \
              -T /dev/null \
              -X PUT \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $DSTAUTHTOKEN" \
              -H "X-Object-Manifest: $CONTAINER/${IMGID}.vhd-" \
           2>/dev/null )
 RETVAL=$?
@@ -744,7 +744,7 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to create empty manifest file in $DSTRGN"
+  echo "Error: Unable to create empty manifest file in $DSTRGN on account $DSTTENANTID"
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
@@ -762,10 +762,10 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -X POST \
              -H "Content-Type: application/json" \
              -H "Accept: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
-             -H "X-Auth-Project-Id: $TENANTID" \
-             -H "X-Tenant-Id: $TENANTID" \
-             -H "X-User-Id: $TENANTID" \
+             -H "X-Auth-Token: $DSTAUTHTOKEN" \
+             -H "X-Auth-Project-Id: $DSTTENANTID" \
+             -H "X-Tenant-Id: $DSTTENANTID" \
+             -H "X-User-Id: $DSTTENANTID" \
              -d '{ "type": "import",
                    "input": {
                      "import_from": "'$CONTAINER'/'$IMGID'.vhd",
@@ -806,10 +806,10 @@ while true; do
                -X GET \
                -H "Accept: application/json" \
                -H "Content-Type: application/json" \
-               -H "X-Auth-Token: $AUTHTOKEN" \
-               -H "X-Auth-Project-Id: $TENANTID" \
-               -H "X-Tenant-Id: $TENANTID" \
-               -H "X-User-Id: $TENANTID" \
+               -H "X-Auth-Token: $DSTAUTHTOKEN" \
+               -H "X-Auth-Project-Id: $DSTTENANTID" \
+               -H "X-Tenant-Id: $DSTTENANTID" \
+               -H "X-User-Id: $DSTTENANTID" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
@@ -846,7 +846,8 @@ echo
 #
 # Report success
 echo "Transfer complete."
-echo "Image ID $IMGID copied from $SRCRGN to $DSTRGN."
-echo "Cloud Files content in $SRCRGN was auto-deleted."
-echo "Cloud Files content in $DSTRGN left in place - delete manually if necessary."
+echo "Image ID $IMGID copied from $SRCRGN on account $SRCTENANTID to $DSTRGN on account $DSTTENANTID."
+echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
+echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
 exit 0
+
