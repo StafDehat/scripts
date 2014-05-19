@@ -289,6 +289,7 @@ echo
 # I am, unfortunately, forced to hard-code these URLs since the TOKEN
 #   does not include Cloud Files URLs - only the Vault ID.
 SRCVAULTID=$( echo "$SRCTOKEN" | tr '"' '\n' | grep MossoCloudFS )
+DSTVAULTID=$( echo "$DSTTOKEN" | tr '"' '\n' | grep MossoCloudFS )
 if [ "$SNET" -eq 1 ]; then
   SRCFILEURL="https://snet-"
 else 
