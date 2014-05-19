@@ -436,6 +436,15 @@ echo
 
 #
 # Create container at destination to store image segments
+
+# Presently the "." character is considered invalid by the export task
+#   when used as the name of a Cloud Files container.  Since "." is 
+#   likely very common in image names (ie: FQDNs), I'm not including
+#   the image name as part of the container name - it would cause the
+#   export task validation to fail.  Once the bug is resolved, I'll
+#   change this, but in the meantime we'll use just the timestamp as
+#   the container name.
+# Ref: https://redmine.ohthree.com/issues/5502
 #CONTAINER="$IMGNAME-$DATE"
 CONTAINER="$DATE"
 echo "Creating Cloud Files container ($CONTAINER) to image for import."
