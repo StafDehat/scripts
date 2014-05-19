@@ -334,13 +334,13 @@ fi
 # Create a container in which to save the exported image
 #CONTAINER="$IMGNAME-$DATE"
 CONTAINER="$DATE"
-echo "Creating Cloud Files container ($CONTAINER) to house exported image."
+echo "Creating Cloud Files container ($CONTAINER) on account $SRCTENANTID to house exported image."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER \
              -X PUT \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -348,14 +348,15 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to create container '$CONTAINER' in region '$SRCRGN'."
+  echo "Error: Unable to create container '$CONTAINER' in region '$SRCRGN'"
+  echo "  on account $SRCTENANTID."
   echo "  Does it already exist?  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
 MADESRCCONT=1
-echo "Successully created container in region '$SRCRGN'."
+echo "Successully created container in region '$SRCRGN' on account $SRCTENANTID."
 echo
 
 
@@ -367,7 +368,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -393,10 +394,10 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -X POST \
              -H "Content-Type: application/json" \
              -H "Accept: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
-             -H "X-Auth-Project-Id: $TENANTID" \
-             -H "X-Tenant-Id: $TENANTID" \
-             -H "X-User-Id: $TENANTID" \
+             -H "X-Auth-Token: $SRCAUTHTOKEN" \
+             -H "X-Auth-Project-Id: $SRCTENANTID" \
+             -H "X-Tenant-Id: $SRCTENANTID" \
+             -H "X-User-Id: $SRCTENANTID" \
              -d '{ "type": "export",
                    "input": {
                      "image_uuid": "'$IMGID'",
