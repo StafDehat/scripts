@@ -488,13 +488,13 @@ echo
 # Ref: https://redmine.ohthree.com/issues/5502
 #CONTAINER="$IMGNAME-$DATE"
 CONTAINER="$DATE"
-echo "Creating Cloud Files container ($CONTAINER) to image for import."
+echo "Creating Cloud Files container ($CONTAINER) on account $DSTTENANTID to store files for import."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $DSTFILEURL/$CONTAINER \
              -X PUT \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $AUTHTOKEN" \
+             -H "X-Auth-Token: $DSTAUTHTOKEN" \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -502,14 +502,15 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to create container '$CONTAINER' in region '$DSTRGN'."
+  echo "Error: Unable to create container '$CONTAINER' in region '$DSTRGN'"
+  echo "  on account $DSTTENANTID."
   echo "  Does it already exist?  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | head -n -1 && cleanup
 fi
 MADEDSTCONT=1
-echo "Successully created container in region '$DSTRGN'."
+echo "Successully created container in region '$DSTRGN' on account $DSTTENANTID."
 echo
 
 
