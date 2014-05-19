@@ -833,14 +833,14 @@ while true; do
     if [ $STATUS == "success" ]; then
       break
     else
-      echo "Error: Export task complete, but status does not indicate success."
+      echo "Error: Import task complete, but status does not indicate success."
       echo "Status: $STATUS"
       echo -n "Message: "
       echo "$DATA" | tr ',' '\n' | grep '"message":' | cut -d'"' -f4 && cleanup
     fi
   fi
 done
-echo "Export task completed successfully."
+echo "Import task completed successfully."
 echo
 
 
