@@ -1,0 +1,112 @@
+root@andr4596-db1[~]# ./cloud-image-transfer.sh -a 17f40b76df9411e3af7113c1d493efe5 -t 111111 -r dfw -i 09c7c696-df94-11e3-b85f-abfacd43a936 -A 1f767fd2df9411e3a7b6bbe3759fffc9 -T 222222 -R ord -s
+Attempting to authenticate against Identity API with source account info.
+Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID.
+
+Attempting to authenticate against Identity API with destination account info.
+Successfully authenticated using provided DSTAUTHTOKEN and DSTTENANTID.
+
+Attempting to identify Image API endpoints.
+Identified Images API endpoints:
+Source:      https://dfw.images.api.rackspacecloud.com/v2/111111
+Destination: https://ord.images.api.rackspacecloud.com/v2/222222
+
+Verifying image exists.
+Image successfully located in region 'dfw' on account 111111.
+Confirmed image has min_disk <= 40GB.
+Image name: andr4596
+
+Testing connectivity to snet-storage101.dfw1.clouddrive.com on tcp/443.
+Connection to ServiceNet successful.
+
+Creating Cloud Files container (2014-05-19_19-57-16) on account 111111 to house exported image.
+Successully created container in region 'dfw' on account 111111.
+
+Attempting to confirm Cloud Files container does now exist.
+Existence confirmed.
+
+Attempting to export image to Cloud Files.
+Successully initiated an image export task in region 'dfw'.
+Task ID: 7eb714bf-840b-429c-bef5-44f1dad4e104
+
+Monitoring status of image export.
+2014-05-19 19:57:21 Waiting for completion - will check every 60 seconds.
+2014-05-19 19:58:32 Waiting for completion - will check every 60 seconds.
+2014-05-19 19:59:36 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:00:42 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:01:44 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:02:44 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:03:51 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:04:53 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:05:55 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:06:57 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:08:02 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:09:02 Waiting for completion - will check every 60 seconds.
+Export task completed successfully.
+
+Creating Cloud Files container (2014-05-19_19-57-16) on account 222222 to store files for import.
+Successully created container in region 'ord' on account 222222.
+
+Attempting to confirm Cloud Files container does now exist on account 222222.
+Existence confirmed.
+
+We're gonna wait 5 minutes now, just to make sure Cloud Files
+  has enough time to populate its folder.  In some cases, we've
+  seen Cloud Files give an incomplete container list - this is
+  a kludgy way of trying to work around that problem.
+Okay, done sleeping.  Continuing now.
+
+Attempting to enumerate all file segments exported to Cloud Files.
+Successfully retrieved container listing.
+md5sum                            filename
+6f0da5a539b05932d813c5323635851c  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00001
+5201c35898d10d395720941596f69c6b  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00002
+7ca1002d70d8be14167e57545700f780  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00003
+
+(1/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00001
+(1/3) Download complete.  Verifying integrity.
+(1/3) Local copy matches md5sum of Cloud Files object in dfw.
+(1/3) Uploading segment to ord.
+(1/3) Segment uploaded successfully.
+(1/3) Checksum validated.
+(1/3) Local copy of segment deleted.
+(2/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00002
+(2/3) Download complete.  Verifying integrity.
+(2/3) Local copy matches md5sum of Cloud Files object in dfw.
+(2/3) Uploading segment to ord.
+(2/3) Segment uploaded successfully.
+(2/3) Checksum validated.
+(2/3) Local copy of segment deleted.
+(3/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00003
+(3/3) Download complete.  Verifying integrity.
+(3/3) Local copy matches md5sum of Cloud Files object in dfw.
+(3/3) Uploading segment to ord.
+(3/3) Segment uploaded successfully.
+(3/3) Checksum validated.
+(3/3) Local copy of segment deleted.
+
+Deleting content of container 2014-05-19_19-57-16 from dfw on account 111111.
+Contents successfully deleted from dfw on account 111111.
+
+Deleting container 2014-05-19_19-57-16 from dfw on account 111111.
+Container deleted successfully.
+
+Creating dynamic manifest file 09c7c696-df94-11e3-b85f-abfacd43a936.vhd on account 222222
+Manifest file created successfully.
+
+Initiating import task in ord.
+Successully initiated an image import task in region 'ord'.
+Task ID: 4c522877-aef4-48fe-809a-b3969082b714
+
+Monitoring status of image import.
+2014-05-19 20:20:47 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:21:49 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:22:52 Waiting for completion - will check every 60 seconds.
+2014-05-19 20:23:53 Waiting for completion - will check every 60 seconds.
+Export task completed successfully.
+
+Transfer complete.
+Image ID 09c7c696-df94-11e3-b85f-abfacd43a936 copied from dfw on account 111111 to ord on account 222222.
+Cloud Files content in dfw on account 111111 was auto-deleted.
+Cloud Files content in ord on account 222222 left in place - delete manually if necessary.
+root@andr4596-db1[~]# 
+
