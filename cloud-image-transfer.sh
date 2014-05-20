@@ -10,6 +10,8 @@
 # Note: To use ServiceNet, this script MUST be run on a Cloud Server
 # in the same region as the source image.
 
+# Note: The export/import process breaks Managed SLA on the image and
+# all servers built from the image.
 
 #
 # Hard-coded variabled
