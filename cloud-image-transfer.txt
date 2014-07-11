@@ -1,4 +1,4 @@
-root@andr4596-db1[~]# ./cloud-image-transfer.sh -a 17f40b76df9411e3af7113c1d493efe5 -t 111111 -r dfw -i 09c7c696-df94-11e3-b85f-abfacd43a936 -A 1f767fd2df9411e3a7b6bbe3759fffc9 -T 222222 -R ord -s
+root@server1[~]# ./cloud-image-transfer.sh -a 17f40b76df9411e3af7113c1d493efe5 -t 111111 -r dfw -i 09c7c696-df94-11e3-b85f-abfacd43a936 -A 1f767fd2df9411e3a7b6bbe3759fffc9 -T 222222 -R ord -s
 Attempting to authenticate against Identity API with source account info.
 Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID.
 
@@ -13,7 +13,7 @@ Destination: https://ord.images.api.rackspacecloud.com/v2/222222
 Verifying image exists.
 Image successfully located in region 'dfw' on account 111111.
 Confirmed image has min_disk <= 40GB.
-Image name: andr4596
+Image name: myserverimg
 
 Testing connectivity to snet-storage101.dfw1.clouddrive.com on tcp/443.
 Connection to ServiceNet successful.
@@ -108,5 +108,5 @@ Transfer complete.
 Image ID 09c7c696-df94-11e3-b85f-abfacd43a936 copied from dfw on account 111111 to ord on account 222222.
 Cloud Files content in dfw on account 111111 was auto-deleted.
 Cloud Files content in ord on account 222222 left in place - delete manually if necessary.
-root@andr4596-db1[~]# 
+root@server1[~]# 
 
