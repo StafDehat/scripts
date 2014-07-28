@@ -69,12 +69,12 @@ if [ $( date +%M ) -eq 00 ]; then
       tmpwatch -m $(( $WEEKS * 7 ))d $BACKUPDIR/weekly
     fi #End weekly
     # Check if this is the 1st of Month
-    if [ $( date +% ) -eq 1 ]; then
+    if [ $( date +%d ) -eq 01 ]; then
       # Monthly
       ln $BACKUPDIR/$TARGETFILE.$DATE.tgz $BACKUPDIR/monthly/$TARGETFILE.$DATE.tgz
       tmpwatch -m $(( $MONTHS * 31 ))d $BACKUPDIR/monthly
       # Check if this is January
-      if [ $(date +% ) -eq 1 ]; then
+      if [ $(date +%m ) -eq 01 ]; then
         # Yearly
         ln $BACKUPDIR/$TARGETFILE.$DATE.tgz $BACKUPDIR/yearly/$TARGETFILE.$DATE.tgz
         tmpwatch -m $(( $YEARS * 365 ))d $BACKUPDIR/yearly
