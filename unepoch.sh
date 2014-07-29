@@ -7,5 +7,5 @@ while read LINE; do
 done
 
 # It's way better to just do this:
-# alias unepoch="perl -pe 's/(\d+)/localtime($1)/e'"
+# alias unepoch='perl -pe "s/(\d+)/localtime($1)/e"'
 
