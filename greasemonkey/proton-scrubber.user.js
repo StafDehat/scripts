@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           Proton scrubber
-// @version        1.12
+// @version        1.11
 // @downloadURL    https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
 // @updateURL      https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
 // @author         Andrew Howard
@@ -21,7 +21,6 @@
 //       Also remove the weird background highlighting.
 // 1.10 - Overrode onClick reset of ticketID to green background with an eventListener.
 // 1.11 - Added auto-updates
-// 1.12 - Testing auto-updates
 
 //
 // This segment stolen from http://www.kryogenix.org/code/browser/sorttable/sorttable.js
