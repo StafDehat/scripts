@@ -1,6 +1,8 @@
 // ==UserScript==
 // @name           Proton scrubber
-// @version        1.10
+// @version        1.11
+// @downloadURL    https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
+// @updateURL      https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
 // @author         Andrew Howard
 // @description    Make Proton look like we like it.
 // @include        https://proton.*/?*section=Queues*&subsection=Queues*
@@ -17,7 +19,8 @@
 // 1.8 - Added fix for delayed loading, and hid the alert scroller
 // 1.9 - Add CSS mods.  Remove some code bits that can be done better via CSS.
 //       Also remove the weird background highlighting.
-// 1.10 - Also overrode onClick reset of ticketID to green background with an eventListener.
+// 1.10 - Overrode onClick reset of ticketID to green background with an eventListener.
+// 1.11 - Added auto-updates
 
 //
 // This segment stolen from http://www.kryogenix.org/code/browser/sorttable/sorttable.js
