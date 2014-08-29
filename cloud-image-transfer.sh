@@ -603,27 +603,27 @@ for SEGMENT in $SEGMENTS; do
   OBJECT=$( echo $SEGMENT | cut -d: -f2- )
   COUNT=$(( $COUNT + 1 ))
   # Download a segment
-  echo "($COUNT/$TOTAL) Downloading segment: $OBJECT"
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Downloading segment: $OBJECT"
   while true; do
     curl $SRCFILEURL/$CONTAINER/$OBJECT \
          -X GET \
          -H "X-Auth-Token: $SRCAUTHTOKEN" \
       >/tmp/$CONTAINER/$OBJECT 2>/dev/null
-    echo "($COUNT/$TOTAL) Download complete.  Verifying integrity."
+    echo "$(date +'%F %T') ($COUNT/$TOTAL) Download complete.  Verifying integrity."
     if [ -f /tmp/$CONTAINER/$OBJECT ]; then
       LOCALMD5=$( md5sum /tmp/$CONTAINER/$OBJECT | awk '{print $1}' )
       if [ "$LOCALMD5" == "$MD5SUM" ]; then
         break
       else
-        echo "($COUNT/$TOTAL) Error: MD5 sum of downloaded file does not match.  Retrying."
+        echo "$(date +'%F %T') ($COUNT/$TOTAL) Error: MD5 sum of downloaded file does not match.  Retrying."
       fi
     else
-      echo "($COUNT/$TOTAL) Error: File not found locally after download.  Retrying."
+      echo "$(date +'%F %T') ($COUNT/$TOTAL) Error: File not found locally after download.  Retrying."
     fi
   done
-  echo "($COUNT/$TOTAL) Local copy matches md5sum of Cloud Files object in $SRCRGN."
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Local copy matches md5sum of Cloud Files object in $SRCRGN."
   # Upload, enforcing md5sum
-  echo "($COUNT/$TOTAL) Uploading segment to $DSTRGN."
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Uploading segment to $DSTRGN."
   while true; do
     DATA=$( curl --write-out \\n%{http_code} --silent --output - \
                  $DSTFILEURL/$CONTAINER/$OBJECT \
@@ -639,7 +639,7 @@ for SEGMENT in $SEGMENTS; do
       echo "Unknown error encountered when trying to run curl command." && cleanup
     fi
     if [ $CODE -eq 422 ]; then
-      echo "($COUNT/$TOTAL) Error: Checksum validation failed.  Retrying."
+      echo "$(date +'%F %T') ($COUNT/$TOTAL) Error: Checksum validation failed.  Retrying."
       continue
     else
       if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
@@ -653,11 +653,11 @@ for SEGMENT in $SEGMENTS; do
       fi
     fi
   done
-  echo "($COUNT/$TOTAL) Segment uploaded successfully."
-  echo "($COUNT/$TOTAL) Checksum validated."
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Segment uploaded successfully."
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Checksum validated."
   # Delete the local copy of $SEGMENT
   rm -f /tmp/$CONTAINER/$OBJECT
-  echo "($COUNT/$TOTAL) Local copy of segment deleted."
+  echo "$(date +'%F %T') ($COUNT/$TOTAL) Local copy of segment deleted."
 done
 rmdir /tmp/$CONTAINER
 SAVELOCAL=0
