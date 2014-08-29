@@ -462,7 +462,7 @@ while true; do
         "$STATUS" == "processing" ]]; then
     continue # Keep waiting
   else
-    if [ $STATUS == "success" ]; then
+    if [ "$STATUS" == "success" ]; then
       break
     else
       echo "Error: Export task complete, but status does not indicate success."
@@ -832,7 +832,7 @@ while true; do
         "$STATUS" == "processing" ]]; then
     continue # Keep waiting
   else
-    if [ $STATUS == "success" ]; then
+    if [ "$STATUS" == "success" ]; then
       break
     else
       echo "Error: Import task complete, but status does not indicate success."
