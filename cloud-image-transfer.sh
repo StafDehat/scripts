@@ -451,6 +451,7 @@ while true; do
     echo "Unknown error encountered when trying to run curl command." && cleanup
   elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to query task details - maybe API is unavailable?"
+    echo "       Maybe your API token just expired?"
     echo "Script will attempt to retry."
     echo "Response data from API was as follows:"
     echo
@@ -821,6 +822,7 @@ while true; do
     echo "Unknown error encountered when trying to run curl command." && cleanup
   elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to query task details - maybe API is unavailable?"
+    echo "       Maybe your API token just expired?"
     echo "Script will attempt to retry."
     echo "Response data from API was as follows:"
     echo
