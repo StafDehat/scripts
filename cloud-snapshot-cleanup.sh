@@ -33,10 +33,34 @@ done
 # Calculate potential-max of disk space increase as a result of coalesce processes
 MaxDiskIncrease=0
 for SNAPSHOT in $OLDSNAPS; do
-  PARENT=$( xe vdi-list params=parent uuid=$SNAPSHOT | cut -d: -f2- )
+  SKIP=1
+  # There's a parent field, but it might not be used - data's probably actually in sm-config
+  # Attempt to check both
+  PARENT1=$( xe vdi-list uuid=$SNAPSHOT params=sm-config --minimal | 
+              sed 's/\s\s*/\n/g' | grep -A 1 "vhd-parent:" | tail -n 1 )
+  PARENT2=$( xe vdi-list params=parent uuid=$SNAPSHOT | cut -d: -f2- )
+  if [[ ( -z "$PARENT1" || $( grep -c "not in database" <<<"$PARENT1" ) -ne 0 ) &&
+        ( -z "$PARENT2" || $( grep -c "not in database" <<<"$PARENT2" ) -ne 0 ) ]]; then
+    # Both empty
+    SKIP=1
+  elif [[ -z "$PARENT1" || $( grep -c "not in database" <<<"$PARENT1" ) -ne 0 ]]; then
+    # Only sm-config empty, but parent field set
+    PARENT=$PARENT2
+    SKIP=0
+  elif [[ -z "$PARENT2" || $( grep -c "not in database" <<<"$PARENT2" ) -ne 0 ]]; then
+    # Only parent empty, but sm-config field set
+    PARENT=$PARENT1
+    SKIP=0
+  elif [ "$PARENT1" == "$PARENT2" ]; then
+    # Both are set, and they're identical
+    PARENT=$PARENT1
+    SKIP=0
+  else
+    # Both are set, but to different values
+    SKIP=1
+  fi
   # Confirm there *is* a parent - if not, don't delete this snapshot
-  if [[ -z "$PARENT" ||
-        $( grep -c "not in database" <<<$PARENT ) -ne 0 ]]; then
+  if [ $SKIP -ne 0 ]; then
     echo "Unable to identify parent VHD of $SNAPSHOT - skipping this one"
   else
     DELETIONS="$DELETIONS $SNAPSHOT"
