@@ -13,6 +13,9 @@
 # Note: The export/import process breaks Managed SLA on the image and
 # all servers built from the image.
 
+# To-do:
+# Attempt to detect and/or gracefully recover from auth token expiration
+
 #
 # Hard-coded variabled
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
