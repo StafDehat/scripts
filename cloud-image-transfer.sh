@@ -488,7 +488,6 @@ echo
 
 #
 # Create container at destination to store image segments
-
 # Presently the "." character is considered invalid by the export task
 #   when used as the name of a Cloud Files container.  Since "." is 
 #   likely very common in image names (ie: FQDNs), I'm not including
@@ -496,9 +495,8 @@ echo
 #   export task validation to fail.  Once the bug is resolved, I'll
 #   change this, but in the meantime we'll use just the timestamp as
 #   the container name.
-# Ref: https://redmine.ohthree.com/issues/5502
 #CONTAINER="$IMGNAME-$DATE"
-CONTAINER="$DATE"
+CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $DSTTENANTID to store files for import."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $DSTFILEURL/$CONTAINER \
@@ -558,41 +556,41 @@ mkdir /tmp/$CONTAINER
 
 
 #
-# Sleep to make sure the Source Container is populated.
-# This shouldn't be necessary, but we're playing it safe.
-echo "We're gonna wait 5 minutes now, just to make sure Cloud Files"
-echo "  has enough time to populate its folder.  In some cases, we've"
-echo "  seen Cloud Files give an incomplete container list - this is"
-echo "  a kludgy way of trying to work around that problem."
-sleep 300
-echo "Okay, done sleeping.  Continuing now."
-echo
-
-
-#
-# Pull a list of all image segment files
+# Kludgy workaround to account for the problem that sometimes,
+#   Cloud Files is missing some objects from the container listing.
 echo "Attempting to enumerate all file segments exported to Cloud Files."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-             $SRCFILEURL/$CONTAINER \
-             -X GET \
-             -H "Accept: application/json" \
-             -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $SRCAUTHTOKEN" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to get details of container."
-  echo "  Raw response data from API is as follows:"
-  echo
-  echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
-fi
-SEGMENTS=$( echo "$DATA" | tr ',' '\n' | grep '"name":\|"hash":' | 
-              cut -d'"' -f4 | sed 'N;s/\n/:/' | grep "$SRCIMGID.vhd-" )
+echo "Will attempt 3 times in 60-second intervals."
+SEGMENTS=""
+for x in $( seq 1 3 ); do
+  echo "Sleeping 60 seconds."
+  sleep 60
+  #
+  # Pull a list of all image segment files
+  echo "Pulling container listing."
+  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+               $SRCFILEURL/$CONTAINER \
+               -X GET \
+               -H "Accept: application/json" \
+               -H "Content-Type: application/json" \
+               -H "X-Auth-Token: $SRCAUTHTOKEN" \
+            2>/dev/null )
+  RETVAL=$?
+  CODE=$( echo "$DATA" | tail -n 1 )
+  # Check for failed API call
+  if [ $RETVAL -ne 0 ]; then
+    echo "Unknown error encountered when trying to run curl command." && cleanup
+  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+    echo "Error: Unable to get details of container."
+    echo "  Raw response data from API is as follows:"
+    echo
+    echo "Response code: $CODE"
+    echo "$DATA" | head -n -1 && cleanup
+  fi
+  SEGMENTS=$( echo "$SEGMENTS";
+              echo "$DATA" | tr ',' '\n' | grep '"name":\|"hash":' |
+                cut -d'"' -f4 | sed 'N;s/\n/:/' | grep "$SRCIMGID.vhd-" )
+done
+SEGMENTS=$( echo "$SEGMENTS" | sort -t : -k 2 | uniq | sed '/^\s*$/d' )
 echo "Successfully retrieved container listing."
 (
   echo "md5sum:filename" 
