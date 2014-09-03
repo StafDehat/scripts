@@ -343,7 +343,7 @@ fi
 #
 # Create a container in which to save the exported image
 #CONTAINER="$IMGNAME-$DATE"
-CONTAINER="$DATE"
+CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $SRCTENANTID to house exported image."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER \
