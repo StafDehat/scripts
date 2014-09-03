@@ -14,7 +14,11 @@
 # all servers built from the image.
 
 # To-do:
-# Attempt to detect and/or gracefully recover from auth token expiration
+# Detect authtoken expiration and prompt for new token
+# Batch-mode & interactive mode
+# Test images with >100 segments
+#   >Or confirm impossible.  Imports limited to 40G, so...
+# Test secondary auth
 
 #
 # Hard-coded variabled
