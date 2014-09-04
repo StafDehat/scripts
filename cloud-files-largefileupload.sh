@@ -3,8 +3,12 @@ echo "This script is not meant to be run directly"
 echo "It's intended as a reference only - read it, don't run it."
 echo
 echo "Actually, this script is deprecated now."
-echo "Use this instead - it's better:"
-echo "https://github.com/StafDehat/scripts/blob/master/cloud-image-region-transfer.sh"
+echo
+echo "To upload large files, use my Bash-based framework for Rackspace Cloud:"
+echo "  https://github.com/StafDehat/bashrc/"
+echo "To transfer images between accounts/regions, use this script:"
+echo "  https://github.com/StafDehat/scripts/blob/master/cloud-image-transfer.sh"
+echo
 exit 0
 
 # These are the variables you'll need to set
