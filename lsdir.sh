@@ -2,9 +2,15 @@
 
 # Author: Andrew Howard
 
-# Work in progresss
+function lsdir() {
+  DIR="$1"
+  if [ "$DIR" == "/" ]; then
+    ls -ld "$DIR"
+    return
+  fi
+  ls -ld "$DIR"
+  lsdir $( dirname "$DIR" )
+}
 
-DIR=$1
-NUMDIRS=$(( `echo $DIR | sed 's_/_\n_g' | wc -l` - 1 ))
-
+lsdir "$1" | column -t | sort -k 9
 
