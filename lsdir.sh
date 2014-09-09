@@ -2,15 +2,13 @@
 
 # Author: Andrew Howard
 
-function lsdir() {
-  DIR="$1"
-  if [ "$DIR" == "/" ]; then
-    ls -ld "$DIR"
-    return
+function dirlist() {
+  if [ "$1" == "/" ]; then
+    echo -n "/"
+  else
+    echo -n "$( dirlist $( dirname "$1" ) ) $1"
   fi
-  ls -ld "$DIR"
-  lsdir $( dirname "$DIR" )
 }
 
-lsdir "$1" | column -t | sort -k 9
+ls -ld $( dirlist "$1" )
 
