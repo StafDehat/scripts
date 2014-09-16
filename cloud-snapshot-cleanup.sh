@@ -31,8 +31,12 @@ for SNAPSHOT in $SNAPSHOTS; do
 done
 
 # Calculate potential-max of disk space increase as a result of coalesce processes
+DELETIONS=""
 MaxDiskIncrease=0
 for SNAPSHOT in $OLDSNAPS; do
+  DATE=$( xe vdi-list uuid=$SNAPSHOT params=snapshot-time --minimal )
+  DATE=$( date +"%F %T" -d "$( echo $DATE | sed 's/T/ /' )" )
+  echo "Checking snapshot VHD $SNAPSHOT (Created $DATE)"
   SKIP=1
   # There's a parent field, but it might not be used - data's probably actually in sm-config
   # Attempt to check both
@@ -63,14 +67,18 @@ for SNAPSHOT in $OLDSNAPS; do
   if [ $SKIP -ne 0 ]; then
     echo "Unable to identify parent VHD of $SNAPSHOT - skipping this one"
   else
-    DELETIONS="$DELETIONS $SNAPSHOT"
-    DiffDisk=$( xe vdi-list is-a-snapshot=false parent=$PARENT params=uuid --minimal )
-    DiffSize=$( du -b /var/run/sr-mount/$SRUUID/$DiffDisk.vhd | awk '{print $1}' )
-    ParentVirtualSize=$( xe vdi-list params=virtual-size uuid=$PARENT --minimal )
-    ParentRealSize=$( du -b /var/run/sr-mount/$SRUUID/$PARENT.vhd | awk '{print $1}' )
-    MaxDiskIncrease=$(( $MaxDiskIncrease +
-                        $( min $DiffSize \
-                               $(( $ParentVirtualSize - $parentRealSize )) ) ))
+    DiffDisk=$( xe vdi-list is-a-snapshot=false sm-config:vhd-parent=$PARENT params=uuid --minimal )
+    if [ -z "$DiffDisk" ]; then
+      echo "WARNING: Snapshot $SNAPSHOT has no non-snapshot siblings."
+    else
+      DELETIONS="$DELETIONS $SNAPSHOT"
+      DiffSize=$( du -b /var/run/sr-mount/$SRUUID/$DiffDisk.vhd | awk '{print $1}' )
+      ParentVirtualSize=$( xe vdi-list params=virtual-size uuid=$PARENT --minimal )
+      ParentRealSize=$( du -b /var/run/sr-mount/$SRUUID/$PARENT.vhd | awk '{print $1}' )
+      MaxDiskIncrease=$(( $MaxDiskIncrease +
+                          $( min $DiffSize \
+                                 $(( $ParentVirtualSize - $ParentRealSize )) ) ))
+    fi
   fi
 done
 
@@ -80,9 +88,11 @@ SAFEZONE=$( echo "$SRSIZE * 0.95" | bc -l | cut -d\. -f1 )
 if [ $(( $SRUSED + $MaxDiskIncrease )) -lt $SAFEZONE ]; then
   # Guaranteed safe to delete snapshots.  Even worst-case disk growth won't fill the SR.
   # Delete snapshot VDIs
+  echo
   echo "SR Size:    $SRSIZE"
   echo "SR Used:    $SRUSED"
   echo "Max change: $MaxDiskIncrease"
+  echo
   echo "Recommend the following deletions:"
   for SNAPSHOT in $DELETIONS; do
     echo "xe vdi-destroy uuid=$SNAPSHOT"
