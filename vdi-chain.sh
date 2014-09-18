@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 if [ $# -ne 1 ]; then
   echo "ERROR: Must provide a single Cloud Server ID (Nova's UUID) as argument."
   exit 1
