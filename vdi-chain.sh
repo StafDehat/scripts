@@ -63,7 +63,7 @@ VHDOUTPUT=$( vhd-util scan -f -p -m \
 #
 # Add names, snapshot flags, and fancy output
 ( 
-echo "VM-Name:Plugged-Into:As-Device:Size:Snapshot?:VDI-UUID"
+echo "VDI-name-label:Plugged-Into:As-Device:Size:Snapshot?:VDI-UUID"
 IFS=''
 while read LINE; do
   SPACING=$( sed 's/^\(\s*\).*$/\1/' <<<"$LINE" )
