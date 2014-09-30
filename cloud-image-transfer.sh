@@ -188,11 +188,11 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  provided.  Raw response data from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID."
 echo
-SRCTOKEN=$( echo "$DATA" | head -n -1 )
+SRCTOKEN=$( echo "$DATA" | sed '$d' )
 
 
 #
@@ -219,11 +219,11 @@ else
     echo "  provided.  Raw response data from API was the following:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | head -n -1 && cleanup
+    echo "$DATA" | sed '$d' && cleanup
   fi
   echo "Successfully authenticated using provided DSTAUTHTOKEN and DSTTENANTID."
   echo
-  DSTTOKEN=$( echo "$DATA" | head -n -1 )
+  DSTTOKEN=$( echo "$DATA" | sed '$d' )
 fi
 
 
@@ -270,7 +270,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Image successfully located in region '$SRCRGN' on account $SRCTENANTID."
 # Check if image is sufficient size
@@ -363,7 +363,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  Does it already exist?  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 MADESRCCONT=1
 echo "Successully created container in region '$SRCRGN' on account $SRCTENANTID."
@@ -390,7 +390,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Existence confirmed."
 echo
@@ -423,9 +423,9 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response data from API was as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
-DATA=$( echo "$DATA" | head -n -1 )
+DATA=$( echo "$DATA" | sed '$d' )
 SRCTASKID=$( echo "$DATA" | tr ',' '\n' | grep '"id":' | cut -d'"' -f4 )
 EXPORTED=1
 echo "Successully initiated an image export task in region '$SRCRGN'."
@@ -463,7 +463,7 @@ while true; do
     echo "Response data from API was as follows:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | head -n -1
+    echo "$DATA" | sed '$d' && cleanup
   fi
   STATUS=$( echo "$DATA" | tr ',' '\n' | grep '"status":' | cut -d'"' -f4 )
   if [[ "$STATUS" == "pending" ||
@@ -516,7 +516,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  Does it already exist?  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 MADEDSTCONT=1
 echo "Successully created container in region '$DSTRGN' on account $DSTTENANTID."
@@ -543,7 +543,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "  Raw response data from API is as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Existence confirmed."
 echo
@@ -584,7 +584,7 @@ for x in $( seq 1 3 ); do
     echo "  Raw response data from API is as follows:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | head -n -1 && cleanup
+    echo "$DATA" | sed '$d' && cleanup
   fi
   SEGMENTS=$( echo "$SEGMENTS";
               echo "$DATA" | tr ',' '\n' | grep '"name":\|"hash":' |
@@ -653,7 +653,7 @@ for SEGMENT in $SEGMENTS; do
         echo "  Raw response data from API is as follows:"
         echo
         echo "Response code: $CODE"
-        echo "$DATA" | head -n -1 && cleanup
+        echo "$DATA" | sed '$d' && cleanup
       else
         break
       fi
@@ -690,7 +690,7 @@ for SEGMENT in $SEGMENTS; do
     echo "Response from API was the following:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | head -n -1 && cleanup
+    echo "$DATA" | sed '$d' && cleanup
   fi
 done
 # Delete the manifest file
@@ -708,7 +708,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Contents successfully deleted from $SRCRGN on account $SRCTENANTID."
 echo
@@ -731,7 +731,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 MADESRCCONT=0
 echo "Container deleted successfully."
@@ -757,7 +757,7 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
 echo "Manifest file created successfully."
 echo
@@ -792,9 +792,9 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was as follows:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | head -n -1 && cleanup
+  echo "$DATA" | sed '$d' && cleanup
 fi
-DATA=$( echo "$DATA" | head -n -1 )
+DATA=$( echo "$DATA" | sed '$d' )
 DSTTASKID=$( echo "$DATA" | tr ',' '\n' | grep '"id":' | cut -d'"' -f4 )
 IMPORTED=1
 echo "Successully initiated an image import task in region '$DSTRGN'."
@@ -832,7 +832,7 @@ while true; do
     echo "Response data from API was as follows:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | head -n -1
+    echo "$DATA" | sed '$d' && cleanup
   fi
   STATUS=$( echo "$DATA" | tr ',' '\n' | grep '"status":' | cut -d'"' -f4 )
   if [[ "$STATUS" == "pending" ||
