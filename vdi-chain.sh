@@ -32,6 +32,16 @@ VDILIST=$( xe vbd-list vm-uuid=$VMUUID params=vdi-uuid --minimal | tr ',' '\n' )
 
 
 #
+# Remove the CBS VDIs from the list (they don't have chains)
+SRUUID=$( xe sr-list name-label="Local storage" --minimal )
+LOCALVDIS=""
+for VDIUUID in $VDILIST; do
+  LOCALVDIS="$LOCALVDIS $( xe vdi-list sr-uuid=$SRUUID uuid=$VDIUUID --minimal )"
+done
+VDILIST="$LOCALVDIS"
+
+
+#
 # Find all the top-level parents of the VDIs
 PARENTLIST=""
 for VDIUUID in $VDILIST; do 
@@ -57,7 +67,7 @@ done
 #
 # Run a VHD scan on only the relevant VHDs
 VHDOUTPUT=$( vhd-util scan -f -p -m \
-  $( for VDI in $VDILIST; do echo -n "/var/run/sr-mount/*/$VDI.vhd "; done ) )
+  $( for VDI in $VDILIST; do echo -n "/var/run/sr-mount/$SRUUID/$VDI.vhd "; done ) )
 
 
 #
