@@ -27,8 +27,14 @@ function depth-first() {
 #
 # Get a list of all VDIs connected directly to this VM
 NOVAID=$1
-VMUUID=$( xe vm-list name-label=instance-$NOVAID --minimal )
-VDILIST=$( xe vbd-list vm-uuid=$VMUUID params=vdi-uuid --minimal | tr ',' '\n' )
+VMUUIDS=$( xe vm-list params=uuid,name-label | 
+             grep -B 1 $NOVAID | 
+             grep -i '^\s*uuid' | 
+             awk '{print $NF}' )
+VDILIST=""
+for VMUUID in $VMUUIDS; do
+  VDILIST="$VDILIST $( xe vbd-list vm-uuid=$VMUUID params=vdi-uuid --minimal | tr ',' '\n' )"
+done
 
 
 #
