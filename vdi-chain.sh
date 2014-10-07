@@ -25,7 +25,8 @@ function depth-first() {
 
 
 #
-# Get a list of all VDIs connected directly to this VM
+# Get a list of all VDIs connected directly to any VM with
+#   a name-label including the $NOVAID
 NOVAID=$1
 VMUUIDS=$( xe vm-list params=uuid,name-label | 
              grep -B 1 $NOVAID | 
