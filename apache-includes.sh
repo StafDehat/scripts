@@ -21,8 +21,10 @@ while [[ $FORE != $AFT ]]; do
   rm -f $TMPDIR/grepping
   mv $TMPDIR/newfinds $TMPDIR/grepping
  
-  for x in `cat $TMPDIR/grepping`; do
-    grep -Ei '^\s*include\s' $x | awk '{print $2}' >> $TMPDIR/newfinds
+  for x in `sort -u $TMPDIR/grepping`; do
+    grep -Ei '^\s*include\s' "$x" |
+      awk '{print $2}' |
+      sed "s/['\"]//g" >> $TMPDIR/newfinds
   done
  
   cat $TMPDIR/grepping $TMPDIR/authlist $TMPDIR/newfinds | sort -u > $TMPDIR/tmp
@@ -31,4 +33,7 @@ while [[ $FORE != $AFT ]]; do
   AFT=`cat $TMPDIR/authlist | wc -l`
 done
  
-for x in `cat $TMPDIR/authlist`; do echo $x; done | sed '/^\//!s/^/\/etc\/httpd\//'
+for x in `cat $TMPDIR/authlist`; do
+  echo "$x";
+done | sed '/^\//!s/^/\/etc\/httpd\//'
+
