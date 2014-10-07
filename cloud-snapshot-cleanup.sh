@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 function min() {
   if [ $1 -lt $2 ]; then
     echo $1

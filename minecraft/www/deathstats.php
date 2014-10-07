@@ -1,4 +1,7 @@
 <?php
+
+// Author: Andrew Howard
+
 require_once("./db-settings.php");
 require_once("./includes.php");
 ?>

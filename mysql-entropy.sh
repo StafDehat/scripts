@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+# Intent of this script is to generate write activity on a demo MySQL database,
+#   so that MySQL practice labs can feel more like a live customer environment.
 
 DB=ecom
 HOST=localhost

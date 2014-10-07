@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 #
 # Increment a lowercase character string.
 # a>b, z>aa, aa>ab, zz>aaa

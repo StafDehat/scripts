@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Author: Andrew Howard
+
 echo "This script is not meant to be run directly"
 echo "It's intended as a reference only - read it, don't run it."
 echo

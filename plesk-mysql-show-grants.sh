@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+# This is probably deprecated now, because it was written for Plesk 8
+
 ADMINPASS=`cat /etc/psa/.psa.shadow`
 USERS=`mysql -uadmin -p$ADMINPASS -e "use psa; select * from db_users;" | grep -E '^[0-9]' | awk '{print $2}'`
 for USER in $USERS; do

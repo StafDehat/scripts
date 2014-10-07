@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 LOCK_FILE=/tmp/`basename $0`.lock
 function cleanup {
  echo "Caught exit signal - deleting trap file"

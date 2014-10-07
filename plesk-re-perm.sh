@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+# This is probably deprecated now, because it was written for Plesk 8
+
 cd /home/httpd/vhosts
 for x in *; do
   grep $x /etc/passwd

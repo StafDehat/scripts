@@ -1,7 +1,7 @@
 #!/bin/bash
 # Find network peers for bonding setup
-# Keith Fralick <keith.fralick@rackspace.com>
-# ( very minor updates: Troy Engel <troy.engel@rackspace.com> )
+# Keith Fralick
+# ( very minor updates: Troy Engel )
 
 if [ `id -u` -ne 0 ]; then
         echo "root privileges needed to properly run this tool"

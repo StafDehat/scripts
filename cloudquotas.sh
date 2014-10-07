@@ -3,6 +3,9 @@
 # Extended from Dave Kludt's limits-linuxv2.sh script:
 # https://github.rackspace.com/davi4261/Custom-Scripts/blob/master/limits-linuxv2.sh
 
+# Original author: Dave Kludt
+# Modified by: Andrew Howard
+
 #Get limits for account First Gen, and Next Gen Limits for both DCs. If using custom limits for FG then some limits will not show.
 
 #Variables to store the account information. First item in each all go together, then the next to allow for stringing multiple accounts together.

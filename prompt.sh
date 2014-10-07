@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+
 # Set the terminal, so people stop complaining about the hash as their prompt
 # regular colors
 K="\[\033[0;30m\]"    # black
