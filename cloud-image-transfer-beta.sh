@@ -186,8 +186,8 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -H "Content-Type: application/json" \
              -d '{ "auth": {
                      "RAX-KSKEY:apiKeyCredentials": {
-                       "apiKey": "{'"$SRCAPIKEY"'}",
-                       "username": "{'"$SRCUSERNAME"'} } } }' \
+                       "apiKey": "'"$SRCAPIKEY"'",
+                       "username": "'"$SRCUSERNAME"'" } } }' \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
@@ -195,13 +195,13 @@ CODE=$( echo "$DATA" | tail -n 1 )
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
 elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to authenticate against API using SRCAUTHTOKEN and SRCTENANTID"
+  echo "Error: Unable to authenticate against API using SRCUSERNAME and SRCAPIKEY"
   echo "  provided.  Raw response data from API was the following:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | sed '$d' && cleanup
 fi
-echo "Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID."
+echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
 echo
 SRCTOKEN=$( echo "$DATA" | sed '$d' )
 
@@ -217,8 +217,8 @@ else
                -H "Content-Type: application/json" \
                -d '{ "auth": {
                        "RAX-KSKEY:apiKeyCredentials": {
-                         "apiKey": "{'"$DSTAPIKEY"'}",
-                         "username": "{'"$DSTUSERNAME"'} } } }' \
+                       "apiKey": "'"$DSTAPIKEY"'",
+                       "username": "'"$DSTUSERNAME"'" } } }' \
            2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
