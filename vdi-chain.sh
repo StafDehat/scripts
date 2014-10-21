@@ -29,7 +29,7 @@ function depth-first() {
 #   a name-label including the $NOVAID
 NOVAID=$1
 VMUUIDS=$( xe vm-list params=uuid,name-label | 
-             grep -B 1 $NOVAID | 
+             grep -B 1 -E "(instance-|slice)$NOVAID\s*$" |
              grep -i '^\s*uuid' | 
              awk '{print $NF}' )
 VDILIST=""
