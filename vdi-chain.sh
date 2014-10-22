@@ -40,7 +40,7 @@ done
 
 #
 # Remove the CBS VDIs from the list (they don't have chains)
-SRUUID=$( xe sr-list name-label="Local storage" --minimal )
+SRUUID=$( xe sr-list type=ext --minimal )
 LOCALVDIS=""
 for VDIUUID in $VDILIST; do
   LOCALVDIS="$LOCALVDIS $( xe vdi-list sr-uuid=$SRUUID uuid=$VDIUUID --minimal )"
