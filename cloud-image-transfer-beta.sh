@@ -125,6 +125,78 @@ function usage() {
 
 
 #
+# Run a curl command
+# Store response code & data in variables named in $2 and $3 respectively
+# If 401 received and creds are known good, re-authenticate and retry
+function doCurl() {
+  # $@ = the curl command
+  while true; do
+    DATA=$( eval curl --write-out \"\\n\"%{http_code} --silent --output - $@ )
+    RETVAL=$?
+    CODE=$( echo "$DATA" | tail -n 1 )
+    DATA=$( echo "$DATA" | sed '$d' )
+    if [ $RETVAL -ne 0 ]; then
+      echo "Unknown error encountered when trying to run curl command."
+      cleanup
+    elif grep -qE '^401$' <<<$CODE; then
+      if [ $GOODCREDS -eq 1 ]; then
+        echo "Received 401, but we know the provided credentials are correct."
+        echo "  API token must have expired - attempting to re-auth."
+        echo "If the API key has changed, this is going to loop forever."
+        setAuthTokens
+      else
+        echo "ERROR: Unable to authenticate with credentials provided."
+        echo "  API response was as follows:"
+        echo
+        echo "Response code: $CODE"
+        echo "$DATA" && cleanup
+      fi
+    else
+      # Curl ran successfully and did not receive code 401.
+      break
+    fi
+    # Just in case we loop infinitely, let's not DoS the API nodes
+    sleep 5
+  done
+}
+
+
+#
+# Auth against API and export token data to global variables
+# Yes, I know.  I don't care.  I'm using globals.  Deal.
+function setAuthTokens() {
+  #
+  # Auth against API, both to confirm DDI/Token, and to get
+  #   endpoints & Cloud Files Vault ID
+  echo "Attempting to authenticate against Identity API with source account info."
+  doCurl $( cat <<EOF
+    $IDENTITY_ENDPOINT/tokens \
+    -H "Content-Type: application/json" \
+    -d '{ "auth": {
+            "RAX-KSKEY:apiKeyCredentials": {
+              "apiKey": "$SRCAPIKEY",
+              "username": "$SRCUSERNAME" } } }'
+EOF
+)
+  if grep -qvE '^2..$' <<<$CODE; then
+    echo "Error: API response != 2**.  Not sure why."
+    echo "  Response from API was as follows:"
+    echo
+    echo "Response code: $CODE"
+    echo "$DATA" && cleanup
+  fi
+  echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
+  echo
+  SRCTOKEN="$DATA"
+  echo
+  echo "Source Token:"
+  echo
+  SRCTENANTID=12345
+  SRCAUTHTOKEN=fdsafdsa
+}
+
+
+#
 # Confirm usage is correct, and all variables passed
 USAGEFLAG=0
 SNET=0
@@ -180,30 +252,7 @@ DSTRGN=$( echo $DSTRGN | tr 'A-Z' 'a-z' )
 #
 # Auth against API, both to confirm DDI/Token, and to get
 #   endpoints & Cloud Files Vault ID
-echo "Attempting to authenticate against Identity API with source account info."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-             $IDENTITY_ENDPOINT/tokens \
-             -H "Content-Type: application/json" \
-             -d '{ "auth": {
-                     "RAX-KSKEY:apiKeyCredentials": {
-                       "apiKey": "'"$SRCAPIKEY"'",
-                       "username": "'"$SRCUSERNAME"'" } } }' \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to authenticate against API using SRCUSERNAME and SRCAPIKEY"
-  echo "  provided.  Raw response data from API was the following:"
-  echo
-  echo "Response code: $CODE"
-  echo "$DATA" | sed '$d' && cleanup
-fi
-echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
-echo
-SRCTOKEN=$( echo "$DATA" | sed '$d' )
+setAuthTokens
 
 
 #
@@ -238,14 +287,14 @@ else
 fi
 
 
-exit 1
-
-
 #
 # Keep internal record that the creds passed to the script are valid.
 #   This means future auth failures are due to API Token rotation,
 #   not due to user error.
 GOODCREDS=1
+
+
+exit 0
 
 
 #
