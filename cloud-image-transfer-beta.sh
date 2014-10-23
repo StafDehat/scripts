@@ -188,11 +188,18 @@ EOF
   echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
   echo
   SRCTOKEN="$DATA"
-  echo
-  echo "Source Token:"
-  echo
-  SRCTENANTID=12345
-  SRCAUTHTOKEN=fdsafdsa
+  # Fuck JSON.  Seriously.
+  SRCTENANTID=$( echo "$SRCTOKEN" | 
+                   tr ',' '\n' | 
+                   sed -n '/token/,/APIKEY/p' | 
+                   sed -n '/tenant/,/}/p' | 
+                   sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+  SRCAUTHTOKEN=$( echo "$SRCTOKEN" | 
+                    tr ',' '\n' | 
+                    sed -n '/token/,/APIKEY/p' | 
+                    sed -n '/token/,/}/p' | 
+                    grep -v \"id\":\"$SRCTENANTID\" | 
+                    sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 }
 
 
