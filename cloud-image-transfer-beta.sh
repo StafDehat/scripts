@@ -57,6 +57,7 @@ SAVELOCAL=0
 #
 # Define a clean-up function and catch exit signals
 function cleanup {
+  stty echo
   echo "----------------------------------------"
   echo "Script exited prematurely."
   echo "You may need to manually delete the following:"
