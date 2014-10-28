@@ -843,7 +843,7 @@ while true; do
     continue # Keep waiting
   else
     if [ "$STATUS" == "success" ]; then
-      DSTIMAGEID=$( echo "$DATA" | tr ',' '\n' | grep '"image_id":' | cut -d'"' -f4 )
+      DSTIMAGEID=$( echo "$DATA" | tr ',' '\n' | grep '"image_id":' | cut -d'"' -f6 )
       break
     else
       echo "Error: Import task complete, but status does not indicate success."
