@@ -10,8 +10,11 @@
 # Note: To use ServiceNet, this script MUST be run on a Cloud Server
 # in the same region as the source image.
 
-# Note: The export/import process breaks Managed SLA on the image and
-# all servers built from the image.
+# Note: The automated software installation/configuration that occurs on
+#   all servers built on a managed cloud account will break on any server
+#   built from an imported image.  Since this script uses the
+#   export & import API calls, that means this script breaks managed
+#   automation too.
 
 # To-do:
 # Detect authtoken expiration and prompt for new token
