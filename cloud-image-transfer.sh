@@ -31,7 +31,7 @@ DATE=$( date +"%F_%H-%M-%S" )
 
 #
 # Verify the existence of pre-req's
-PREREQS="curl grep sed date cut tr echo column nc"
+PREREQS="curl grep sed date cut tr echo column nc md5sum"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ &>/dev/null
