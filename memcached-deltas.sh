@@ -25,7 +25,7 @@ fi
 
     for VAR in $@; do
       declare THEN_$VAR=$(eval "echo \$NOW_$VAR")
-      declare NOW_$VAR="$( awk '$2 ~ /^'"$VAR"'$/ {print}' | sed 's/[^0-9]*\([0-9]*\).*/\1/' )"
+      declare NOW_$VAR="$( awk '$2 ~ /^'"$VAR"'$/ {print}' $x | sed 's/[^0-9]*\([0-9]*\).*/\1/' )"
       declare DIFF_$VAR=$(( $(eval "echo \$NOW_$VAR") - $(eval "echo \$THEN_$VAR") ))
       ECHO=$( eval "echo \$DIFF_$VAR" )
       echo -n "$ECHO "
