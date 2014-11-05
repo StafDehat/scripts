@@ -864,3 +864,16 @@ echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
 echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
 exit 0
 
+
+#
+# Set missing metadata so the managed software automation doesn't [always] break
+#
+#curl https://${REGION}.servers.api.rackspacecloud.com/v2/${DDI}/images/${IMGID}/metadata \
+#  -X POST \
+#  -H "Accept: application/json" \
+#  -H "Content-Type: application/json" \
+#  -H "X-Auth-Token: ${AUTHTOKEN}" \
+#  -d '{ "metadata": { "org.openstack__1__os_distro": "'${SRCDISTRO}'",
+#                      "org.openstack__1__os_version": "'${SRCVERSION}'" } }'
+
+
