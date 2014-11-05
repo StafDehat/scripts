@@ -3,11 +3,11 @@
 # Author: Andrew Howard
 # Holy shit, indirect references
 
-# After created logs of memcache stats with memcached-statuslog.sh, you can
+# After creating logs of memcache stats with memcached-statuslog.sh, you can
 #   use this script to print a report of how many operations occurred each
 #   interval.
 # Example usage:
-#   ./memcached-statusreport.sh cmd_get cmd_set curr_items
+#   ./memcached-deltas.sh cmd_get cmd_set curr_items
 
 if [ $# -lt 1 ]; then
   echo "Gotta pass args"
