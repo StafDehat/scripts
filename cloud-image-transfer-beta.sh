@@ -201,6 +201,48 @@ EOF
                     sed -n '/token/,/}/p' | 
                     grep -v \"id\":\"$SRCTENANTID\" | 
                     sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+  #
+  # Authentication destination creds, unless "-1" was passed
+  if [ $ONEACCOUNT -eq 1 ]; then
+    echo "Single account - Copying SRC creds to DST creds."
+    echo
+    DSTTENANTID=$SRCTENANTID
+    DSTAUTHTOKEN=$SRCAUTHTOKEN
+    return
+  fi
+  echo "Attempting to authenticate against Identity API with destination account info."
+  doCurl $( cat <<EOF
+    $IDENTITY_ENDPOINT/tokens \
+    -H "Content-Type: application/json" \
+    -d '{ "auth": {
+            "RAX-KSKEY:apiKeyCredentials": {
+              "apiKey": "$DSTAPIKEY",
+              "username": "$DSTUSERNAME" } } }'
+EOF
+)
+  if grep -qvE '^2..$' <<<$CODE; then
+    echo "Error: API response != 2**.  Not sure why."
+    echo "  Response from API was as follows:"
+    echo
+    echo "Response code: $CODE"
+    echo "$DATA" && cleanup
+  fi
+  echo "Successfully authenticated using provided DSTUSERNAME and DSTAPIKEY."
+  echo
+  DSTTOKEN="$DATA"
+  DSTTENANTID=$( echo "$DSTTOKEN" | 
+                   tr ',' '\n' | 
+                   sed -n '/token/,/APIKEY/p' | 
+                   sed -n '/tenant/,/}/p' | 
+                   sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+  DSTAUTHTOKEN=$( echo "$DSTTOKEN" | 
+                    tr ',' '\n' | 
+                    sed -n '/token/,/APIKEY/p' | 
+                    sed -n '/token/,/}/p' | 
+                    grep -v \"id\":\"$DSTTENANTID\" | 
+                    sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+
+
 }
 
 
@@ -241,13 +283,15 @@ done
 if [ $USAGEFLAG -ne 0 ]; then
   usage && exit 1
 fi
-read -p "Enter source account's API Key: " -s SRCAPIKEY
-echo
-if [ "$ONEACCOUNT" -eq 1 ]; then
-  DSTAPIKEY="$SRCAPIKEY"
-else
-  read -p "Enter destination account's API Key: " -s DSTAPIKEY
+if [ -z "$SRCAPIKEY" ]; then
+  read -p "Enter source account's API Key: " -s SRCAPIKEY
   echo
+  if [ "$ONEACCOUNT" -eq 1 ]; then
+    DSTAPIKEY="$SRCAPIKEY"
+  else
+    read -p "Enter destination account's API Key: " -s DSTAPIKEY
+    echo
+  fi
 fi
 
 
@@ -264,45 +308,10 @@ setAuthTokens
 
 
 #
-# Auth against DST API if necessary
-if [ "$ONEACCOUNT" -eq 1 ]; then
-  DSTTOKEN="$SRCTOKEN"
-else
-  echo "Attempting to authenticate against Identity API with destination account info."
-  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-               $IDENTITY_ENDPOINT/tokens \
-               -H "Content-Type: application/json" \
-               -d '{ "auth": {
-                       "RAX-KSKEY:apiKeyCredentials": {
-                       "apiKey": "'"$DSTAPIKEY"'",
-                       "username": "'"$DSTUSERNAME"'" } } }' \
-           2>/dev/null )
-  RETVAL=$?
-  CODE=$( echo "$DATA" | tail -n 1 )
-  # Check for failed API call
-  if [ $RETVAL -ne 0 ]; then
-    echo "Unknown error encountered when trying to run curl command." && cleanup
-  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-    echo "Error: Unable to authenticate against API using DSTUSERNAME and DSTAPIKEY"
-    echo "  provided.  Raw response data from API was the following:"
-    echo
-    echo "Response code: $CODE"
-    echo "$DATA" | sed '$d' && cleanup
-  fi
-  echo "Successfully authenticated using provided DSTUSERNAME and DSTAPIKEY."
-  echo
-  DSTTOKEN=$( echo "$DATA" | sed '$d' )
-fi
-
-
-#
 # Keep internal record that the creds passed to the script are valid.
 #   This means future auth failures are due to API Token rotation,
 #   not due to user error.
 GOODCREDS=1
-
-
-exit 0
 
 
 #
@@ -327,7 +336,7 @@ echo
 #
 # Verify SRCIMGID exists in SRCRGN
 echo "Verifying image exists."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $SRCIMGURL/images/$SRCIMGID \
              -X GET \
              -H "Accept: application/json" \
@@ -335,14 +344,10 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -H "X-Auth-Token: $SRCAUTHTOKEN" \
              -H "X-Auth-Project-Id: $SRCTENANTID" \
              -H "X-Tenant-Id: $SRCTENANTID" \
-             -H "X-User-Id: $SRCTENANTID" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+             -H "X-User-Id: $SRCTENANTID"
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to get details of source image - does it exist?  Did"
   echo "  you specify the correct SRCRGN?  Raw response data from API was"
   echo "  the following:"
@@ -420,22 +425,17 @@ fi
 
 #
 # Create a container in which to save the exported image
-#CONTAINER="$IMGNAME-$DATE"
 CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $SRCTENANTID to house exported image."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $SRCFILEURL/$CONTAINER \
              -X PUT \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $SRCAUTHTOKEN" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+             -H "X-Auth-Token: $SRCAUTHTOKEN"
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to create container '$CONTAINER' in region '$SRCRGN'"
   echo "  on account $SRCTENANTID."
   echo "  Does it already exist?  Raw response data from API is as follows:"
@@ -451,19 +451,15 @@ echo
 #
 # Confirm the existence of Source Cloud Files container
 echo "Attempting to confirm Cloud Files container does now exist."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $SRCFILEURL/$CONTAINER \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $SRCAUTHTOKEN" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+             -H "X-Auth-Token: $SRCAUTHTOKEN"
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to get details of container."
   echo "  Raw response data from API is as follows:"
   echo
@@ -477,7 +473,7 @@ echo
 #
 # Initiate the image export
 echo "Attempting to export image to Cloud Files."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $SRCIMGURL/tasks \
              -X POST \
              -H "Content-Type: application/json" \
@@ -489,14 +485,10 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              -d '{ "type": "export",
                    "input": {
                      "image_uuid": "'$SRCIMGID'",
-                     "receiving_swift_container": "'$CONTAINER'" } }' \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+                     "receiving_swift_container": "'$CONTAINER'" } }'
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to initiate export task - reason unknown."
   echo "Response data from API was as follows:"
   echo
@@ -519,7 +511,7 @@ while true; do
   echo -n $( date +"%F %T" )
   echo " Waiting for completion - will check every $INTERVAL seconds."
   sleep 60
-  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
                $SRCIMGURL/tasks/$SRCTASKID \
                -X GET \
                -H "Accept: application/json" \
@@ -527,14 +519,10 @@ while true; do
                -H "X-Auth-Token: $SRCAUTHTOKEN" \
                -H "X-Auth-Project-Id: $SRCTENANTID" \
                -H "X-Tenant-Id: $SRCTENANTID" \
-               -H "X-User-Id: $SRCTENANTID" \
-            2>/dev/null )
-  RETVAL=$?
-  CODE=$( echo "$DATA" | tail -n 1 )
-  # Check for failed API call
-  if [ $RETVAL -ne 0 ]; then
-    echo "Unknown error encountered when trying to run curl command." && cleanup
-  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+               -H "X-User-Id: $SRCTENANTID"
+EOF
+)
+  if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to query task details - maybe API is unavailable?"
     echo "       Maybe your API token just expired?"
     echo "Script will attempt to retry."
@@ -576,19 +564,15 @@ echo
 #CONTAINER="$IMGNAME-$DATE"
 CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $DSTTENANTID to store files for import."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $DSTFILEURL/$CONTAINER \
              -X PUT \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $DSTAUTHTOKEN" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+             -H "X-Auth-Token: $DSTAUTHTOKEN"
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to create container '$CONTAINER' in region '$DSTRGN'"
   echo "  on account $DSTTENANTID."
   echo "  Does it already exist?  Raw response data from API is as follows:"
@@ -604,19 +588,15 @@ echo
 #
 # Confirm the existence of Destination Cloud Files container
 echo "Attempting to confirm Cloud Files container does now exist on account $DSTTENANTID."
-DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
              $DSTFILEURL/$CONTAINER \
              -X GET \
              -H "Accept: application/json" \
              -H "Content-Type: application/json" \
-             -H "X-Auth-Token: $DSTAUTHTOKEN" \
-          2>/dev/null )
-RETVAL=$?
-CODE=$( echo "$DATA" | tail -n 1 )
-# Check for failed API call
-if [ $RETVAL -ne 0 ]; then
-  echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+             -H "X-Auth-Token: $DSTAUTHTOKEN"
+EOF
+)
+if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Error: Unable to get details of container."
   echo "  Raw response data from API is as follows:"
   echo
@@ -645,19 +625,15 @@ for x in $( seq 1 3 ); do
   #
   # Pull a list of all image segment files
   echo "Pulling container listing."
-  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+  doCurl $( cat <<EOF
                $SRCFILEURL/$CONTAINER \
                -X GET \
                -H "Accept: application/json" \
                -H "Content-Type: application/json" \
-               -H "X-Auth-Token: $SRCAUTHTOKEN" \
-            2>/dev/null )
-  RETVAL=$?
-  CODE=$( echo "$DATA" | tail -n 1 )
-  # Check for failed API call
-  if [ $RETVAL -ne 0 ]; then
-    echo "Unknown error encountered when trying to run curl command." && cleanup
-  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+               -H "X-Auth-Token: $SRCAUTHTOKEN"
+EOF
+)
+  if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to get details of container."
     echo "  Raw response data from API is as follows:"
     echo
@@ -678,6 +654,15 @@ echo
 
 
 #
+# Problems on this next part.  Turns out I need to restructure doCurl
+#   so that the data comes out through STDOUT.  Or, I switch to wget or
+#   something or tell curl to write directly to file.  In my past
+#   experience though, curl has a bug regarding interaction with file
+#   handles via -T or whatever.  Future problems for future me.
+exit 0
+
+
+#
 # Download/Upload loop
 # Transfer 1 segment at a time to DSTRGN, verifying md5sums
 TOTAL=$( echo "$SEGMENTS" | wc -l )
@@ -689,10 +674,12 @@ for SEGMENT in $SEGMENTS; do
   # Download a segment
   echo "$(date +'%F %T') ($COUNT/$TOTAL) Downloading segment: $OBJECT"
   while true; do
-    curl $SRCFILEURL/$CONTAINER/$OBJECT \
+    doCurl $( cat <<EOF
+         $SRCFILEURL/$CONTAINER/$OBJECT \
          -X GET \
-         -H "X-Auth-Token: $SRCAUTHTOKEN" \
-      >/tmp/$CONTAINER/$OBJECT 2>/dev/null
+         -H "X-Auth-Token: $SRCAUTHTOKEN"
+EOF
+) >/tmp/$CONTAINER/$OBJECT 2>/dev/null
     echo "$(date +'%F %T') ($COUNT/$TOTAL) Download complete.  Verifying integrity."
     if [ -f /tmp/$CONTAINER/$OBJECT ]; then
       LOCALMD5=$( md5sum /tmp/$CONTAINER/$OBJECT | awk '{print $1}' )
