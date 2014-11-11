@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Author: Andrew Howard
-# Holy shit, indirect references
 
 # After creating logs of memcache stats with memcached-statuslog.sh, you can
 #   use this script to print a report of how many operations occurred each
