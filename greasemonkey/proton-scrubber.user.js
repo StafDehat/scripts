@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name           Proton scrubber
-// @version        1.12
+// @version        1.13
 // @downloadURL    https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
 // @updateURL      https://github.com/StafDehat/scripts/raw/master/greasemonkey/proton-scrubber.user.js
 // @author         Andrew Howard
@@ -22,6 +22,7 @@
 // 1.10 - Overrode onClick reset of ticketID to green background with an eventListener.
 // 1.11 - Added auto-updates
 // 1.12 - Made "My Tickets" table sortable.
+// 1.13 - Rolled back 1.12 - sortable "My Tickets" is native now.
 
 //
 // This segment stolen from http://www.kryogenix.org/code/browser/sorttable/sorttable.js
@@ -629,8 +630,8 @@ function scrub() {
 
 
   // Make "My Tickets" sortable
-  myTickets = document.getElementById("myTicketsQueue");
-  sorttable.makeSortable(myTickets);
+//  myTickets = document.getElementById("myTicketsQueue");
+//  sorttable.makeSortable(myTickets);
 
 
   // Tweak CSS
