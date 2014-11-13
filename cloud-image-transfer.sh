@@ -841,7 +841,7 @@ while true; do
       echo "Here's the task details response:"
       echo "$DATA"
       echo
-      DSTIMGID=$( echo "$DATA" | tr ',' '\n' | sed -n 's/^.*"image_id": "\(.*\)"\s*/\1/p' )
+      DSTIMGID=$( echo "$DATA" | tr ',' '\n' | sed -n 's/^.*"image_id": "\([^"]*\)".*$/\1/p' )
       break
     else
       echo "Error: Import task complete, but status does not indicate success."
