@@ -10,21 +10,9 @@
 # Note: To use ServiceNet, this script MUST be run on a Cloud Server
 # in the same region as the source image.
 
-# Note: The automated software installation/configuration that occurs on
-#   all servers built on a managed cloud account will break on any server
-#   built from an imported image.  Since this script uses the
-#   export & import API calls, that means this script breaks managed
-#   automation too.
-
-# To-do:
-# Detect authtoken expiration and prompt for new token
-# Batch-mode & interactive mode
-# Test images with >100 segments
-#   >Or confirm impossible.  Imports limited to 40G, so...
-# Test secondary auth
 
 #
-# Hard-coded variabled
+# Hard-coded variables
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
 DATE=$( date +"%F_%H-%M-%S" )
 
@@ -114,7 +102,6 @@ function usage() {
   echo "  -A X  API Authentication token of destination account."
   echo "  -h    Print this help"
   echo "  -i X  Image ID.  Find in MyCloud by hovering over image name."
-  echo "  -M    Mark image as a managed image"
   echo "  -r X  Region of source (DFW/ORD/IAD/etc)"
   echo "  -R X  Region of destination (DFW/ORD/IAD/etc)."
   echo "  -s    Use ServiceNet for download (Must run this script in same"
@@ -129,8 +116,7 @@ function usage() {
 USAGEFLAG=0
 SNET=0
 ONEACCOUNT=0
-MANAGED=0
-while getopts ":1a:A:hi:Mr:R:st:T:" arg; do
+while getopts ":1a:A:hi:r:R:st:T:" arg; do
   case $arg in
     1) ONEACCOUNT=1;;
     a) SRCAUTHTOKEN=$OPTARG;;
@@ -140,7 +126,6 @@ while getopts ":1a:A:hi:Mr:R:st:T:" arg; do
     r) SRCRGN=$OPTARG;;
     R) DSTRGN=$OPTARG;;
     s) SNET=1;;
-    M) MANAGED=1;;
     t) SRCTENANTID=$OPTARG;;
     T) DSTTENANTID=$OPTARG;;
     :) echo "ERROR: Option -$OPTARG requires an argument."
@@ -287,6 +272,9 @@ if [ $MINDISK -gt 40 ]; then
   echo "  to build a Standard NextGen server from this image at the source"
   echo "  region, resize it to <=2G RAM (<=40G disk), then take a new image"
   echo "  and transfer that new image instead."
+  echo "Note: In order to resize down, you may need to first manually set"
+  echo "  the min_disk and min_ram values on this image to <= 40 disk and"
+  echo "  1024 RAM."
   echo 
   echo "Ref:"
   echo "http://www.rackspace.com/knowledge_center/article/preparing-an-image-for-import-into-the-rackspace-open-cloud"
@@ -295,7 +283,11 @@ else
   echo "Confirmed image has min_disk <= 40GB."
 fi
 IMGNAME=$( echo "$DATA" | tr ',' '\n' | grep '"name":' | cut -d'"' -f4 )
-echo "Image name: $IMGNAME"
+IMGDISTRO=$( echo "$DATA" | tr ',' '\n' | sed -n 's/.*"org.openstack__1__os_distro": "\(.*\)"\s*$/\1/p' )
+IMGVER=$( echo "$DATA" | tr ',' '\n' | sed -n 's/.*"org.openstack__1__os_version": "\(.*\)"\s*$/\1/p' )
+echo "Image name:       $IMGNAME"
+echo "Image OS distro:  $IMGDISTRO"
+echo "Image OS version: $IMGVER"
 echo
 
 
@@ -824,8 +816,8 @@ while true; do
                -H "X-Auth-Token: $DSTAUTHTOKEN" \
                -H "X-Auth-Project-Id: $DSTTENANTID" \
                -H "X-Tenant-Id: $DSTTENANTID" \
-               -H "X-User-Id: $DSTTENANTID"
-            )
+               -H "X-User-Id: $DSTTENANTID" \
+            2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
   # Check for failed API call
@@ -846,7 +838,10 @@ while true; do
     continue # Keep waiting
   else
     if [ "$STATUS" == "success" ]; then
-      DSTIMAGEID=$( echo "$DATA" | tr ',' '\n' | grep '"image_id":' | cut -d'"' -f6 )
+      echo "Here's the task details response:"
+      echo "$DATA"
+      echo
+      DSTIMGID=$( echo "$DATA" | tr ',' '\n' | sed -n 's/^.*"image_id": "\(.*\)"\s*/\1/p' )
       break
     else
       echo "Error: Import task complete, but status does not indicate success."
@@ -859,33 +854,35 @@ done
 echo "Import task completed successfully."
 echo
 
-if [ "$MANAGED" -eq 1 ]; then
-  echo -n $( date +"%F %T" )
-  echo " Setting Managed server metadata: $DSTIMAGEID"
-  SRCSRVURL="https://${SRCRGN}.servers.api.rackspacecloud.com/v2/${SRCTENANTID}/"
-  DSTSRVURL="https://${DSTRGN}.servers.api.rackspacecloud.com/v2/${DSTTENANTID}/"
-  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-               $SRCSRVURL/images/${SRCIMAGEID}/metadata \
-               -X GET \
-               -H "Accept: application/json" \
-               -H "X-Auth-Token: $SRCAUTHTOKEN"
-            )
-  SRCDISTRO=$( echo "$DATA" | tr ',' '\n' | grep '"org.openstack__1__os_distro":' | cut -d'"' -f4 )
-  SRCVERSION=$( echo "$DATA" | tr ',' '\n' | grep '"org.openstack__1__os_version":' | cut -d'"' -f4 )
-  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-               $DSTSRVURL/images/${DSTIMAGEID}/metadata \
-               -X POST \
-               -H "Accept: application/json" \
-               -H "Content-Type: application/json" \
-               -H "X-Auth-Token: $DSTAUTHTOKEN" \
-               -d '{
-                     "metadata": {
-                       "org.openstack__1__os_distro": "'$SRCDISTRO'",
-                       "org.openstack__1__os_version": "'$SRCVERSION'"
-                   }
-               }'
-            )
+
+#
+# Set missing metadata so the managed software automation doesn't [always] break
+#
+DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+             https://${DSTRGN}.servers.api.rackspacecloud.com/v2/${DSTTENANTID}/images/${DSTIMGID}/metadata \
+             -X POST \
+             -H "Accept: application/json" \
+             -H "Content-Type: application/json" \
+             -H "X-Auth-Token: ${DSTAUTHTOKEN}" \
+             -d '{ "metadata": { "org.openstack__1__os_distro": "'${IMGDISTRO}'",
+                                 "org.openstack__1__os_version": "'${IMGVER}'" } }' \
+          2>/dev/null )
+RETVAL=$?
+CODE=$( echo "$DATA" | tail -n 1 )
+# Check for failed API call
+if [ $RETVAL -ne 0 ]; then
+  echo "Unknown error encountered when trying to run curl command." && cleanup
+elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+  echo "Error: Failed to set OS metadata on image.  Image was imported successfully,"
+  echo "  but the managed server automation will fail due to this missing metadata."
+  echo "Response data from API was as follows:"
+  echo
+  echo "Response code: $CODE"
+  echo "$DATA" | sed '$d'
 fi
+echo "Successfully updated OS metadata details."
+echo
+
 
 #
 # Report success
@@ -894,17 +891,5 @@ echo "Image ID $SRCIMGID copied from $SRCRGN on account $SRCTENANTID to $DSTRGN 
 echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
 echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
 exit 0
-
-
-#
-# Set missing metadata so the managed software automation doesn't [always] break
-#
-#curl https://${REGION}.servers.api.rackspacecloud.com/v2/${DDI}/images/${IMGID}/metadata \
-#  -X POST \
-#  -H "Accept: application/json" \
-#  -H "Content-Type: application/json" \
-#  -H "X-Auth-Token: ${AUTHTOKEN}" \
-#  -d '{ "metadata": { "org.openstack__1__os_distro": "'${SRCDISTRO}'",
-#                      "org.openstack__1__os_version": "'${SRCVERSION}'" } }'
 
 
