@@ -838,9 +838,6 @@ while true; do
     continue # Keep waiting
   else
     if [ "$STATUS" == "success" ]; then
-      echo "Here's the task details response:"
-      echo "$DATA"
-      echo
       DSTIMGID=$( echo "$DATA" | tr ',' '\n' | sed -n 's/^.*"image_id": "\([^"]*\)".*$/\1/p' )
       break
     else
