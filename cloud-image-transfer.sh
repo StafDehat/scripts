@@ -114,6 +114,7 @@ function usage() {
   echo "  -A X  API Authentication token of destination account."
   echo "  -h    Print this help"
   echo "  -i X  Image ID.  Find in MyCloud by hovering over image name."
+  echo "  -M    Mark image as a managed image"
   echo "  -r X  Region of source (DFW/ORD/IAD/etc)"
   echo "  -R X  Region of destination (DFW/ORD/IAD/etc)."
   echo "  -s    Use ServiceNet for download (Must run this script in same"
@@ -128,7 +129,8 @@ function usage() {
 USAGEFLAG=0
 SNET=0
 ONEACCOUNT=0
-while getopts ":1a:A:hi:r:R:st:T:" arg; do
+MANAGED=0
+while getopts ":1a:A:hi:Mr:R:st:T:" arg; do
   case $arg in
     1) ONEACCOUNT=1;;
     a) SRCAUTHTOKEN=$OPTARG;;
@@ -138,6 +140,7 @@ while getopts ":1a:A:hi:r:R:st:T:" arg; do
     r) SRCRGN=$OPTARG;;
     R) DSTRGN=$OPTARG;;
     s) SNET=1;;
+    M) MANAGED=1;;
     t) SRCTENANTID=$OPTARG;;
     T) DSTTENANTID=$OPTARG;;
     :) echo "ERROR: Option -$OPTARG requires an argument."
@@ -821,8 +824,8 @@ while true; do
                -H "X-Auth-Token: $DSTAUTHTOKEN" \
                -H "X-Auth-Project-Id: $DSTTENANTID" \
                -H "X-Tenant-Id: $DSTTENANTID" \
-               -H "X-User-Id: $DSTTENANTID" \
-            2>/dev/null )
+               -H "X-User-Id: $DSTTENANTID"
+            )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
   # Check for failed API call
@@ -843,6 +846,7 @@ while true; do
     continue # Keep waiting
   else
     if [ "$STATUS" == "success" ]; then
+      DSTIMAGEID=$( echo "$DATA" | tr ',' '\n' | grep '"image_id":' | cut -d'"' -f6 )
       break
     else
       echo "Error: Import task complete, but status does not indicate success."
@@ -855,6 +859,33 @@ done
 echo "Import task completed successfully."
 echo
 
+if [ "$MANAGED" -eq 1 ]; then
+  echo -n $( date +"%F %T" )
+  echo " Setting Managed server metadata: $DSTIMAGEID"
+  SRCSRVURL="https://${SRCRGN}.servers.api.rackspacecloud.com/v2/${SRCTENANTID}/"
+  DSTSRVURL="https://${DSTRGN}.servers.api.rackspacecloud.com/v2/${DSTTENANTID}/"
+  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+               $SRCSRVURL/images/${SRCIMAGEID}/metadata \
+               -X GET \
+               -H "Accept: application/json" \
+               -H "X-Auth-Token: $SRCAUTHTOKEN"
+            )
+  SRCDISTRO=$( echo "$DATA" | tr ',' '\n' | grep '"org.openstack__1__os_distro":' | cut -d'"' -f4 )
+  SRCVERSION=$( echo "$DATA" | tr ',' '\n' | grep '"org.openstack__1__os_version":' | cut -d'"' -f4 )
+  DATA=$( curl --write-out \\n%{http_code} --silent --output - \
+               $DSTSRVURL/images/${DSTIMAGEID}/metadata \
+               -X POST \
+               -H "Accept: application/json" \
+               -H "Content-Type: application/json" \
+               -H "X-Auth-Token: $DSTAUTHTOKEN" \
+               -d '{
+                     "metadata": {
+                       "org.openstack__1__os_distro": "'$SRCDISTRO'",
+                       "org.openstack__1__os_version": "'$SRCVERSION'"
+                   }
+               }'
+            )
+fi
 
 #
 # Report success
