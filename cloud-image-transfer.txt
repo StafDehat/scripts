@@ -1,112 +1,244 @@
-root@server1[~]# ./cloud-image-transfer.sh -a 17f40b76df9411e3af7113c1d493efe5 -t 111111 -r dfw -i 09c7c696-df94-11e3-b85f-abfacd43a936 -A 1f767fd2df9411e3a7b6bbe3759fffc9 -T 222222 -R ord -s
+[root@server1 ~]# ./cloud-image-transfer.sh -t 123456 -a 640a530e6c4211e4ade64308215afcb0 -r dfw -R ord -1 -s -i 72c838de-6c42-11e4-b931-2f2335016181
 Attempting to authenticate against Identity API with source account info.
 Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID.
 
-Attempting to authenticate against Identity API with destination account info.
-Successfully authenticated using provided DSTAUTHTOKEN and DSTTENANTID.
-
 Attempting to identify Image API endpoints.
 Identified Images API endpoints:
-Source:      https://dfw.images.api.rackspacecloud.com/v2/111111
-Destination: https://ord.images.api.rackspacecloud.com/v2/222222
+Source:      https://dfw.images.api.rackspacecloud.com/v2
+Destination: https://ord.images.api.rackspacecloud.com/v2
 
 Verifying image exists.
-Image successfully located in region 'dfw' on account 111111.
+Image successfully located in region 'dfw' on account 123456.
 Confirmed image has min_disk <= 40GB.
-Image name: myserverimg
+Image name:       molly
+Image OS distro:  org.centos
+Image OS version: 6.5
 
 Testing connectivity to snet-storage101.dfw1.clouddrive.com on tcp/443.
 Connection to ServiceNet successful.
 
-Creating Cloud Files container (2014-05-19_19-57-16) on account 111111 to house exported image.
-Successully created container in region 'dfw' on account 111111.
+Creating Cloud Files container (img-copy-2014-11-14_14-36-59) on account 123456 to house exported image.
+Successully created container in region 'dfw' on account 123456.
 
 Attempting to confirm Cloud Files container does now exist.
 Existence confirmed.
 
 Attempting to export image to Cloud Files.
 Successully initiated an image export task in region 'dfw'.
-Task ID: 7eb714bf-840b-429c-bef5-44f1dad4e104
+Task ID: 910f7942-6c42-11e4-b313-ff79f3564b82
 
 Monitoring status of image export.
-2014-05-19 19:57:21 Waiting for completion - will check every 60 seconds.
-2014-05-19 19:58:32 Waiting for completion - will check every 60 seconds.
-2014-05-19 19:59:36 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:00:42 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:01:44 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:02:44 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:03:51 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:04:53 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:05:55 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:06:57 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:08:02 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:09:02 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:37:01 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:38:02 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:39:02 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:40:03 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:41:03 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:42:04 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:43:04 Waiting for completion - will check every 60 seconds.
 Export task completed successfully.
 
-Creating Cloud Files container (2014-05-19_19-57-16) on account 222222 to store files for import.
-Successully created container in region 'ord' on account 222222.
+Creating Cloud Files container (img-copy-2014-11-14_14-36-59) on account 123456 to store files for import.
+Successully created container in region 'ord' on account 123456.
 
-Attempting to confirm Cloud Files container does now exist on account 222222.
+Attempting to confirm Cloud Files container does now exist on account 123456.
 Existence confirmed.
 
-We're gonna wait 5 minutes now, just to make sure Cloud Files
-  has enough time to populate its folder.  In some cases, we've
-  seen Cloud Files give an incomplete container list - this is
-  a kludgy way of trying to work around that problem.
-Okay, done sleeping.  Continuing now.
-
 Attempting to enumerate all file segments exported to Cloud Files.
+Will attempt 3 times in 60-second intervals.
+Sleeping 60 seconds.
+Pulling container listing.
+Sleeping 60 seconds.
+Pulling container listing.
+Sleeping 60 seconds.
+Pulling container listing.
 Successfully retrieved container listing.
 md5sum                            filename
-6f0da5a539b05932d813c5323635851c  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00001
-5201c35898d10d395720941596f69c6b  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00002
-7ca1002d70d8be14167e57545700f780  09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00003
+43e2e92e29e5f4c2e5d2a7a910707fb6  72c838de-6c42-11e4-b931-2f2335016181.vhd-00001
+b52073dd82420bed7e333c31b5b41bc9  72c838de-6c42-11e4-b931-2f2335016181.vhd-00002
+ba3cb43abd22ad43562ffefd6c4c5aa2  72c838de-6c42-11e4-b931-2f2335016181.vhd-00003
+837b0d185656f3024f5064dbdb90ff6d  72c838de-6c42-11e4-b931-2f2335016181.vhd-00004
+55905064a40677307004f309b95dab27  72c838de-6c42-11e4-b931-2f2335016181.vhd-00005
+f400c0b1881e5171ab16347274096005  72c838de-6c42-11e4-b931-2f2335016181.vhd-00006
+4dad039fea4864e67c701cf23286aded  72c838de-6c42-11e4-b931-2f2335016181.vhd-00007
+44194317f298ba268875709e150759ab  72c838de-6c42-11e4-b931-2f2335016181.vhd-00008
+30397c40841a9e450e9c45ca53b26a64  72c838de-6c42-11e4-b931-2f2335016181.vhd-00009
+d5a39d67ab7e9fa23157e6c1a0a1d952  72c838de-6c42-11e4-b931-2f2335016181.vhd-00010
+5f8e6af517243641386b610a955cc94b  72c838de-6c42-11e4-b931-2f2335016181.vhd-00011
+a8c766bee90e747919e8747fe7d9dffe  72c838de-6c42-11e4-b931-2f2335016181.vhd-00012
+488dc23457cb2f0a8ee4eeabe87954b3  72c838de-6c42-11e4-b931-2f2335016181.vhd-00013
+5e68d8acfa439131289cbf6a47c9588c  72c838de-6c42-11e4-b931-2f2335016181.vhd-00014
+5c5757defafbdd8502a1b8d55cd75217  72c838de-6c42-11e4-b931-2f2335016181.vhd-00015
+526b77733e80a9fa2c0c598cd3de93d6  72c838de-6c42-11e4-b931-2f2335016181.vhd-00016
+d1a2dfc2155f143f6eb17341b4171d73  72c838de-6c42-11e4-b931-2f2335016181.vhd-00017
+a0358a6d59d57fbaeb65a027c7927672  72c838de-6c42-11e4-b931-2f2335016181.vhd-00018
+8c2982a00fb7cd764d697472a8713bdc  72c838de-6c42-11e4-b931-2f2335016181.vhd-00019
+99e7e6432c655f258636719bd436d3ac  72c838de-6c42-11e4-b931-2f2335016181.vhd-00020
 
-(1/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00001
-(1/3) Download complete.  Verifying integrity.
-(1/3) Local copy matches md5sum of Cloud Files object in dfw.
-(1/3) Uploading segment to ord.
-(1/3) Segment uploaded successfully.
-(1/3) Checksum validated.
-(1/3) Local copy of segment deleted.
-(2/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00002
-(2/3) Download complete.  Verifying integrity.
-(2/3) Local copy matches md5sum of Cloud Files object in dfw.
-(2/3) Uploading segment to ord.
-(2/3) Segment uploaded successfully.
-(2/3) Checksum validated.
-(2/3) Local copy of segment deleted.
-(3/3) Downloading segment: 09c7c696-df94-11e3-b85f-abfacd43a936.vhd-00003
-(3/3) Download complete.  Verifying integrity.
-(3/3) Local copy matches md5sum of Cloud Files object in dfw.
-(3/3) Uploading segment to ord.
-(3/3) Segment uploaded successfully.
-(3/3) Checksum validated.
-(3/3) Local copy of segment deleted.
+2014-11-14 14:47:06 (1/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00001
+2014-11-14 14:47:08 (1/20) Download complete.  Verifying integrity.
+2014-11-14 14:47:08 (1/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:47:08 (1/20) Uploading segment to ord.
+2014-11-14 14:47:32 (1/20) Segment uploaded successfully.
+2014-11-14 14:47:32 (1/20) Checksum validated.
+2014-11-14 14:47:32 (1/20) Local copy of segment deleted.
+2014-11-14 14:47:32 (2/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00002
+2014-11-14 14:47:35 (2/20) Download complete.  Verifying integrity.
+2014-11-14 14:47:35 (2/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:47:35 (2/20) Uploading segment to ord.
+2014-11-14 14:48:00 (2/20) Segment uploaded successfully.
+2014-11-14 14:48:00 (2/20) Checksum validated.
+2014-11-14 14:48:00 (2/20) Local copy of segment deleted.
+2014-11-14 14:48:00 (3/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00003
+2014-11-14 14:48:08 (3/20) Download complete.  Verifying integrity.
+2014-11-14 14:48:09 (3/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:48:09 (3/20) Uploading segment to ord.
+2014-11-14 14:49:05 (3/20) Segment uploaded successfully.
+2014-11-14 14:49:05 (3/20) Checksum validated.
+2014-11-14 14:49:05 (3/20) Local copy of segment deleted.
+2014-11-14 14:49:05 (4/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00004
+2014-11-14 14:49:07 (4/20) Download complete.  Verifying integrity.
+2014-11-14 14:49:07 (4/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:49:07 (4/20) Uploading segment to ord.
+2014-11-14 14:49:32 (4/20) Segment uploaded successfully.
+2014-11-14 14:49:32 (4/20) Checksum validated.
+2014-11-14 14:49:32 (4/20) Local copy of segment deleted.
+2014-11-14 14:49:32 (5/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00005
+2014-11-14 14:49:34 (5/20) Download complete.  Verifying integrity.
+2014-11-14 14:49:34 (5/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:49:34 (5/20) Uploading segment to ord.
+2014-11-14 14:49:58 (5/20) Segment uploaded successfully.
+2014-11-14 14:49:58 (5/20) Checksum validated.
+2014-11-14 14:49:58 (5/20) Local copy of segment deleted.
+2014-11-14 14:49:58 (6/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00006
+2014-11-14 14:50:11 (6/20) Download complete.  Verifying integrity.
+2014-11-14 14:50:11 (6/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:50:11 (6/20) Uploading segment to ord.
+2014-11-14 14:50:47 (6/20) Segment uploaded successfully.
+2014-11-14 14:50:47 (6/20) Checksum validated.
+2014-11-14 14:50:47 (6/20) Local copy of segment deleted.
+2014-11-14 14:50:47 (7/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00007
+2014-11-14 14:50:49 (7/20) Download complete.  Verifying integrity.
+2014-11-14 14:50:49 (7/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:50:49 (7/20) Uploading segment to ord.
+2014-11-14 14:51:13 (7/20) Segment uploaded successfully.
+2014-11-14 14:51:13 (7/20) Checksum validated.
+2014-11-14 14:51:13 (7/20) Local copy of segment deleted.
+2014-11-14 14:51:13 (8/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00008
+2014-11-14 14:51:15 (8/20) Download complete.  Verifying integrity.
+2014-11-14 14:51:16 (8/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:51:16 (8/20) Uploading segment to ord.
+2014-11-14 14:52:07 (8/20) Segment uploaded successfully.
+2014-11-14 14:52:07 (8/20) Checksum validated.
+2014-11-14 14:52:07 (8/20) Local copy of segment deleted.
+2014-11-14 14:52:07 (9/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00009
+2014-11-14 14:52:10 (9/20) Download complete.  Verifying integrity.
+2014-11-14 14:52:11 (9/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:52:11 (9/20) Uploading segment to ord.
+2014-11-14 14:52:40 (9/20) Segment uploaded successfully.
+2014-11-14 14:52:40 (9/20) Checksum validated.
+2014-11-14 14:52:40 (9/20) Local copy of segment deleted.
+2014-11-14 14:52:40 (10/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00010
+2014-11-14 14:52:55 (10/20) Download complete.  Verifying integrity.
+2014-11-14 14:52:56 (10/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:52:56 (10/20) Uploading segment to ord.
+2014-11-14 14:53:21 (10/20) Segment uploaded successfully.
+2014-11-14 14:53:21 (10/20) Checksum validated.
+2014-11-14 14:53:21 (10/20) Local copy of segment deleted.
+2014-11-14 14:53:21 (11/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00011
+2014-11-14 14:53:23 (11/20) Download complete.  Verifying integrity.
+2014-11-14 14:53:23 (11/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:53:23 (11/20) Uploading segment to ord.
+2014-11-14 14:53:46 (11/20) Segment uploaded successfully.
+2014-11-14 14:53:46 (11/20) Checksum validated.
+2014-11-14 14:53:46 (11/20) Local copy of segment deleted.
+2014-11-14 14:53:46 (12/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00012
+2014-11-14 14:53:48 (12/20) Download complete.  Verifying integrity.
+2014-11-14 14:53:49 (12/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:53:49 (12/20) Uploading segment to ord.
+2014-11-14 14:54:14 (12/20) Segment uploaded successfully.
+2014-11-14 14:54:14 (12/20) Checksum validated.
+2014-11-14 14:54:14 (12/20) Local copy of segment deleted.
+2014-11-14 14:54:14 (13/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00013
+2014-11-14 14:54:15 (13/20) Download complete.  Verifying integrity.
+2014-11-14 14:54:16 (13/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:54:16 (13/20) Uploading segment to ord.
+2014-11-14 14:54:48 (13/20) Segment uploaded successfully.
+2014-11-14 14:54:48 (13/20) Checksum validated.
+2014-11-14 14:54:48 (13/20) Local copy of segment deleted.
+2014-11-14 14:54:48 (14/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00014
+2014-11-14 14:54:51 (14/20) Download complete.  Verifying integrity.
+2014-11-14 14:54:51 (14/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:54:51 (14/20) Uploading segment to ord.
+2014-11-14 14:55:14 (14/20) Segment uploaded successfully.
+2014-11-14 14:55:14 (14/20) Checksum validated.
+2014-11-14 14:55:14 (14/20) Local copy of segment deleted.
+2014-11-14 14:55:14 (15/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00015
+2014-11-14 14:55:42 (15/20) Download complete.  Verifying integrity.
+2014-11-14 14:55:42 (15/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:55:42 (15/20) Uploading segment to ord.
+2014-11-14 14:56:07 (15/20) Segment uploaded successfully.
+2014-11-14 14:56:07 (15/20) Checksum validated.
+2014-11-14 14:56:07 (15/20) Local copy of segment deleted.
+2014-11-14 14:56:07 (16/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00016
+2014-11-14 14:56:11 (16/20) Download complete.  Verifying integrity.
+2014-11-14 14:56:12 (16/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:56:12 (16/20) Uploading segment to ord.
+2014-11-14 14:56:35 (16/20) Segment uploaded successfully.
+2014-11-14 14:56:35 (16/20) Checksum validated.
+2014-11-14 14:56:35 (16/20) Local copy of segment deleted.
+2014-11-14 14:56:35 (17/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00017
+2014-11-14 14:56:37 (17/20) Download complete.  Verifying integrity.
+2014-11-14 14:56:37 (17/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:56:37 (17/20) Uploading segment to ord.
+2014-11-14 14:57:01 (17/20) Segment uploaded successfully.
+2014-11-14 14:57:01 (17/20) Checksum validated.
+2014-11-14 14:57:01 (17/20) Local copy of segment deleted.
+2014-11-14 14:57:01 (18/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00018
+2014-11-14 14:57:02 (18/20) Download complete.  Verifying integrity.
+2014-11-14 14:57:03 (18/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:57:03 (18/20) Uploading segment to ord.
+2014-11-14 14:57:26 (18/20) Segment uploaded successfully.
+2014-11-14 14:57:26 (18/20) Checksum validated.
+2014-11-14 14:57:26 (18/20) Local copy of segment deleted.
+2014-11-14 14:57:26 (19/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00019
+2014-11-14 14:57:29 (19/20) Download complete.  Verifying integrity.
+2014-11-14 14:57:29 (19/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:57:29 (19/20) Uploading segment to ord.
+2014-11-14 14:57:53 (19/20) Segment uploaded successfully.
+2014-11-14 14:57:53 (19/20) Checksum validated.
+2014-11-14 14:57:53 (19/20) Local copy of segment deleted.
+2014-11-14 14:57:53 (20/20) Downloading segment: 72c838de-6c42-11e4-b931-2f2335016181.vhd-00020
+2014-11-14 14:57:54 (20/20) Download complete.  Verifying integrity.
+2014-11-14 14:57:54 (20/20) Local copy matches md5sum of Cloud Files object in dfw.
+2014-11-14 14:57:54 (20/20) Uploading segment to ord.
+2014-11-14 14:58:31 (20/20) Segment uploaded successfully.
+2014-11-14 14:58:31 (20/20) Checksum validated.
+2014-11-14 14:58:31 (20/20) Local copy of segment deleted.
 
-Deleting content of container 2014-05-19_19-57-16 from dfw on account 111111.
-Contents successfully deleted from dfw on account 111111.
+Deleting content of container img-copy-2014-11-14_14-36-59 from dfw on account 123456.
+Contents successfully deleted from dfw on account 123456.
 
-Deleting container 2014-05-19_19-57-16 from dfw on account 111111.
+Deleting container img-copy-2014-11-14_14-36-59 from dfw on account 123456.
 Container deleted successfully.
 
-Creating dynamic manifest file 09c7c696-df94-11e3-b85f-abfacd43a936.vhd on account 222222
+Creating dynamic manifest file 72c838de-6c42-11e4-b931-2f2335016181.vhd on account 123456
 Manifest file created successfully.
 
 Initiating import task in ord.
 Successully initiated an image import task in region 'ord'.
-Task ID: 4c522877-aef4-48fe-809a-b3969082b714
+Task ID: d3681682-6c42-11e4-aa09-c7da230b7563
 
 Monitoring status of image import.
-2014-05-19 20:20:47 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:21:49 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:22:52 Waiting for completion - will check every 60 seconds.
-2014-05-19 20:23:53 Waiting for completion - will check every 60 seconds.
-Export task completed successfully.
+2014-11-14 14:58:38 Waiting for completion - will check every 60 seconds.
+2014-11-14 14:59:40 Waiting for completion - will check every 60 seconds.
+2014-11-14 15:00:41 Waiting for completion - will check every 60 seconds.
+2014-11-14 15:01:42 Waiting for completion - will check every 60 seconds.
+Import task completed successfully.
+
+Successfully updated OS metadata details.
 
 Transfer complete.
-Image ID 09c7c696-df94-11e3-b85f-abfacd43a936 copied from dfw on account 111111 to ord on account 222222.
-Cloud Files content in dfw on account 111111 was auto-deleted.
-Cloud Files content in ord on account 222222 left in place - delete manually if necessary.
-root@server1[~]# 
-
+Image ID 72c838de-6c42-11e4-b931-2f2335016181 copied from dfw on account 123456 to ord on account 123456.
+Cloud Files content in dfw on account 123456 was auto-deleted.
+Cloud Files content in ord on account 123456 left in place - delete manually if necessary.
+[root@server1 ~]# 
