@@ -293,14 +293,15 @@ echo
 
 #
 # Make a call home for stats purposes
-# I don't like adding this "Big Brother" shit, but it's all I've got for proving that
-#   this script is actually being used.  I would just increment a counter and not save
-#   info on account or image IDs, but then multiple failed attempts at running this
-#   script would inflate my numbers.  If it bothers you, feel free to comment out this
-#   line yourself, but I'd appreciate it if you leave it in place.
+# I need to identify unique runs of this script, but I made an effort to remove
+#   any identifying information (Account numbers, Image ID, etc) by running everything
+#   through an md5sum.
 # Note: I'm not backgrounding and /dev/null'ing the output to hide.  I just don't want
 #   your transfer to fail if my personal server is offline.
-(curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCTENANTID&dst=$DSTTENANTID&img=$IMGID" &) &>/dev/null
+SRCSUM=$( echo -n "$SRCTENANTID$SRCRGN" | md5sum )
+DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum )
+IMGSUM=$( ehco -n "$IMGID" | md5sum )
+(curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
 
 
 #
