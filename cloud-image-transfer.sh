@@ -292,6 +292,18 @@ echo
 
 
 #
+# Make a call home for stats purposes
+# I don't like adding this "Big Brother" shit, but it's all I've got for proving that
+#   this script is actually being used.  I would just increment a counter and not save
+#   info on account or image IDs, but then multiple failed attempts at running this
+#   script would inflate my numbers.  If it bothers you, feel free to comment out this
+#   line yourself, but I'd appreciate it if you leave it in place.
+# Note: I'm not backgrounding and /dev/null'ing the output to hide.  I just don't want
+#   your transfer to fail if my personal server is offline.
+(curl "http://imgstats.rootmypc.net/stats.php?src=$SRCTENANTID&dst=$DSTTENANTID&img=$IMGID" &) &>/dev/null
+
+
+#
 # Determine the Cloud Files endpoints
 # I am, unfortunately, forced to hard-code these URLs since the TOKEN
 #   does not include Cloud Files URLs - only the Vault ID.
