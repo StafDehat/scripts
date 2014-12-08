@@ -300,7 +300,7 @@ echo
 #   line yourself, but I'd appreciate it if you leave it in place.
 # Note: I'm not backgrounding and /dev/null'ing the output to hide.  I just don't want
 #   your transfer to fail if my personal server is offline.
-(curl "http://imgstats.rootmypc.net/stats.php?src=$SRCTENANTID&dst=$DSTTENANTID&img=$IMGID" &) &>/dev/null
+(curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCTENANTID&dst=$DSTTENANTID&img=$IMGID" &) &>/dev/null
 
 
 #
