@@ -300,7 +300,7 @@ echo
 #   your transfer to fail if my personal server is offline.
 SRCSUM=$( echo -n "$SRCTENANTID$SRCRGN" | md5sum )
 DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum )
-IMGSUM=$( ehco -n "$IMGID" | md5sum )
+IMGSUM=$( echo -n "$IMGID" | md5sum )
 (curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
 
 
