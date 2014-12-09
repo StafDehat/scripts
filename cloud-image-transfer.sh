@@ -298,9 +298,9 @@ echo
 #   through an md5sum.
 # Note: I'm not backgrounding and /dev/null'ing the output to hide.  I just don't want
 #   your transfer to fail if my personal server is offline.
-SRCSUM=$( echo -n "$SRCTENANTID$SRCRGN" | md5sum )
-DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum )
-IMGSUM=$( echo -n "$IMGID" | md5sum )
+SRCSUM=$( echo -n "$SRCTENANTID$SRCRGN" | md5sum | awk '{print $1}' )
+DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum | awk '{print $1}' )
+IMGSUM=$( echo -n "$IMGID" | md5sum | awk '{print $1}' )
 (curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
 
 
