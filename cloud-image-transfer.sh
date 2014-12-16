@@ -47,6 +47,7 @@ SAVELOCAL=0
 #
 # Define a clean-up function and catch exit signals
 function cleanup {
+  stty echo
   echo "----------------------------------------"
   echo "Script exited prematurely."
   echo "You may need to manually delete the following:"
@@ -74,40 +75,43 @@ trap 'cleanup' 1 2 9 15 17 19 23
 #
 # Usage statement
 function usage() {
-  echo "Usage: cloud-image-transfer.sh [-h] -s -1 \\"
-  echo "                               -i SRCIMGID \\"
-  echo "                               -a SRCAUTHTOKEN -A DSTAUTHTOKEN \\"
-  echo "                               -t SRCTENANTID  -T DSTTENANTID \\"
-  echo "                               -r SRCRGN       -R DSTRGN"
+  echo "Note: Authentication has changed!"
+  echo "      This script used to use Tenant ID and API Token."
+  echo "      Now it uses Username and API Key."
+  echo
+  echo "Usage: cloud-image-region-transfer.sh [-h] [-s] [-1] \\"
+  echo "                                      -i SRCIMGID \\"
+  echo "                                      -u SRCUSERNAME  -U DSTUSERNAME \\"
+  echo "                                      -r SRCRGN       -R DSTRGN \\"
+  echo "                                      [-a SRCAPIKEY]  [-A DSTAPIKEY]"
   echo "Example:"
-  echo "  # cloud-image-transfer.sh -a 7a9d3410cd7d11e3a8bfabb5e3025477 \\"
-  echo "                            -t 111111 \\"
-  echo "                            -r dfw \\"
-  echo "                            -R iad \\"
-  echo "                            -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f \\"
-  echo "                            -1 -s"
+  echo "  # cloud-image-region-transfer.sh -u rackuser1 \\"
+  echo "                                   -r dfw \\"
+  echo "                                   -R iad \\"
+  echo "                                   -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f \\"
+  echo "                                   -1 -s"
   echo "Example:"
-  echo "  # cloud-image-transfer.sh -a 7a9d3410cd7d11e3a8bfabb5e3025477 \\"
-  echo "                            -A 5b2e5686df7f11e3897ceb644a057c7f \\"
-  echo "                            -t 111111 \\"
-  echo "                            -T 222222 \\"
-  echo "                            -r dfw \\"
-  echo "                            -R iad \\"
-  echo "                            -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f"
+  echo "  # cloud-image-region-transfer.sh -u rackuser1 \\"
+  echo "                                   -U rackuser2 \\"
+  echo "                                   -r dfw \\"
+  echo "                                   -R iad \\"
+  echo "                                   -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f"
   echo "Arguments:"
   echo "Note: Source args in lowercase, destination in uppercase."
   echo "  -1    Use the source account details for the destination too"
   echo "        (overrides -A and -T)."
-  echo "  -a X  API Authentication token of source account."
-  echo "  -A X  API Authentication token of destination account."
+  echo "  -a X  API Key (not token) of source account."
+  echo "        Optional - If not provided, will prompt for input."
+  echo "  -A X  API Key (not token) of destination account."
+  echo "        Optional - If not provided, will prompt for input."
   echo "  -h    Print this help"
   echo "  -i X  Image ID.  Find in MyCloud by hovering over image name."
   echo "  -r X  Region of source (DFW/ORD/IAD/etc)"
   echo "  -R X  Region of destination (DFW/ORD/IAD/etc)."
   echo "  -s    Use ServiceNet for download (Must run this script in same"
   echo "        region as defined for SRCRGN)."
-  echo "  -t X  Tenant ID (DDI) of source account."
-  echo "  -T X  Tenant ID (DDI) of destination account."
+  echo "  -u X  Username of source account."
+  echo "  -U X  Username of destination account."
 }
 
 
@@ -116,18 +120,18 @@ function usage() {
 USAGEFLAG=0
 SNET=0
 ONEACCOUNT=0
-while getopts ":1a:A:hi:r:R:st:T:" arg; do
+while getopts ":1a:A:hi:r:R:su:U:" arg; do
   case $arg in
     1) ONEACCOUNT=1;;
-    a) SRCAUTHTOKEN=$OPTARG;;
-    A) DSTAUTHTOKEN=$OPTARG;;
+    a) SRCAPIKEY=$OPTARG;;
+    A) DSTAPIKEY=$OPTARG;;
     h) usage && exit 0;;
     i) SRCIMGID=$OPTARG;;
     r) SRCRGN=$OPTARG;;
     R) DSTRGN=$OPTARG;;
     s) SNET=1;;
-    t) SRCTENANTID=$OPTARG;;
-    T) DSTTENANTID=$OPTARG;;
+    u) SRCUSERNAME=$OPTARG;;
+    U) DSTUSERNAME=$OPTARG;;
     :) echo "ERROR: Option -$OPTARG requires an argument."
        USAGEFLAG=1;;
     *) echo "ERROR: Invalid option: -$OPTARG"
@@ -136,10 +140,9 @@ while getopts ":1a:A:hi:r:R:st:T:" arg; do
 done #End arguments
 shift $(($OPTIND - 1))
 if [ "$ONEACCOUNT" -eq 1 ]; then
-  DSTAUTHTOKEN="$SRCAUTHTOKEN"
-  DSTTENANTID="$SRCTENANTID"
+  DSTUSERNAME="$SRCUSERNAME"
 fi
-ARGUMENTS="SRCAUTHTOKEN DSTAUTHTOKEN SRCTENANTID DSTTENANTID SRCRGN DSTRGN SRCIMGID"
+ARGUMENTS="SRCUSERNAME DSTUSERNAME SRCRGN DSTRGN SRCIMGID"
 for ARGUMENT in $ARGUMENTS; do
   if [ -z "${!ARGUMENT}" ]; then
     echo "ERROR: Must define $ARGUMENT as argument."
@@ -148,6 +151,16 @@ for ARGUMENT in $ARGUMENTS; do
 done
 if [ $USAGEFLAG -ne 0 ]; then
   usage && exit 1
+fi
+if [ -z "$SRCAPIKEY" ]; then
+  read -p "Enter source account's API Key: " -s SRCAPIKEY
+  echo
+  if [ "$ONEACCOUNT" -eq 1 ]; then
+    DSTAPIKEY="$SRCAPIKEY"
+  else
+    read -p "Enter destination account's API Key: " -s DSTAPIKEY
+    echo
+  fi
 fi
 
 
@@ -158,63 +171,89 @@ DSTRGN=$( echo $DSTRGN | tr 'A-Z' 'a-z' )
 
 
 #
-# Auth against API, both to confirm DDI/Token, and to get
+# Auth against API, both to get DDI/Token, and to get
 #   endpoints & Cloud Files Vault ID
 echo "Attempting to authenticate against Identity API with source account info."
 DATA=$(curl --write-out \\n%{http_code} --silent --output - \
             $IDENTITY_ENDPOINT/tokens \
             -H "Content-Type: application/json" \
             -d '{ "auth": {
-                    "tenantId": "'$SRCTENANTID'",
-                    "token": {
-                      "id": "'$SRCAUTHTOKEN'" } } }' \
+                    "RAX-KSKEY:apiKeyCredentials": {
+                      "apiKey": "'"$SRCAPIKEY"'",
+                      "username": "'"$SRCUSERNAME"'" } } }' \
          2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
 # Check for failed API call
 if [ $RETVAL -ne 0 ]; then
   echo "Unknown error encountered when trying to run curl command." && cleanup
-elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-  echo "Error: Unable to authenticate against API using SRCAUTHTOKEN and SRCTENANTID"
+elif grep -qvE '^2..$' <<<$CODE; then
+  echo "Error: Unable to authenticate against API using SRCUSERNAME and SRCAPIKEY"
   echo "  provided.  Raw response data from API was the following:"
   echo
   echo "Response code: $CODE"
   echo "$DATA" | sed '$d' && cleanup
 fi
-echo "Successfully authenticated using provided SRCAUTHTOKEN and SRCTENANTID."
+echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
 echo
 SRCTOKEN=$( echo "$DATA" | sed '$d' )
+SRCTENANTID=$( echo "$SRCTOKEN" |
+                 tr ',' '\n' |
+                 sed -n '/token/,/APIKEY/p' |
+                 sed -n '/tenant/,/}/p' |
+                 sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+SRCAUTHTOKEN=$( echo "$SRCTOKEN" |
+                  tr ',' '\n' |
+                  sed -n '/token/,/APIKEY/p' |
+                  sed -n '/token/,/}/p' |
+                  grep -v \"id\":\"$SRCTENANTID\" |
+                  sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 
 
 #
 # Auth against DST API if necessary
 if [ "$ONEACCOUNT" -eq 1 ]; then
+  echo "Single account - Copying SRC creds to DST creds."
+  echo
   DSTTOKEN="$SRCTOKEN"
+  DSTTENANTID="$SRCTENANTID"
+  DSTAUTHTOKEN="$SRCAUTHTOKEN"
 else
   echo "Attempting to authenticate against Identity API with destination account info."
   DATA=$(curl --write-out \\n%{http_code} --silent --output - \
               $IDENTITY_ENDPOINT/tokens \
               -H "Content-Type: application/json" \
               -d '{ "auth": {
-                      "tenantId": "'$DSTTENANTID'",
-                      "token": {
-                        "id": "'$DSTAUTHTOKEN'" } } }' \
+                      "RAX-KSKEY:apiKeyCredentials": {
+                        "apiKey": "'"$DSTAPIKEY"'",
+                        "username": "'"$DSTUSERNAME"'" } } }' \
            2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
     echo "Unknown error encountered when trying to run curl command." && cleanup
-  elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
-    echo "Error: Unable to authenticate against API using DSTAUTHTOKEN and DSTTENANTID"
+  elif grep -qvE '^2..$' <<<$CODE; then
+    echo "Error: Unable to authenticate against API using DSTUSERNAME and DSTAPIKEY"
     echo "  provided.  Raw response data from API was the following:"
     echo
     echo "Response code: $CODE"
     echo "$DATA" | sed '$d' && cleanup
   fi
-  echo "Successfully authenticated using provided DSTAUTHTOKEN and DSTTENANTID."
+  echo "Successfully authenticated using provided DSTUSERNAME and DSTAPIKEY."
   echo
   DSTTOKEN=$( echo "$DATA" | sed '$d' )
+  DSTTENANTID=$( echo "$DSTTOKEN" |
+                   tr ',' '\n' |
+                   sed -n '/token/,/APIKEY/p' |
+                   sed -n '/tenant/,/}/p' |
+                   sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+  DSTAUTHTOKEN=$( echo "$DSTTOKEN" |
+                    tr ',' '\n' |
+                    sed -n '/token/,/APIKEY/p' |
+                    sed -n '/token/,/}/p' |
+                    grep -v \"id\":\"$DSTTENANTID\" |
+                    sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 fi
 
 
