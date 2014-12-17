@@ -901,6 +901,7 @@ while true; do
   fi
 done
 echo "Import task completed successfully."
+echo "New image ID: $DSTIMGID"
 echo
 
 
@@ -936,7 +937,8 @@ echo
 #
 # Report success
 echo "Transfer complete."
-echo "Image ID $SRCIMGID copied from $SRCRGN on account $SRCTENANTID to $DSTRGN on account $DSTTENANTID."
+echo "Image ID $SRCIMGID copied from $SRCRGN on account $SRCTENANTID"
+echo "  to ID $DSTIMGID in $DSTRGN on account $DSTTENANTID."
 echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
 echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
 exit 0
