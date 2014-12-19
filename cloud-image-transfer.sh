@@ -173,6 +173,7 @@ DSTRGN=$( echo $DSTRGN | tr 'A-Z' 'a-z' )
 #
 # Auth against API, both to get DDI/Token, and to get
 #   endpoints & Cloud Files Vault ID
+echo
 echo "Attempting to authenticate against Identity API with source account info."
 DATA=$(curl --write-out \\n%{http_code} --silent --output - \
             $IDENTITY_ENDPOINT/tokens \
