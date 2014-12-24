@@ -19,7 +19,7 @@ DATE=$( date +"%F_%H-%M-%S" )
 
 #
 # Verify the existence of pre-req's
-PREREQS="curl grep sed date cut tr echo column nc md5sum"
+PREREQS="curl grep sed date cut tr echo column md5sum"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ &>/dev/null
@@ -380,14 +380,14 @@ esac
 if [ $SNET -eq 1 ]; then
   SNETHOST=$( echo "$SRCFILEURL" | cut -d/ -f3 )
   echo "Testing connectivity to $SNETHOST on tcp/443."
-  nc -w 5 -z $SNETHOST 443 &>/dev/null
-  if [ $? -ne 0 ]; then
+  if ( echo > /dev/tcp/$SNETHOST/443 ) &>/dev/null; then
+    echo "Connection to ServiceNet successful."
+    echo
+  else
     echo "Error: Unable to reach Cloud Files API over ServiceNet."
     echo "You may have to use public traffic instead."
     exit 1
   fi
-  echo "Connection to ServiceNet successful."
-  echo
 fi
 
 
