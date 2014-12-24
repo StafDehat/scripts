@@ -538,6 +538,47 @@ echo
 
 
 #
+# Check size of exported image.
+# If >40G, we'll get an error on import.  Best to catch that now.
+echo "Verifying exported image is <= 40G..."
+DATA=$( curl -I --write-out \\n%{http_code} --silent --output - \
+             $SRCFILEURL/$CONTAINER \
+             -X GET \
+             -H "X-Auth-Token: $DSTAUTHTOKEN" \
+          2>/dev/null )
+RETVAL=$?
+CODE=$( echo "$DATA" | tail -n 1 )
+if [ $RETVAL -ne 0 ]; then
+  echo "Unknown error encountered when trying to run curl command." && cleanup
+elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
+  echo "Error: Unable to determine size of source container.  This isn't necessarily"
+  echo "  a fatal error.  Let's keep going, but the intent behind this check is to"
+  echo "  ensure the image is <40G.  Anything over 40G will fail to import with error"
+  echo "  code 609.  So we haven't failed yet, but no promises on the import."
+else
+  PHYSIZE=$( echo "$DATA" | grep "X-Container-Bytes-Used:" | cut -d\  -f2 )
+  echo "Exported image is $PHYSIZE bytes."
+  # 42949672960 is 40G, in bytes
+  if [ "$PHYSIZE" -gt 42949672960 ]; then
+    echo "Error: Physical size of exported image is >40G.  This means that even though"
+    echo "  it exported fine, it will not import.  We're bailing here."
+    echo
+    echo "To proceed, you'll need to first shrink the VHD.  You can do this by"
+    echo "  building a 2G NextGen-Standard server from the source image, then write"
+    echo "  zeros to all your unused disk space (cat /dev/zero > /zero; rm -f /zero),"
+    echo "  then resize down to a 1G NextGen-Standard, then take a new image and try"
+    echo "  exporting that new image instead.  The resize-down process should reclaim"
+    echo "  any blocks of contiguous zeros, thereby shrinking the final image."
+    echo
+    cleanup
+  else
+    echo "No size problems detected with exported image."
+    echo
+  fi
+fi
+
+
+#
 # Create container at destination to store image segments
 # Presently the "." character is considered invalid by the export task
 #   when used as the name of a Cloud Files container.  Since "." is 
