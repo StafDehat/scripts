@@ -559,7 +559,9 @@ else
   PHYSIZE=$( echo "$DATA" | grep "X-Container-Bytes-Used:" | cut -d\  -f2 )
   echo "Exported image is $PHYSIZE bytes."
   # 42949672960 is 40G, in bytes
-  if [ "$PHYSIZE" -gt 42949672960 ]; then
+  if [[ ! -z "$PHYSIZE" && 
+        grep -cE '^[0-9]*$' <<"$PHYSIZE" &&
+        $PHYSIZE -gt 42949672960 ]]; then
     echo "Error: Physical size of exported image is >40G.  This means that even though"
     echo "  it exported fine, it will not import.  We're bailing here."
     echo
