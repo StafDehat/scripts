@@ -83,7 +83,8 @@ function usage() {
   echo "                                      -i SRCIMGID \\"
   echo "                                      -u SRCUSERNAME  -U DSTUSERNAME \\"
   echo "                                      -r SRCRGN       -R DSTRGN \\"
-  echo "                                      [-a SRCAPIKEY]  [-A DSTAPIKEY]"
+  echo "                                      [-a SRCAPIKEY]  [-A DSTAPIKEY] \\"
+  ecoh "                                      [-n DSTIMAGENAME]
   echo "Example:"
   echo "  # cloud-image-region-transfer.sh -u rackuser1 \\"
   echo "                                   -r dfw \\"
@@ -95,7 +96,8 @@ function usage() {
   echo "                                   -U rackuser2 \\"
   echo "                                   -r dfw \\"
   echo "                                   -R iad \\"
-  echo "                                   -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f"
+  echo "                                   -i 8883bb30-cd7d-11e3-ab61-3b672f712d5f \\"
+  echo "                                   -n webserver-iad"
   echo "Arguments:"
   echo "Note: Source args in lowercase, destination in uppercase."
   echo "  -1    Use the source account details for the destination too"
@@ -106,6 +108,8 @@ function usage() {
   echo "        Optional - If not provided, will prompt for input."
   echo "  -h    Print this help"
   echo "  -i X  Image ID.  Find in MyCloud by hovering over image name."
+  echo "  -n X  Name of imported image at DSTRGN."
+  echo "        Optional - If not provided, will use same name as SRCIMG."
   echo "  -r X  Region of source (DFW/ORD/IAD/etc)"
   echo "  -R X  Region of destination (DFW/ORD/IAD/etc)."
   echo "  -s    Use ServiceNet for download (Must run this script in same"
@@ -120,13 +124,15 @@ function usage() {
 USAGEFLAG=0
 SNET=0
 ONEACCOUNT=0
-while getopts ":1a:A:hi:r:R:su:U:" arg; do
+DSTIMGNAME=""
+while getopts ":1a:A:hi:n:r:R:su:U:" arg; do
   case $arg in
     1) ONEACCOUNT=1;;
     a) SRCAPIKEY=$OPTARG;;
     A) DSTAPIKEY=$OPTARG;;
     h) usage && exit 0;;
     i) SRCIMGID=$OPTARG;;
+    n) DSTIMGNAME=$OPTARG;;
     r) SRCRGN=$OPTARG;;
     R) DSTRGN=$OPTARG;;
     s) SNET=1;;
@@ -326,13 +332,20 @@ if [ $MINDISK -gt 40 ]; then
 else
   echo "Confirmed image has min_disk <= 40GB."
 fi
-IMGNAME=$( echo "$DATA" | tr ',' '\n' | grep '"name":' | cut -d'"' -f4 )
+SRCIMGNAME=$( echo "$DATA" | tr ',' '\n' | grep '"name":' | cut -d'"' -f4 )
 IMGDISTRO=$( echo "$DATA" | tr ',' '\n' | sed -n 's/.*"org.openstack__1__os_distro": "\(.*\)"\s*$/\1/p' )
 IMGVER=$( echo "$DATA" | tr ',' '\n' | sed -n 's/.*"org.openstack__1__os_version": "\(.*\)"\s*$/\1/p' )
-echo "Image name:       $IMGNAME"
+echo "Image name:       $SRCIMGNAME"
 echo "Image OS distro:  $IMGDISTRO"
 echo "Image OS version: $IMGVER"
 echo
+
+
+#
+# Set DSTIMGNAME to SRCIMGNAME as necessary
+if [ -z "$DSTIMGNAME" ]; then
+  DSTIMGNAME="$SRCIMGNAME"
+fi
 
 
 #
@@ -397,7 +410,6 @@ fi
 
 #
 # Create a container in which to save the exported image
-#CONTAINER="$IMGNAME-$DATE"
 CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $SRCTENANTID to house exported image."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
@@ -591,7 +603,6 @@ fi
 #   export task validation to fail.  Once the bug is resolved, I'll
 #   change this, but in the meantime we'll use just the timestamp as
 #   the container name.
-#CONTAINER="$IMGNAME-$DATE"
 CONTAINER="img-copy-$DATE"
 echo "Creating Cloud Files container ($CONTAINER) on account $DSTTENANTID to store files for import."
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
@@ -876,7 +887,7 @@ DATA=$( curl --write-out \\n%{http_code} --silent --output - \
                      "import_from": "'$CONTAINER'/'$SRCIMGID'.vhd",
                      "import_from_format": "vhd", 
                      "image_properties": {
-                       "name": "'"$IMGNAME"'" } } }' \
+                       "name": "'"$DSTIMGNAME"'" } } }' \
           2>/dev/null )
 RETVAL=$?
 CODE=$( echo "$DATA" | tail -n 1 )
