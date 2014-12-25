@@ -993,11 +993,35 @@ echo
 
 #
 # Report success
-echo "Transfer complete."
-echo "Image ID $SRCIMGID copied from $SRCRGN on account $SRCTENANTID"
-echo "  to ID $DSTIMGID in $DSTRGN on account $DSTTENANTID."
-echo "Cloud Files content in $SRCRGN on account $SRCTENANTID was auto-deleted."
-echo "Cloud Files content in $DSTRGN on account $DSTTENANTID left in place - delete manually if necessary."
+echo "Transfer details"
+echo "Container:   $CONTAINER"
+echo "Import task: $SRCTASKID"
+echo "Export task: $DSTTASKID"
+echo
+echo "----- Source -----"
+echo "Username:   $SRCUSERNAME"
+echo "Tenant ID:  $SRCTENANTID"
+echo "Region:     $SRCRGN"
+echo "Image ID:   $SRCIMGID"
+echo "Image name: $SRCIMGNAME"
+echo
+echo "----- Destination -----"
+echo "Username:   $DSTUSERNAME"
+echo "Tenant ID:  $DSTTENANTID"
+echo "Region:     $DSTRGN"
+echo "Image ID:   $DSTIMGID"
+echo "Image name: $DSTIMGNAME"
+echo 
+echo "Transfer completed successfully."
+echo
+echo "The following Cloud Files content was left in place and could be used for"
+echo "  additional imports within $DSTRGN.  If you're done with it though, you'll"
+echo "  need to delete that manually to avoid recurring storage fees."
+echo "Region:    $DSTRGN"
+echo "Account:   $DSTTENANTID ($DSTUSERNAME)"
+echo "Container: $CONTAINER"
+echo "Size:      $PHYSIZE"
+echo
 exit 0
 
 
