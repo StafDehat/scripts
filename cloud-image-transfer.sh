@@ -307,14 +307,18 @@ echo "Image successfully located in region '$SRCRGN' on account $SRCTENANTID."
 # Check if image is sufficient size
 MINDISK=$( echo "$DATA" | tr ',' '\n' | grep '"min_disk":' | awk '{print $NF}' )
 if [ $MINDISK -gt 40 ]; then
-  echo "Error: You won't be able to import this image at the destination,"
-  echo "  because it was taken of a server with >40G OS disk.  You'll need"
-  echo "  to build a Standard NextGen server from this image at the source"
-  echo "  region, resize it to <=2G RAM (<=40G disk), then take a new image"
-  echo "  and transfer that new image instead."
+  echo "Error: This image has min_disk >40G.  It may not export, and even if"
+  echo "  it does, it definitely won't import at the destination, so we're"
+  echo "  not proceeding past this point.  You'll need to build a NextGen-"
+  echo "  Standard server from this image, resize down to a 1G NextGen-"
+  echo "  Standard server, take a new image, and transfer that new image"
+  echo "  instead."
   echo "Note: In order to resize down, you may need to first manually set"
   echo "  the min_disk and min_ram values on this image to <= 40 disk and"
   echo "  1024 RAM."
+  echo "Also note: The physical size of this exported image will also need"
+  echo "  to be <=40G.  Please contact your support team to determine the size"
+  echo "  of your VDI chain and the estimated size of your exported image."
   echo 
   echo "Ref:"
   echo "http://www.rackspace.com/knowledge_center/article/preparing-an-image-for-import-into-the-rackspace-open-cloud"
