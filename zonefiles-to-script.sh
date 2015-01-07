@@ -30,6 +30,7 @@ ZONES=*
 for ZONE in $ZONES; do
   echo "add_default_zone $ZONE $ACCT"
 done
+echo
 
 
 for ZONE in $ZONES; do
