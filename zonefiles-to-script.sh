@@ -5,33 +5,15 @@
 # outputs to stdout - you probably want to redirect this to a file
 
 # Known limitations:
-# Currently does not handle 'origin' syntax at all.  This is a huge
-#   failing of this script, but will rarely come into play.
-# Ignores NS records.  This is due to ScriptRunner limitations, and
-#   also because they're unlikely to be accurate anyway.
-# Ignores PTR records.
-# Custom TTLs are ignored
 # Requires perl-regexp support for grep (-P), otherwise Windows-style
 #   newlines would cause issues.
-
-# Stuff we don't want
-#cat * | sed 's/;.*$//' |
-#  grep -ivP '\s\s*SOA\s\s*' |
-#  grep -ivP '^\s*[0-9][0-9]*\s*\)?\s*$' |
-#  grep -ivP '\s\s*NS\s\s*' |
-#  grep -ivP '^\s*\$TTL\s' |
-#  grep -ivP '\$include ' |
-#  grep -ivP '^\s*$'
-
-# Stuff I want
-#cat * | sed 's/;.*$//' |
-#  grep -ivP '\s\s*A\s\s*' | 
-#  grep -ivP '\s\s*AAAA\s\s*' | 
-#  grep -ivP '\s\s*CNAME\s\s*' | 
-#  grep -ivP '\s\s*MX\s\s*' |
-#  grep -ivP '\s\s*(TXT SPF)\s\s*' |
-#  grep -ivP '\s\s*SRV\s\s*' |
-
+# Ignores NS records.  This is due to ScriptRunner limitations, and
+#   also because they're unlikely to be accurate anyway.
+# Custom TTLs are ignored
+# Currently does not handle 'origin' syntax at all.  This is a huge
+#   failing of this script, but will rarely come into play.
+# Only handles A, AAAA, CNAME, MX, PTR, SRV, and TXT/SPF records,
+#   because ScriptRunner doesn't handle anything else.
 
 
 ACCT=123456
@@ -169,13 +151,31 @@ for ZONE in $ZONES; do
 
   #
   # PTR records
-#  cut -d\" -f1 $ZONE |
-#    grep -iP '\s\s*MX\s\s*' |
-#    sed 's/;.*$//' |
-#    sed '/^\s*$/d' |
-#    sed "s/@/$ZONE./"
-#  add_ptr_record zone ip_address fqdn 
-
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' |
+    sed '/^\s*$/d' | # Delete empty lines
+    sort -n |
+    while read LINE; do
+      RECORD=$( echo "$LINE" | awk '{print $1}' )
+      if [ -z "$RECORD" ]; then
+        continue  # Totally not okay
+      elif grep -qP '\.$' <<<"$RECORD"; then
+        # ie: 155.0.16.10.in-addr.arpa.
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        # ie: 155
+        RECORD="$RECORD.$ZONE"
+      fi
+      RECORD=$( echo "$RECORD" | sed 's/\.in-addr\.arpa.*//' |
+                  tr '.' '\n' | tac | tr '\n' '.' | sed 's/\.\s*$//' )
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
+      if grep -qP '\.$' <<<"$TARGET"; then
+        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
+      else
+        TARGET="$TARGET.$ZONE"
+      fi
+      echo "add_ptr_record $ZONE $RECORD $TARGET"
+    done
 
   #
   # Print a newline
