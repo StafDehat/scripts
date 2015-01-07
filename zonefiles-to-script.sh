@@ -29,7 +29,7 @@
 #  grep -ivP '\s\s*AAAA\s\s*' | 
 #  grep -ivP '\s\s*CNAME\s\s*' | 
 #  grep -ivP '\s\s*MX\s\s*' |
-#  grep -ivP '\s\s*(TXT|SPF)\s\s*' |
+#  grep -ivP '\s\s*(TXT SPF)\s\s*' |
 #  grep -ivP '\s\s*SRV\s\s*' |
 
 
@@ -125,7 +125,8 @@ for ZONE in $ZONES; do
   #
   # TXT/SPF records
   grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' $ZONE |
-    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed "s/^\(\([^\"';]*|\"[^\"]*\"\|'[^']*'\)*\);.*$/\1/" | # Scrub trailing comments
+    sed "s/@/$ZONE./" | # Sub out @ for the zone name
     sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' )
