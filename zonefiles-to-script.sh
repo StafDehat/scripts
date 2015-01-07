@@ -9,10 +9,7 @@
 #   failing of this script, but will rarely come into play.
 # Ignores NS records.  This is due to ScriptRunner limitations, and
 #   also because they're unlikely to be accurate anyway.
-# SPF records are getting matched in the A/CNAME/MX search.  This
-#   causes a lot of error messages, but doesn't actually hurt the
-#   desired results, since ?all, ~all, etc aren't valid IPs.
-
+# Ignores PTR records.
 
 # Stuff we don't want
 #cat * | sed 's/;.*$//' |
@@ -34,7 +31,7 @@
 
 
 
-ACCT=
+ACCT=123456
 ZONEDIR=/home/ahoward/Downloads/tmp/root/dnsexport
 
 
@@ -49,7 +46,8 @@ for ZONE in $ZONES; do
 
   #
   # A records
-  grep -iE '\s\s*A\s\s*' $ZONE |
+  cut -d\" -f1 $ZONE |
+    grep -iE '\s\s*A\s\s*' |
     sed 's/;.*$//' |
     sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
@@ -66,7 +64,8 @@ for ZONE in $ZONES; do
   
   #
   # AAAA records
-  grep -iE '\s\s*AAAA\s\s*' $ZONE | 
+  cut -d\" -f1 $ZONE |
+    grep -iE '\s\s*AAAA\s\s*' | 
     sed 's/;.*$//' |
     sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
@@ -83,7 +82,8 @@ for ZONE in $ZONES; do
   
   #
   # CNAME records
-  grep -iE '\s\s*CNAME\s\s*' $ZONE | 
+  cut -d\" -f1 $ZONE |
+    grep -iE '\s\s*CNAME\s\s*' | 
     sed 's/;.*$//' |
     sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
@@ -105,7 +105,8 @@ for ZONE in $ZONES; do
   
   #
   # MX records
-  grep -iE '\s\s*MX\s\s*' $ZONE | 
+  cut -d\" -f1 $ZONE |
+    grep -iE '\s\s*MX\s\s*' | 
     sed 's/;.*$//' |
     sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
