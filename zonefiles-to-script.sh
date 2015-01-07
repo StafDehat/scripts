@@ -11,24 +11,26 @@
 #   also because they're unlikely to be accurate anyway.
 # Ignores PTR records.
 # Custom TTLs are ignored
+# Requires perl-regexp support for grep (-P), otherwise Windows-style
+#   newlines would cause issues.
 
 # Stuff we don't want
 #cat * | sed 's/;.*$//' |
-#  grep -ivE '\s\s*SOA\s\s*' |
-#  grep -ivE '^\s*[0-9][0-9]*\s*\)?\s*$' |
-#  grep -ivE '\s\s*NS\s\s*' |
-#  grep -ivE '^\s*\$TTL\s' |
-#  grep -ivE '\$include ' |
-#  grep -ivE '^\s*$'
+#  grep -ivP '\s\s*SOA\s\s*' |
+#  grep -ivP '^\s*[0-9][0-9]*\s*\)?\s*$' |
+#  grep -ivP '\s\s*NS\s\s*' |
+#  grep -ivP '^\s*\$TTL\s' |
+#  grep -ivP '\$include ' |
+#  grep -ivP '^\s*$'
 
 # Stuff I want
 #cat * | sed 's/;.*$//' |
-#  grep -ivE '\s\s*A\s\s*' | 
-#  grep -ivE '\s\s*AAAA\s\s*' | 
-#  grep -ivE '\s\s*CNAME\s\s*' | 
-#  grep -ivE '\s\s*MX\s\s*' |
-#  grep -ivE '\s\s*(TXT|SPF)\s\s*' |
-#  grep -ivE '\s\s*SRV\s\s*' |
+#  grep -ivP '\s\s*A\s\s*' | 
+#  grep -ivP '\s\s*AAAA\s\s*' | 
+#  grep -ivP '\s\s*CNAME\s\s*' | 
+#  grep -ivP '\s\s*MX\s\s*' |
+#  grep -ivP '\s\s*(TXT|SPF)\s\s*' |
+#  grep -ivP '\s\s*SRV\s\s*' |
 
 
 
@@ -47,14 +49,12 @@ for ZONE in $ZONES; do
 
   #
   # A records
-  cut -d\" -f1 $ZONE |
-    grep -iE '\s\s*A\s\s*' |
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?A\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qE '\.$' <<<$RECORD; then
+      if grep -qP '\.$' <<<$RECORD; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
@@ -65,14 +65,12 @@ for ZONE in $ZONES; do
   
   #
   # AAAA records
-  cut -d\" -f1 $ZONE |
-    grep -iE '\s\s*AAAA\s\s*' | 
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?AAAA\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qE '\.$' <<<"$RECORD"; then
+      if grep -qP '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
@@ -83,20 +81,18 @@ for ZONE in $ZONES; do
   
   #
   # CNAME records
-  cut -d\" -f1 $ZONE |
-    grep -iE '\s\s*CNAME\s\s*' | 
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?CNAME\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qE '\.$' <<<"$RECORD"; then
+      if grep -qP '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
       fi
       TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qE '\.$' <<<"$TARGET"; then
+      if grep -qP '\.$' <<<"$TARGET"; then
         TARGET=$( echo "$TARGET" | sed 's/\.$//' )
       else
         TARGET="$TARGET.$ZONE"
@@ -106,20 +102,18 @@ for ZONE in $ZONES; do
   
   #
   # MX records
-  cut -d\" -f1 $ZONE |
-    grep -iE '\s\s*MX\s\s*' | 
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?MX\s+\d+\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qE '\.$' <<<"$RECORD"; then
+      if grep -qP '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
       fi
       TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qE '\.$' <<<"$TARGET"; then
+      if grep -qP '\.$' <<<"$TARGET"; then
         TARGET=$( echo "$TARGET" | sed 's/\.$//' )
       else
         TARGET="$TARGET.$ZONE"
@@ -130,13 +124,12 @@ for ZONE in $ZONES; do
   
   #
   # TXT/SPF records
-  grep -iE '\s\s*(TXT|SPF)\s\s*' $ZONE | 
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' )
-      if grep -qE '\.$' <<<"$RECORD"; then
+      if grep -qP '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
@@ -147,15 +140,14 @@ for ZONE in $ZONES; do
 
   #
   # SRV records
-  grep -iE '\s\s*SRV\s\s*' $ZONE | 
-    sed 's/;.*$//' |
-    sed '/^\s*$/d' |
-    sed "s/@/$ZONE./" |
+  grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?SRV\s+\d+\s+\d+\s+\d+\s+' $ZONE |
+    sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
+    sed '/^\s*$/d' | # Delete empty lines
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | cut -d. -f3- )
       if [ -z "$RECORD" ]; then
         RECORD="$ZONE"
-      elif grep -qE '\.$' <<<"$RECORD"; then
+      elif grep -qP '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
@@ -163,7 +155,7 @@ for ZONE in $ZONES; do
       SERVICE=$( echo "$LINE" | awk '{print $1}' | cut -d. -f1 )
       PROTOCOL=$( echo "$LINE" | awk '{print $1}' | cut -d. -f2 )
       TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qE '\.$' <<<"$TARGET"; then
+      if grep -qP '\.$' <<<"$TARGET"; then
         TARGET=$( echo "$TARGET" | sed 's/\.$//' )
       else
         TARGET="$TARGET.$ZONE"
@@ -177,7 +169,7 @@ for ZONE in $ZONES; do
   #
   # PTR records
 #  cut -d\" -f1 $ZONE |
-#    grep -iE '\s\s*MX\s\s*' |
+#    grep -iP '\s\s*MX\s\s*' |
 #    sed 's/;.*$//' |
 #    sed '/^\s*$/d' |
 #    sed "s/@/$ZONE./"
