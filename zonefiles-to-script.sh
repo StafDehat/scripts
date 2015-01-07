@@ -1,23 +1,24 @@
 #!/bin/bash
 
 # Author: Andrew Howard
-# Assumes a directory of zone files, where the filename is the domain
-# outputs to stdout - you probably want to redirect this to a file
 
 # Known limitations:
 # Requires perl-regexp support for grep (-P), otherwise Windows-style
 #   newlines would cause issues.
-# Ignores NS records.  This is due to ScriptRunner limitations, and
-#   also because they're unlikely to be accurate anyway.
+# Only handles A, AAAA, CNAME, MX, PTR, SRV, and TXT/SPF records,
+#   because ScriptRunner doesn't handle anything else.
 # Custom TTLs are ignored
 # Currently does not handle 'origin' syntax at all.  This is a huge
 #   failing of this script, but will rarely come into play.
-# Only handles A, AAAA, CNAME, MX, PTR, SRV, and TXT/SPF records,
-#   because ScriptRunner doesn't handle anything else.
 
 
+# These two variables need to be set:
 ACCT=123456
 ZONEDIR=/home/ahoward/Downloads/tmp/root/dnsexport
+
+# ACCT should be the account number into which these zones are being imported
+# ZONEDIR should be a directory containing *only* bind9-format zone files,
+#   and those files should have the same name as the zone itself (ie: @).
 
 
 cd $ZONEDIR
