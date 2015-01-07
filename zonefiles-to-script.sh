@@ -98,6 +98,7 @@ for ZONE in $ZONES; do
   # MX records
   grep -iE '\s\s*MX\s\s*' $ZONE | 
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
@@ -120,6 +121,7 @@ for ZONE in $ZONES; do
   # TXT/SPF records
   grep -iE '\s\s*(TXT|SPF)\s\s*' $ZONE | 
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' )
@@ -136,10 +138,13 @@ for ZONE in $ZONES; do
   # SRV records
   grep -iE '\s\s*SRV\s\s*' $ZONE | 
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | cut -d. -f3- )
-      if grep -qE '\.$' <<<"$RECORD"; then
+      if [ -z "$RECORD" ]; then
+        RECORD="$ZONE"
+      elif grep -qE '\.$' <<<"$RECORD"; then
         RECORD=$( echo "$RECORD" | sed 's/\.$//' )
       else
         RECORD="$RECORD.$ZONE"
