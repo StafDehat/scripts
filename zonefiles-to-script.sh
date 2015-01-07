@@ -25,11 +25,14 @@ cd $ZONEDIR
 ZONES=*
 
 
+#
+# Attempt to create the zones on ACCT
 for ZONE in $ZONES; do
-  #
-  # Create the zone with default records
   echo "add_default_zone $ZONE $ACCT"
+done
 
+
+for ZONE in $ZONES; do
   #
   # A records
   grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?A\s+' $ZONE |
