@@ -4,6 +4,15 @@
 # Assumes a directory of zone files, where the filename is the domain
 # outputs to stdout - you probably want to redirect this to a file
 
+# Known limitations:
+# Currently does not handle 'origin' syntax at all.  This is a huge
+#   failing of this script, but will rarely come into play.
+# Ignores NS records.  This is due to ScriptRunner limitations, and
+#   also because they're unlikely to be accurate anyway.
+# SPF records are getting matched in the A/CNAME/MX search.  This
+#   causes a lot of error messages, but doesn't actually hurt the
+#   desired results, since ?all, ~all, etc aren't valid IPs.
+
 
 # Stuff we don't want
 #cat * | sed 's/;.*$//' |
@@ -25,7 +34,7 @@
 
 
 
-ACCT=672199
+ACCT=
 ZONEDIR=/home/ahoward/Downloads/tmp/root/dnsexport
 
 
