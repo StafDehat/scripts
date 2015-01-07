@@ -25,8 +25,8 @@
 
 
 
-ACCT=825357
-ZONEDIR=/home/ahoward/Downloads/tmp/
+ACCT=672199
+ZONEDIR=/home/ahoward/Downloads/tmp/root/dnsexport
 
 
 cd $ZONEDIR
@@ -42,10 +42,16 @@ for ZONE in $ZONES; do
   # A records
   grep -iE '\s\s*A\s\s*' $ZONE |
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      TARGET=$( echo "$LINE" | awk '{print $NF}' )
+      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
+      if grep -qE '\.$' <<<$RECORD; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
       echo "add_address_record $ZONE $RECORD $TARGET"
     done
   
@@ -53,10 +59,16 @@ for ZONE in $ZONES; do
   # AAAA records
   grep -iE '\s\s*AAAA\s\s*' $ZONE | 
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      TARGET=$( echo "$LINE" | awk '{print $NF}' )
+      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
+      if grep -qE '\.$' <<<"$RECORD"; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
       echo "add_aaaa_record $ZONE $RECORD $TARGET"
     done
   
@@ -64,10 +76,21 @@ for ZONE in $ZONES; do
   # CNAME records
   grep -iE '\s\s*CNAME\s\s*' $ZONE | 
     sed 's/;.*$//' |
+    sed '/^\s*$/d' |
     sed "s/@/$ZONE./" |
     while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      TARGET=$( echo "$LINE" | awk '{print $NF}' )
+      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
+      if grep -qE '\.$' <<<"$RECORD"; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
+      if grep -qE '\.$' <<<"$TARGET"; then
+        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
+      else
+        TARGET="$TARGET.$ZONE"
+      fi
       echo "add_cname_record $ZONE $RECORD $TARGET"
     done
   
@@ -77,9 +100,19 @@ for ZONE in $ZONES; do
     sed 's/;.*$//' |
     sed "s/@/$ZONE./" |
     while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      TARGET=$( echo "$LINE" | awk '{print $NF}' )
-      PRIORITY=$( echo "$LINE" | awk '{print $(NF-1)}' )
+      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
+      if grep -qE '\.$' <<<"$RECORD"; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
+      if grep -qE '\.$' <<<"$TARGET"; then
+        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
+      else
+        TARGET="$TARGET.$ZONE"
+      fi
+      PRIORITY=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-1)}' )
       echo "add_mx_record $ZONE $RECORD $PRIORITY $TARGET"
     done
   
@@ -90,6 +123,11 @@ for ZONE in $ZONES; do
     sed "s/@/$ZONE./" |
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' )
+      if grep -qE '\.$' <<<"$RECORD"; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
       TARGET=$( echo "$LINE" | sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' )
       echo "add_txt_record $ZONE $RECORD $TARGET"
     done
@@ -101,12 +139,22 @@ for ZONE in $ZONES; do
     sed "s/@/$ZONE./" |
     while read LINE; do
       RECORD=$( echo "$LINE" | awk '{print $1}' | cut -d. -f3- )
+      if grep -qE '\.$' <<<"$RECORD"; then
+        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
+      else
+        RECORD="$RECORD.$ZONE"
+      fi
       SERVICE=$( echo "$LINE" | awk '{print $1}' | cut -d. -f1 )
       PROTOCOL=$( echo "$LINE" | awk '{print $1}' | cut -d. -f2 )
-      TARGET=$( echo "$LINE" | awk '{print $NF}' )
-      PORT=$( echo "$LINE" | awk '{print $(NF-1)}' )
-      WEIGHT=$( echo "$LINE" | awk '{print $(NF-2)}' )
-      PRIORITY=$( echo "$LINE" | awk '{print $(NF-3)}' )
+      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
+      if grep -qE '\.$' <<<"$TARGET"; then
+        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
+      else
+        TARGET="$TARGET.$ZONE"
+      fi
+      PORT=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-1)}' )
+      WEIGHT=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-2)}' )
+      PRIORITY=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-3)}' )
       echo "add_srv_record $ZONE $RECORD $TARGET $SERVICE $PROTOCOL $PORT $WEIGHT $PRIORITY"
     done
 
