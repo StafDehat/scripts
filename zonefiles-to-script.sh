@@ -10,6 +10,7 @@
 # Ignores NS records.  This is due to ScriptRunner limitations, and
 #   also because they're unlikely to be accurate anyway.
 # Ignores PTR records.
+# Custom TTLs are ignored
 
 # Stuff we don't want
 #cat * | sed 's/;.*$//' |
@@ -172,6 +173,16 @@ for ZONE in $ZONES; do
       PRIORITY=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-3)}' )
       echo "add_srv_record $ZONE $RECORD $TARGET $SERVICE $PROTOCOL $PORT $WEIGHT $PRIORITY"
     done
+
+  #
+  # PTR records
+#  cut -d\" -f1 $ZONE |
+#    grep -iE '\s\s*MX\s\s*' |
+#    sed 's/;.*$//' |
+#    sed '/^\s*$/d' |
+#    sed "s/@/$ZONE./"
+#  add_ptr_record zone ip_address fqdn 
+
 
   #
   # Print a newline
