@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#
+# Replaces the df binary, and makes system look 95% full
+# Doesn't work with LVM
+
+
+# Stolen from:
+# http://stackoverflow.com/questions/17615881/simplest-method-to-convert-file-size-with-suffix-to-bytes
+to_bytes() {
+    INPUT=$( cat )
+    units=$(echo "$INPUT" | sed 's/^[0123456789]*//' | tr '[:upper:]' '[:lower:]')
+    index=$(echo "$units" | awk '{print index ("bkmgt kbgb  mbtb", $0)}')
+    mod=$(echo "1024^(($index-1)%5)" | bc)
+    [ "$mod" -gt 0 ] &&
+        echo $(echo "$INPUT" | sed 's/[^0123456789].*$//g')"*$mod" | bc
+}
+
+# Stolen from:
+# http://ubuntuforums.org/showthread.php?t=1795681
+function to_human() {
+  cat | awk '{ sum=$1 ; hum[1024**3]="G";hum[1024**2]="M";hum[1024]="K"; for (x=1024**3; x>=1024; x/=1024){ if (sum>=x) { printf "%.2f%s\n",sum/x,hum[x];break } }}'
+}
+
+# Author: Andrew Howard
+df $@ | while read LINE; do
+  if grep -qi /dev/xvd <<<"$LINE"; then
+    TOTAL=$( echo "$LINE" | awk '{print $2}' | to_bytes )
+    USED=$( echo "$LINE" | awk '{print $3}' )
+    AVAIL=$( echo "$LINE" | awk '{print $4}' )
+    NEWUSED=$( echo $(( $TOTAL * 95 / 100 )) )
+    NEWAVAIL=$( echo $(( $TOTAL * 5 / 100 )) )
+    if grep -q h <<<"$@"; then
+      NEWUSED=$( echo "$NEWUSED" | to_human )
+      NEWAVAIL=$( echo "$NEWAVAIL" | to_human )
+    fi
+    echo "$LINE" | sed -e "s/$USED/$NEWUSED/" \
+                       -e "s/$AVAIL/$NEWAVAIL/" \
+                       -e 's/[0-9]*\%/95\%/'
+  else
+    echo "$LINE"
+  fi
+done | column -t
+
