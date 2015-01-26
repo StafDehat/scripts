@@ -797,7 +797,8 @@ for SEGMENT in $SEGMENTS; do
     echo "Response from API was the following:"
     echo
     echo "Response code: $CODE"
-    echo "$DATA" | sed '$d' && cleanup
+    echo "$DATA" | sed '$d'
+    echo "This is not a fatal error - ignoring and proceeding."
   fi
 done
 # Delete the manifest file
@@ -815,15 +816,20 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | sed '$d' && cleanup
+  echo "$DATA" | sed '$d'
+  echo "This is not a fatal error - ignoring and proceeding."
+else
+  echo "Contents deleted from $SRCRGN on account $SRCTENANTID."
 fi
-echo "Contents successfully deleted from $SRCRGN on account $SRCTENANTID."
 echo
 
 
 #
 # Delete the $SRCRGN container
 echo "Deleting container $CONTAINER from $SRCRGN on account $SRCTENANTID."
+# Sleep to avoid possible race condition
+# https://github.com/StafDehat/scripts/issues/13
+sleep 5
 DATA=$( curl --write-out \\n%{http_code} --silent --output - \
              $SRCFILEURL/$CONTAINER \
              -X DELETE \
@@ -838,10 +844,13 @@ elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
   echo "Response from API was the following:"
   echo
   echo "Response code: $CODE"
-  echo "$DATA" | sed '$d' && cleanup
+  echo "$DATA" | sed '$d'
+  echo "This is not a fatal error - ignoring and proceeding."
+  echo "You'll need to manually delete that source container later."
+else
+  MADESRCCONT=0
+  echo "Container deleted successfully."
 fi
-MADESRCCONT=0
-echo "Container deleted successfully."
 echo
 
 
