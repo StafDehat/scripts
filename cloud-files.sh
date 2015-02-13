@@ -1,7 +1,15 @@
 #!/bin/bash
 
-# Author: Dave Kludt
-# Additional regions (beyond DFW & ORD) added by Andrew Howard
+# Title:   cloud-files-bulk-objects.sh
+# Version: 1.1
+# Author:  Dave Kludt
+#          Additional regions (beyond DFW & ORD) added by Andrew Howard
+# Purpose: Automate the upload/download/deletion of multiple files from
+#          a Cloud Files container.
+# Danger:  This script *may* download many files to local directories,
+#          upload files to Cloud Files containers, and/or delete files
+#          from Cloud Files containers.
+
 
 getToken () {
     auth_response=`/usr/bin/curl -s -XPOST -H "Content-Type: application/json" -d '{"auth":{"RAX-KSKEY:apiKeyCredentials":{"username":"'$username'","apiKey":"'$key'"}}}' https://identity.api.rackspacecloud.com/v2.0/tokens`;
