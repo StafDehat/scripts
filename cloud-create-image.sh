@@ -98,7 +98,7 @@ TENANTID=$( echo "$TOKEN" | perl -pe 's/.*"token":.*?"tenant":.*?"id":"(.*?)".*$
 # 
 # Send the image-create signal
 REGION=$( tr 'A-Z' 'a-z' <<<"$REGION" )
-DATA=$( curl --write-out \\n%{http_code} --silent \
+DATA=$( curl -D - --write-out \\n%{http_code} --silent \
              https://$REGION.servers.api.rackspacecloud.com/v2/$TENANTID/servers/${SERVER_ID}/action \
              -X POST \
              -H "Content-Type: application/json" \
@@ -117,9 +117,10 @@ fi
 
 #
 # Report results
-echo "Creating new image."
+echo "Image creation initialized successfully."
 echo
-echo "Raw response data from API:"
+echo "Response headers from API:"
 echo "$DATA" | sed '$d'
+
 
 
