@@ -84,7 +84,7 @@ function usage() {
   echo "                                      -u SRCUSERNAME  -U DSTUSERNAME \\"
   echo "                                      -r SRCRGN       -R DSTRGN \\"
   echo "                                      [-a SRCAPIKEY]  [-A DSTAPIKEY] \\"
-  ecoh "                                      [-n DSTIMAGENAME]
+  echo "                                      [-n DSTIMAGENAME]"
   echo "Example:"
   echo "  # cloud-image-region-transfer.sh -u rackuser1 \\"
   echo "                                   -r dfw \\"
