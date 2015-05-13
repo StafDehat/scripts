@@ -215,6 +215,7 @@ SRCAUTHTOKEN=$( echo "$SRCTOKEN" |
                   sed -n '/token/,/}/p' |
                   grep -v \"id\":\"$SRCTENANTID\" |
                   sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+unset SRCAPIKEY
 
 
 #
@@ -261,6 +262,7 @@ else
                     sed -n '/token/,/}/p' |
                     grep -v \"id\":\"$DSTTENANTID\" |
                     sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+  unset DSTAPIKEY
 fi
 
 
