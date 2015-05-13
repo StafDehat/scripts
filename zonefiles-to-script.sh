@@ -16,8 +16,9 @@
 # ACCT should be the account number into which these zones are being imported
 # ZONEDIR should be a directory containing *only* bind9-format zone files,
 #   and those files should have the same name as the zone itself (ie: @).
+
 ACCT=123456
-ZONEDIR=/home/ahoward/Downloads/tmp/root/dnsexport
+ZONEDIR=/var/named/tmp
 
 
 function usage() {
@@ -36,6 +37,28 @@ function addzones() {
     echo "add_default_zone $ZONE $ACCT"
   done
   echo
+  #
+  # Record in appstats that this was executed.
+  curl -s http://10.21.229.29/appstats/event/ \
+       -X POST \
+       -H "Content-Type: application/json" \
+       -d '{ "username": "andrew.howard",
+             "status": "SUCCESS",
+             "bizunit": "Enterprise",
+             "OS": "Linux",
+             "functionid": "Part1-Zones",
+             "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+             "version": "1.0",
+             "appid": "zonefiles-to-script.sh",
+             "device": "N/A",
+             "ip": "",
+             "datey": "'$(date +%Y)'",
+             "datem": "'$(date +%-m)'",
+             "dated": "'$(date +%-d)'",
+             "dateh": "'$(date +%-H)'",
+             "datemin": "'$(date +%-M)'",
+             "dates": "'$(date +%-S)'"
+             }' &>/dev/null
 }
 
 #
@@ -195,6 +218,29 @@ function addrecords() {
     echo
   
   done
+
+  #
+  # Record in appstats that this was executed.
+  curl -s http://10.21.229.29/appstats/event/ \
+       -X POST \
+       -H "Content-Type: application/json" \
+       -d '{ "username": "andrew.howard",
+             "status": "SUCCESS",
+             "bizunit": "Enterprise",
+             "OS": "Linux",
+             "functionid": "Part2-Records",
+             "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+             "version": "1.0",
+             "appid": "zonefiles-to-script.sh",
+             "device": "N/A",
+             "ip": "",
+             "datey": "'$(date +%Y)'",
+             "datem": "'$(date +%-m)'",
+             "dated": "'$(date +%-d)'",
+             "dateh": "'$(date +%-H)'",
+             "datemin": "'$(date +%-M)'",
+             "dates": "'$(date +%-S)'"
+             }' &>/dev/null
 }
 
 
