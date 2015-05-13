@@ -39,7 +39,7 @@ function addzones() {
   echo
   #
   # Record in appstats that this was executed.
-  curl -s http://10.21.229.29/appstats/event/ \
+  curl -s https://appstats.rackspace.com/appstats/event/ \
        -X POST \
        -H "Content-Type: application/json" \
        -d '{ "username": "andrew.howard",
@@ -221,7 +221,7 @@ function addrecords() {
 
   #
   # Record in appstats that this was executed.
-  curl -s http://10.21.229.29/appstats/event/ \
+  curl -s https://appstats.rackspace.com/appstats/event/ \
        -X POST \
        -H "Content-Type: application/json" \
        -d '{ "username": "andrew.howard",
