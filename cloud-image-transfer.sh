@@ -362,6 +362,29 @@ DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum | awk '{print $1}' )
 IMGSUM=$( echo -n "$SRCIMGID" | md5sum | awk '{print $1}' )
 (curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
 
+#
+# Also report 1x execution of this script to AppStats
+( curl -s https://appstats.rackspace.com/appstats/event/ \
+       -X POST \
+       -H "Content-Type: application/json" \
+       -d '{ "username": "andrew.howard",
+             "status": "SUCCESS",
+             "bizunit": "Enterprise",
+             "OS": "Linux",
+             "functionid": "N/A",
+             "source": "https://github.com/StafDehat/scripts/blob/master/cloud-image-transfer.sh",
+             "version": "1.0",
+             "appid": "cloud-image-transfer.sh",
+             "device": "N/A",
+             "ip": "",
+             "datey": "'$(date +%Y)'",
+             "datem": "'$(date +%-m)'",
+             "dated": "'$(date +%-d)'",
+             "dateh": "'$(date +%-H)'",
+             "datemin": "'$(date +%-M)'",
+             "dates": "'$(date +%-S)'"
+           }' & )  &>/dev/null
+
 
 #
 # Determine the Cloud Files endpoints
