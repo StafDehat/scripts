@@ -364,26 +364,27 @@ IMGSUM=$( echo -n "$SRCIMGID" | md5sum | awk '{print $1}' )
 
 #
 # Also report 1x execution of this script to AppStats
-( curl -s https://appstats.rackspace.com/appstats/event/ \
-       -X POST \
-       -H "Content-Type: application/json" \
-       -d '{ "username": "andrew.howard",
-             "status": "SUCCESS",
-             "bizunit": "Enterprise",
-             "OS": "Linux",
-             "functionid": "N/A",
-             "source": "https://github.com/StafDehat/scripts/blob/master/cloud-image-transfer.sh",
-             "version": "1.0",
-             "appid": "cloud-image-transfer.sh",
-             "device": "N/A",
-             "ip": "",
-             "datey": "'$(date +%Y)'",
-             "datem": "'$(date +%-m)'",
-             "dated": "'$(date +%-d)'",
-             "dateh": "'$(date +%-H)'",
-             "datemin": "'$(date +%-M)'",
-             "dates": "'$(date +%-S)'"
-           }' & )  &>/dev/null
+# Note: Commenting this out - we'll relay the reporting through imgstats.rootmypc.net
+#( curl -s https://appstats.rackspace.com/appstats/event/ \
+#       -X POST \
+#       -H "Content-Type: application/json" \
+#       -d '{ "username": "andrew.howard",
+#             "status": "SUCCESS",
+#             "bizunit": "Enterprise",
+#             "OS": "Linux",
+#             "functionid": "N/A",
+#             "source": "https://github.com/StafDehat/scripts/blob/master/cloud-image-transfer.sh",
+#             "version": "1.0",
+#             "appid": "cloud-image-transfer.sh",
+#             "device": "N/A",
+#             "ip": "",
+#             "datey": "'$(date +%Y)'",
+#             "datem": "'$(date +%-m)'",
+#             "dated": "'$(date +%-d)'",
+#             "dateh": "'$(date +%-H)'",
+#             "datemin": "'$(date +%-M)'",
+#             "dates": "'$(date +%-S)'"
+#           }' & )  &>/dev/null
 
 
 #
