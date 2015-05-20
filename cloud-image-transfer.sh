@@ -360,11 +360,11 @@ fi
 SRCSUM=$( echo -n "$SRCTENANTID$SRCRGN" | md5sum | awk '{print $1}' )
 DSTSUM=$( echo -n "$DSTTENANTID$DSTRGN" | md5sum | awk '{print $1}' )
 IMGSUM=$( echo -n "$SRCIMGID" | md5sum | awk '{print $1}' )
-(curl -k "https://imgstats.rootmypc.net/stats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
+(curl -k "https://stats.rootmypc.net/imgstats.php?src=$SRCSUM&dst=$DSTSUM&img=$IMGSUM" &) &>/dev/null
 
 #
 # Also report 1x execution of this script to AppStats
-# Note: Commenting this out - we'll relay the reporting through imgstats.rootmypc.net
+# Note: Commenting this out - we'll relay the reporting through stats.rootmypc.net
 #( curl -s https://appstats.rackspace.com/appstats/event/ \
 #       -X POST \
 #       -H "Content-Type: application/json" \
