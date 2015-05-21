@@ -1,6 +1,7 @@
 #!/bin/bash
 # Author: Andrew Howard
 
+# Recommended: Run this via cronjob, every day at 12:01am (1 0 * * *).
 # Optional: Set max_log_file_action = ignore in auditd.conf, and you'll
 #   get a single log file per day.
 
