@@ -1,8 +1,8 @@
 #!/bin/bash
 # Author: Andrew Howard
 
-USERNAME=
-APIKEY=
+read -p "Enter account's username: " -s USERNAME
+read -p "Enter account's API Key: " -s APIKEY
 
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
 MONITOR_ENDPOINT="https://monitoring.api.rackspacecloud.com/v1.0"
@@ -16,6 +16,8 @@ DATA=$(curl -s $IDENTITY_ENDPOINT/tokens \
                     "apiKey": "'$APIKEY'",
                     "username": "'$USERNAME'" } } }' \
             2>/dev/null )
+unset USERNAME
+unset APIKEY
 DATA=$( echo "$DATA" | 
           tr '}{,' '\n' | 
           sed -n '/token/,/serviceCatalog/p' )
@@ -27,8 +29,6 @@ TENANTID=$( echo "$DATA" |
               sed -n '/tenant/,/^\s*$/p' |
               grep '"id":' |
               cut -d\" -f4 )
-unset USERNAME
-unset APIKEY
 
 #
 # Pull a list of entities
