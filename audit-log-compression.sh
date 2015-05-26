@@ -1,7 +1,7 @@
 #!/bin/bash
 # Author: Andrew Howard
 
-# Recommended: Run this via cronjob, every day at 12:01am (1 0 * * *).
+# Recommended: Run this via cronjob, every day at midnight (0 0 * * *).
 # Optional: Set max_log_file_action = ignore in auditd.conf, and you'll
 #   get a single log file per day.
 
@@ -34,6 +34,7 @@ YESTERDAY=$( date +%F -d "yesterday" )
 # audit logs.  Verify no 'yesterday' logs currently exist, else exit.
 COUNT=$( ls -1U audit.log.$YESTERDAY.* 2>/dev/null | wc -l )
 if [ $COUNT -ne 0 ]; then
+  logger "$0: ERROR - Yesterday's logs already rotated."
   echo "ERROR: Yesterday's logs already rotated."
   echo "Script must have already run today - exiting."
   exit 1
@@ -42,22 +43,30 @@ fi
 
 # Begin auditd self-rotation
 # Rotate the audit logs safely (only auditd can do that)
+logger "$0: Asking auditd to rotate its active log file"
 /sbin/service auditd rotate
 EXITVALUE=$?
 if [ $EXITVALUE != 0 ]; then
   /usr/bin/logger -t auditd "ALERT exited abnormally with [$EXITVALUE]"
   exit 0
+else
+  logger "$0: Auditd reports successful rotation"
 fi
 # End auditd self-rotation
 
 # Begin rename/compression
 # Append date to each rotated audit log, and compress
 NEWLOGS=$( ls -1U audit.log.* | grep -E '^audit.log.[0-9][0-9]*$' )
+logger "$0: Attempting to rotate the following: $NEWLOGS"
 for FILE in $NEWLOGS; do
   SUFFIX=${FILE/audit.log./}
+  logger "$0: Renaming audit.log.$SUFFIX audit.log.$YESTERDAY.$SUFFIX"
   mv audit.log.$SUFFIX audit.log.$YESTERDAY.$SUFFIX
+  logger "$0: Compressing logfile audit.log.$YESTERDAY.$SUFFIX"
   gzip audit.log.$YESTERDAY.$SUFFIX
 done
+logger "$0: Finished"
 # End rename/compression
 
 exit 0
+
