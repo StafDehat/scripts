@@ -29,8 +29,8 @@ trap 'cleanup' 1 2 9 15 17 19 23 EXIT
 
 function usage() {
   echo "Usage: cloud-files-upload.sh [-h] [-u USERNAME] [-k APIKEY] \\"
-  echo "                             [-s] [-r REGION] [-n OBJECTNAME] \\"
-  echo "                             [-b BYTES] -f LOCALFILE -c CONTAINER"
+  echo "                             [-s] [-b BYTES] [-n OBJECTNAME] \\"
+  echo "                             -r REGION -f LOCALFILE -c CONTAINER"
   echo "Example:"
   echo "  # cloud-files-upload.sh -r dfw \\"
   echo "                          -f /home/user/pbjt.jpg \\"
