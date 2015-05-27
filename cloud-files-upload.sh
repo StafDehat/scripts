@@ -4,6 +4,20 @@
 #
 # Upload a file to Cloud Files.  If it's over 4GB, split into 1GB chunks.
 
+PREREQS="curl grep sed cut tr echo"
+PREREQFLAG=0
+for PREREQ in $PREREQS; do
+  which $PREREQ &>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Error: Gotta have '$PREREQ' binary to run."
+    PREREQFLAG=1
+  fi
+done
+if [ $PREREQFLAG -ne 0 ]; then
+  exit 1
+fi
+
+
 PIPE1="/tmp/cflf.pipe1"
 PIPE2="/tmp/cflf.pipe2"
 function cleanup {
@@ -14,52 +28,50 @@ trap 'cleanup' 1 2 9 15 17 19 23 EXIT
 
 
 function usage() {
-  echo "Usage: brc-files-createobject [-h] [-a BRC_AUTHTOKEN] [-v BRC_VAULTNAME] \\"
-  echo "                              [-s] [-r BRC_REGION] [-n OBJECTNAME] \\"
-  echo "                              [-b BYTES] -f LOCALFILE -c CONTAINER"
+  echo "Usage: cloud-files-upload.sh [-h] [-u USERNAME] [-k APIKEY] \\"
+  echo "                             [-s] [-r REGION] [-n OBJECTNAME] \\"
+  echo "                             [-b BYTES] -f LOCALFILE -c CONTAINER"
   echo "Example:"
-  echo "  # brc-files-createobject -a 1a2b3c4d5e6f7g8h9i0j \\"
-  echo "                           -v MossoCloudFS_199f2dd2-e293-11e3-87ea-6f46a026e216 \\"
-  echo "                           -r dfw \\"
-  echo "                           -f /home/user/pbjt.jpg \\"
-  echo "                           -c jpegs"
+  echo "  # cloud-files-upload.sh -r dfw \\"
+  echo "                          -f /home/user/pbjt.jpg \\"
+  echo "                          -c jpegs"
   echo "Arguments:"
-  echo "  -a X  Authentication token.  This can be set via the environment"
-  echo "        variable BRC_AUTHTOKEN instead of as an argument."
-  echo "  -b X  Split object into X-byte sized segments.  Create a manifest file"
-  echo "        if this results in multiple segments.  Default:5368709120 (5GB)"
+  echo "  -b X  Limit individual object size to X bytes.  Create a manifest file"
+  echo "        if this results in multiple segments.  Default: 1073741824 (1GB)"
   echo "  -c X  Name of Cloud Files container in which to store file."
   echo "  -f X  Path to local file to be uploaded."
   echo "  -h    Print this help"
-  echo "  -n X  Optional.  Filename to use in Cloud Files.  If excluded,"
+  echo "  -k X  Optional.  Cloud account's API key.  If omitted from arguments"
+  echo "        then it must be provided interactively via prompts."
+  echo "  -n X  Optional.  Filename to use in Cloud Files.  If omitted,"
   echo "        name in Cloud Files will match local filename."
-  echo "  -r X  Region.  Examples: iad, dfw, ord, syd.  This can be set via"
-  echo "        the environment variable BRC_REGION instead of as an"
-  echo "        argument."
-  echo "  -s    Use ServiceNet.  For this to work, you must be executing this"
-  echo "        command within the same region as BRC_REGION."
-  echo "  -v X  Vault name for this account.  This can be set via the environment"
-  echo "        variable BRC_VAULTNAME instead of as an argument."
+  echo "  -r X  Cloud region.  Examples: iad, dfw, ord, syd."
+  echo "  -s    Use ServiceNet."
+  echo "  -u X  Optional.  Cloud account username.  If omitted from arguments"
+  echo "        then it must be provided interactively via prompts."
 }
 
 
 USAGEFLAG=0
+USERNAME=""
+APIKEY=""
 CONTAINER=""
 LOCALFILE=""
 OBJECTNAME=""
+REGION=""
 SNET=0
-MAXSIZE=$(( 1024 * 1024 * 1024 * 5 ))
-while getopts ":a:b:c:f:hn:r:sv:" arg; do
+MAXSIZE=$(( 1024 * 1024 * 1024 ))
+while getopts ":b:c:f:hk:n:r:su:" arg; do
   case $arg in
-    a) BRC_AUTHTOKEN=$OPTARG;;
-    b) MAXSIZE=$OPTARG;;
+    b) MAXSIZE="$OPTARG";;
     c) CONTAINER="$OPTARG";;
     f) LOCALFILE="$OPTARG";;
     h) usage && exit 0;;
+    k) APIKEY="$OPTARG";;
     n) OBJECTNAME="$OPTARG";;
-    r) BRC_REGION=$OPTARG;;
+    r) REGION="$OPTARG";;
     s) SNET=1;;
-    v) BRC_VAULTNAME=$OPTARG;;
+    u) USERNAME="$OPTARG";;
     :) echo "ERROR: Option -$OPTARG requires an argument."
        USAGEFLAG=1;;
     *) echo "ERROR: Invalid option: -$OPTARG"
@@ -68,15 +80,8 @@ while getopts ":a:b:c:f:hn:r:sv:" arg; do
 done #End arguments
 shift $(($OPTIND - 1))
 
-
-# Arg testing
-for ARG in BRC_AUTHTOKEN BRC_REGION BRC_VAULTNAME; do
-  if [ -z "${!ARG}" ]; then
-    echo "ERROR: Must define $ARG in environment or argument"
-    USAGEFLAG=1
-  fi
-done
-for ARG in CONTAINER LOCALFILE; do
+USAGEFLAG=0
+for ARG in REGION LOCALFILE CONTAINER; do
   if [ -z "${!ARG}" ]; then
     echo "ERROR: Must define $ARG as argument"
     USAGEFLAG=1
@@ -85,34 +90,90 @@ done
 if [ $USAGEFLAG -ne 0 ]; then
   usage && exit 1
 fi
+
 if [ ! -f "$LOCALFILE" ]; then
   echo "ERROR: Can not access $LOCALFILE - does it exist?"
   exit 1
 fi
-
-
-if [ "$SNET" -eq 1 ]; then
-  FILES_ENDPOINT=$( $BRCUTIL/brc-util-filesendpoint -r $BRC_REGION -i )
-else
-  FILES_ENDPOINT=$( $BRCUTIL/brc-util-filesendpoint -r $BRC_REGION )
+if [ -z "$USERNAME" ]; then
+  read -p "Enter cloud account username: " -s USERNAME
+  echo
 fi
-FILESHOST=$( echo "$FILES_ENDPOINT" | cut -d/ -f3 )
-nc -w 5 -z $FILESHOST 443 &>/dev/null
-if [ $? -ne 0 ]; then
-  echo "Error: Unable to reach Cloud Files API ($FILESHOST:443)."
-  exit 1
+if [ -z "$APIKEY" ]; then
+  read -p "Enter cloud account API Key: " -s APIKEY
+  echo
 fi
-
 if [ -z "$OBJECTNAME" ]; then
   OBJECTNAME=$( basename "$LOCALFILE" )
 fi
 
-# These are the variables you'll need to set
-LOCALFILE=/home/rack/image.vhd
-FILES_VAULT=MossoCloudFS_3ce9abd8-cbc7-11e3-9eee-27700cf6687a
-FILES_ENDPOINT=https://storage101.dfw1.clouddrive.com/v1
-CONTAINER=MyContainer
-CFNAME=MyBigFile
+IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
+
+FILES_ENDPOINT=""
+if [ $SNET -eq 1 ]; then
+  FILES_ENDPOINT="https://snet-"
+else 
+  FILES_ENDPOINT="https://"
+fi
+REGION=$( tr 'A-Z' 'a-z' <<<"$REGION" )
+case $REGION in
+  ord) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.ord1.clouddrive.com/v1";;
+  dfw) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.dfw1.clouddrive.com/v1";;
+  hkg) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.hkg1.clouddrive.com/v1";;
+  lon) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.lon3.clouddrive.com/v1";;
+  iad) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.iad3.clouddrive.com/v1";;
+  syd) FILES_ENDPOINT="${FILES_ENDPOINT}storage101.syd2.clouddrive.com/v1";;
+    *) echo "ERROR: Unrecognized REGION code." && exit 1;;
+esac
+FILESHOST=$( echo "$FILES_ENDPOINT" | cut -d/ -f3 )
+if ! ( echo > /dev/tcp/$FILESHOST/443 ) &>/dev/null; then
+  echo "Error: Unable to reach Cloud Files API ($FILESHOST:443)."
+  exit 1
+fi
+
+
+#
+# Auth against API
+DATA=$(curl --write-out \\n%{http_code} --silent --output - \
+            $IDENTITY_ENDPOINT/tokens \
+            -H "Content-Type: application/json" \
+            -d '{ "auth": {
+                    "RAX-KSKEY:apiKeyCredentials": {
+                      "apiKey": "'"$APIKEY"'",
+                      "username": "'"$USERNAME"'" } } }' \
+         2>/dev/null )
+RETVAL=$?
+CODE=$( echo "$DATA" | tail -n 1 )
+# Check for failed API call
+if [ $RETVAL -ne 0 ]; then
+  echo "Unknown error encountered when trying to run curl command." && cleanup
+elif grep -qvE '^2..$' <<<$CODE; then
+  echo "Error: Unable to authenticate against API using USERNAME and APIKEY"
+  echo "  provided.  Raw response data from API was the following:"
+  echo
+  echo "Response code: $CODE"
+  echo "$DATA" | sed '$d' && exit 1
+fi
+unset USERNAME
+unset APIKEY
+APITOKEN=$( echo "$DATA" | sed '$d' )
+TENANTID=$( echo "$APITOKEN" |
+              tr ',' '\n' |
+              sed -n '/token/,/APIKEY/p' |
+              sed -n '/tenant/,/}/p' |
+              sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+AUTHTOKEN=$( echo "$APITOKEN" |
+               tr ',' '\n' |
+               sed -n '/token/,/APIKEY/p' |
+               sed -n '/token/,/}/p' |
+               grep -v \"id\":\"$TENANTID\" |
+               sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
+VAULTNAME=$( echo "$APITOKEN" | 
+               sed 's/endpoints/\n/g' | 
+               grep cloudFiles | grep tenantId | 
+               tr '{},' '\n' | 
+               grep tenantId | sort -u | head -n 1 | 
+               cut -d\" -f4 )
 
 
 function uploadSmallFile() {
@@ -124,18 +185,20 @@ function uploadSmallFile() {
   #      Because of this, I can't pass the file directly to curl - gotta
   #      cat it and pipe to curl, then use "-T -" to read from stdin with curl.
   DATA=$( cat "$FILE" | curl -I --write-out \\n%{http_code} --silent --output - \
-               $FILES_ENDPOINT/$BRC_VAULTNAME/"$CONTAINER"/"$CFNAME" \
+               $FILES_ENDPOINT/$VAULTNAME/"$CONTAINER"/"$CFNAME" \
                -X PUT \
                -T - \
-               -H "X-Auth-Token: $BRC_AUTHTOKEN" \
+               -H "X-Auth-Token: $AUTHTOKEN" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
-    errorcurlfail
+    echo "Unknown error while attempting to run curl command"
+    exit 1
   elif ! grep -qE '^2..$' <<<$CODE; then
-    errornot200 $CODE $( echo "$DATA" | head -n -1 )
+    echo "ERROR: curl command did not receive HTTP 200 response"
+    exit 1
   fi
   # Print the md5sum etag
   # We'll test the value outside this function
@@ -182,21 +245,24 @@ function uploadLargeFile() {
   rm -f $PIPE1 $PIPE2
 
   # Create a dynamic manifest file
+  # To-Do: Change this to a static manifest file
   echo "Creating manifest object '$CFNAME'."
   DATA=$( curl --write-out \\n%{http_code} --silent --output - \
-               $FILES_ENDPOINT/$BRC_VAULTNAME/"$CONTAINER"/"$CFNAME" \
+               $FILES_ENDPOINT/$VAULTNAME/"$CONTAINER"/"$CFNAME" \
                -T /dev/null \
                -X PUT \
-               -H "X-Auth-Token: $BRC_AUTHTOKEN" \
+               -H "X-Auth-Token: $AUTHTOKEN" \
                -H "X-Object-Manifest: $CONTAINER/${CFNAME}-" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
-    errorcurlfail
+    echo "Unknown error while attempting to run curl command"
+    exit 1
   elif ! grep -qE '^2..$' <<<$CODE; then
-    errornot200 $CODE $( echo "$DATA" | head -n -1 )
+    echo "ERROR: curl command did not receive HTTP 200 response"
+    exit 1
   fi
 }
 
