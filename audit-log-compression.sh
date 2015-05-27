@@ -45,6 +45,7 @@ fi
 # Rotate the audit logs safely (only auditd can do that)
 logger "$0: Asking auditd to rotate its active log file"
 /sbin/service auditd rotate
+sleep 30
 EXITVALUE=$?
 if [ $EXITVALUE != 0 ]; then
   /usr/bin/logger -t auditd "ALERT exited abnormally with [$EXITVALUE]"
@@ -60,10 +61,12 @@ NEWLOGS=$( ls -1U audit.log.* | grep -E '^audit.log.[0-9][0-9]*$' )
 logger "$0: Attempting to rotate the following: $NEWLOGS"
 for FILE in $NEWLOGS; do
   SUFFIX=${FILE/audit.log./}
-  logger "$0: Renaming audit.log.$SUFFIX audit.log.$YESTERDAY.$SUFFIX"
+  logger "$0: Renaming audit.log.$SUFFIX to audit.log.$YESTERDAY.$SUFFIX"
   mv audit.log.$SUFFIX audit.log.$YESTERDAY.$SUFFIX
-  logger "$0: Compressing logfile audit.log.$YESTERDAY.$SUFFIX"
-  gzip audit.log.$YESTERDAY.$SUFFIX
+done
+for FILE in audit.log.$YESTERDAY.*; do
+  logger "$0: Compressing logfile $FILE"
+  gzip $FILE
 done
 logger "$0: Finished"
 # End rename/compression
