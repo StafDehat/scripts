@@ -4,6 +4,12 @@
 #
 # Archive a block device into 
 
+
+# To-Do: Nuke this and leverage cloud-files-upload.sh
+# Save to $FILES_ENDPOINT/$VAULTNAME/$CBS-ID/$DATE
+# Write extract script that prompts for which date to restore from
+
+
 #
 # Remove any stuff we created
 function cleanup() {
