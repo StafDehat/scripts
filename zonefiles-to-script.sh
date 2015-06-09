@@ -12,21 +12,66 @@
 #   failing of this script, but will rarely come into play.
 
 
-# These two variables need to be set
-# ACCT should be the account number into which these zones are being imported
-# ZONEDIR should be a directory containing *only* bind9-format zone files,
-#   and those files should have the same name as the zone itself (ie: @).
-
-ACCT=123456
-ZONEDIR=/var/named/tmp
-
-
 function usage() {
-  echo "Script requires one argument, either '1' or '2'."
-  echo "  Pass argument '1' if you want commands to create empty zones."
-  echo "  Pass argument '2' if you want commands to add records to existing zones."
-  echo "Example: $0 1"
+  echo
+  echo "Description:"
+  echo "  Generate ScriptRunner syntax to recreate on ACCOUNT, using DNS"
+  echo "  Tool ScriptRunner syntax,  all zone files stored in DIRECTORY."
+  echo ""
+  echo "Usage: zonefiles-to-script.sh -a ACCOUNT \\"
+  echo "                              -d DIRECTORY \\"
+  echo "                              [-h] [-r] [-z]"
+  echo "Example: ./zonefiles-to-script.sh -a 123456 \\"
+  echo "                                  -d /tmp/zones \\"
+  echo "                                  -z"
+  echo ""
+  echo "Arguments:"
+  echo "  -a X  Customer's account number (or DDI)."
+  echo "  -d X  Directory containing zone files (and only zone files)."
+  echo "  -h    Print this help."
+  echo "  -r    Generate script commands to recreate records.  Assume"
+  echo "        prior existence of zones."
+  echo "  -z    Generate script commands to create empty zones."
 }
+
+USAGEFLAG=0
+ACCT=""
+DORECORDS=0
+DOZONES=0
+ZONEDIR=""
+while getopts ":a:d:hrz" arg; do
+  case $arg in
+    a) ACCT=$OPTARG;;
+    d) ZONEDIR=$OPTARG;;
+    h) usage && exit 0;;
+    r) DORECORDS=1;;
+    z) DOZONES=1;;
+    :) echo "ERROR: Option -$OPTARG requires an argument."
+       USAGEFLAG=1;;
+    *) echo "ERROR: Invalid option: -$OPTARG"
+       USAGEFLAG=1;;
+  esac
+done
+
+if [ -z "$ZONEDIR" ]; then
+  echo "ERROR: Must define DIRECTORY as argument (-d)"
+  USAGEFLAG=1
+elif [ ! -d "$ZONEDIR" ]; then
+  echo "ERROR: Specified directory does not exist or is not accessible."
+  USAGEFLAG=1
+fi
+
+if [ -z "$ACCT" ]; then
+  echo "ERROR: Must define ACCOUNT as argument (-a)"
+  USAGEFLAG=1
+elif [ $( grep -cE '^[0-9][0-9]*$' <<<"$ACCT" ) -ne 1 ]; then
+  echo "ERROR: Specified accout must be numeric."
+  USAGEFLAG=1
+fi
+if [ $USAGEFLAG -ne 0 ]; then
+  usage && exit 1
+fi
+
 
 #
 # This gets run if argument $1 was '1'
@@ -41,26 +86,26 @@ function addzones() {
   echo
   #
   # Record in appstats that this was executed.
-  ( curl -s https://appstats.rackspace.com/appstats/event/ \
-         -X POST \
-         -H "Content-Type: application/json" \
-         -d '{ "username": "andrew.howard",
-               "status": "SUCCESS",
-               "bizunit": "Enterprise",
-               "OS": "Linux",
-               "functionid": "Part1-Zones",
-               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
-               "version": "1.0",
-               "appid": "zonefiles-to-script.sh",
-               "device": "N/A",
-               "ip": "",
-               "datey": "'$(date +%Y)'",
-               "datem": "'$(date +%-m)'",
-               "dated": "'$(date +%-d)'",
-               "dateh": "'$(date +%-H)'",
-               "datemin": "'$(date +%-M)'",
-               "dates": "'$(date +%-S)'"
-               }' &) &>/dev/null
+#  ( curl -s https://appstats.rackspace.com/appstats/event/ \
+#         -X POST \
+#         -H "Content-Type: application/json" \
+#         -d '{ "username": "andrew.howard",
+#               "status": "SUCCESS",
+#               "bizunit": "Enterprise",
+#               "OS": "Linux",
+#               "functionid": "Part1-Zones",
+#               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+#               "version": "1.0",
+#               "appid": "zonefiles-to-script.sh",
+#               "device": "N/A",
+#               "ip": "",
+#               "datey": "'$(date +%Y)'",
+#               "datem": "'$(date +%-m)'",
+#               "dated": "'$(date +%-d)'",
+#               "dateh": "'$(date +%-H)'",
+#               "datemin": "'$(date +%-M)'",
+#               "dates": "'$(date +%-S)'"
+#               }' &) &>/dev/null
   #
   # Report usage stats to author's tracking tool
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=$NUMZONES&records=0" &) &>/dev/null
@@ -227,26 +272,26 @@ function addrecords() {
 
   #
   # Record in appstats that this was executed.
-  ( curl -s https://appstats.rackspace.com/appstats/event/ \
-         -X POST \
-         -H "Content-Type: application/json" \
-         -d '{ "username": "andrew.howard",
-               "status": "SUCCESS",
-               "bizunit": "Enterprise",
-               "OS": "Linux",
-               "functionid": "Part2-Records",
-               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
-               "version": "1.0",
-               "appid": "zonefiles-to-script.sh",
-               "device": "N/A",
-               "ip": "",
-               "datey": "'$(date +%Y)'",
-               "datem": "'$(date +%-m)'",
-               "dated": "'$(date +%-d)'",
-               "dateh": "'$(date +%-H)'",
-               "datemin": "'$(date +%-M)'",
-               "dates": "'$(date +%-S)'"
-               }' &) &>/dev/null
+#  ( curl -s https://appstats.rackspace.com/appstats/event/ \
+#         -X POST \
+#         -H "Content-Type: application/json" \
+#         -d '{ "username": "andrew.howard",
+#               "status": "SUCCESS",
+#               "bizunit": "Enterprise",
+#               "OS": "Linux",
+#               "functionid": "Part2-Records",
+#               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+#               "version": "1.0",
+#               "appid": "zonefiles-to-script.sh",
+#               "device": "N/A",
+#               "ip": "",
+#               "datey": "'$(date +%Y)'",
+#               "datem": "'$(date +%-m)'",
+#               "dated": "'$(date +%-d)'",
+#               "dateh": "'$(date +%-H)'",
+#               "datemin": "'$(date +%-M)'",
+#               "dates": "'$(date +%-S)'"
+#               }' &) &>/dev/null
   #
   # Report usage stats to author's tracking tool
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=0&records=$NUMRECORDS" &) &>/dev/null
@@ -258,13 +303,9 @@ cd $ZONEDIR
 # Do at least a tiny bit of verification to see if these files are, in fact, DNS zones
 ZONES=$( grep -li soa * )
 
-if [ -z "$1" ]; then
-  usage && exit
-elif [ $1 -eq 1 ]; then
+if [ $DOZONES -eq 1 ]; then
   addzones
-elif [ $1 -eq 2 ]; then
-  addrecords
-else
-  usage && exit
 fi
-
+if [ $DORECORDS -eq 1 ]; then
+  addrecords
+fi
