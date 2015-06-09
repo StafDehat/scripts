@@ -86,26 +86,26 @@ function addzones() {
   echo
   #
   # Record in appstats that this was executed.
-#  ( curl -s https://appstats.rackspace.com/appstats/event/ \
-#         -X POST \
-#         -H "Content-Type: application/json" \
-#         -d '{ "username": "andrew.howard",
-#               "status": "SUCCESS",
-#               "bizunit": "Enterprise",
-#               "OS": "Linux",
-#               "functionid": "Part1-Zones",
-#               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
-#               "version": "1.0",
-#               "appid": "zonefiles-to-script.sh",
-#               "device": "N/A",
-#               "ip": "",
-#               "datey": "'$(date +%Y)'",
-#               "datem": "'$(date +%-m)'",
-#               "dated": "'$(date +%-d)'",
-#               "dateh": "'$(date +%-H)'",
-#               "datemin": "'$(date +%-M)'",
-#               "dates": "'$(date +%-S)'"
-#               }' &) &>/dev/null
+  ( curl -s https://appstats.rackspace.com/appstats/event/ \
+         -X POST \
+         -H "Content-Type: application/json" \
+         -d '{ "username": "andrew.howard",
+               "status": "SUCCESS",
+               "bizunit": "Enterprise",
+               "OS": "Linux",
+               "functionid": "Part1-Zones",
+               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+               "version": "1.0",
+               "appid": "zonefiles-to-script.sh",
+               "device": "N/A",
+               "ip": "",
+               "datey": "'$(date +%Y)'",
+               "datem": "'$(date +%-m)'",
+               "dated": "'$(date +%-d)'",
+               "dateh": "'$(date +%-H)'",
+               "datemin": "'$(date +%-M)'",
+               "dates": "'$(date +%-S)'"
+               }' &) &>/dev/null
   #
   # Report usage stats to author's tracking tool
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=$NUMZONES&records=0" &) &>/dev/null
@@ -272,26 +272,26 @@ function addrecords() {
 
   #
   # Record in appstats that this was executed.
-#  ( curl -s https://appstats.rackspace.com/appstats/event/ \
-#         -X POST \
-#         -H "Content-Type: application/json" \
-#         -d '{ "username": "andrew.howard",
-#               "status": "SUCCESS",
-#               "bizunit": "Enterprise",
-#               "OS": "Linux",
-#               "functionid": "Part2-Records",
-#               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
-#               "version": "1.0",
-#               "appid": "zonefiles-to-script.sh",
-#               "device": "N/A",
-#               "ip": "",
-#               "datey": "'$(date +%Y)'",
-#               "datem": "'$(date +%-m)'",
-#               "dated": "'$(date +%-d)'",
-#               "dateh": "'$(date +%-H)'",
-#               "datemin": "'$(date +%-M)'",
-#               "dates": "'$(date +%-S)'"
-#               }' &) &>/dev/null
+  ( curl -s https://appstats.rackspace.com/appstats/event/ \
+         -X POST \
+         -H "Content-Type: application/json" \
+         -d '{ "username": "andrew.howard",
+               "status": "SUCCESS",
+               "bizunit": "Enterprise",
+               "OS": "Linux",
+               "functionid": "Part2-Records",
+               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+               "version": "1.0",
+               "appid": "zonefiles-to-script.sh",
+               "device": "N/A",
+               "ip": "",
+               "datey": "'$(date +%Y)'",
+               "datem": "'$(date +%-m)'",
+               "dated": "'$(date +%-d)'",
+               "dateh": "'$(date +%-H)'",
+               "datemin": "'$(date +%-M)'",
+               "dates": "'$(date +%-S)'"
+               }' &) &>/dev/null
   #
   # Report usage stats to author's tracking tool
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=0&records=$NUMRECORDS" &) &>/dev/null
