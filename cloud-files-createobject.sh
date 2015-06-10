@@ -80,7 +80,6 @@ while getopts ":b:c:f:hk:n:r:su:" arg; do
 done #End arguments
 shift $(($OPTIND - 1))
 
-USAGEFLAG=0
 for ARG in REGION LOCALFILE CONTAINER; do
   if [ -z "${!ARG}" ]; then
     echo "ERROR: Must define $ARG as argument"
