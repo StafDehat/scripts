@@ -2,7 +2,10 @@
 # Author: Andrew Howard
 
 #
-# Upload a file to Cloud Files.  If it's over 4GB, split into 1GB chunks.
+# Upload a file to Cloud Files.
+# If it's over the max size (-b MAXSIZE-BYTES), split into multiple
+#   segments and create a manifest file.
+
 
 PREREQS="curl grep sed cut tr echo"
 PREREQFLAG=0
