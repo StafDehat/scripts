@@ -6,6 +6,8 @@
 #          Additional regions (beyond DFW & ORD) added by Andrew Howard
 # Purpose: Automate the upload/download/deletion of multiple files from
 #          a Cloud Files container.
+# Note:    For mass deletes, use 'eliminator' instead.
+#          https://eliminator.eco.rackspace.com/
 # Danger:  This script *may* download many files to local directories,
 #          upload files to Cloud Files containers, and/or delete files
 #          from Cloud Files containers.
