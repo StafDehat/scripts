@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+# Calculate md5sum of a file, 1G at a time
+
 FILE="$1"
 SIZE=$( stat -c %s "$FILE" )
 MAXSIZE=1073741824 #1G

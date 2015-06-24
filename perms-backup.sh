@@ -1,7 +1,8 @@
 #!/bin/bash
+
 # Author: Andrew Howard
-# A race-condition-safe bash script wrapper that will ensure this script
-# runs non-concurrently with other instances of itself.
+# Traverse filesystem and create a file which, when executed, will set permissions
+#   server-wide to what they were when this script ran.
 
 logger "Beginning run of script: $0"
 
