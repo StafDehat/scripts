@@ -3,6 +3,8 @@
 # Author: Andrew Howard
 # Note: This script requires the BashRC framework from here:
 # https://github.com/StafDehat/bashrc
+
+# Note: Deprecated.  MyCloud portal now shows this easily.
  
 AUTHTOKEN=
 DDI=

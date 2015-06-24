@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Author: Andrew Howard
+# Wrote this for a very specific use case for my friend Joe.
+# Likely that no one else will ever find this useful
 
 # Colours!
 K="\033[0;30m"    # black
