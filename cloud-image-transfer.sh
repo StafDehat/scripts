@@ -101,7 +101,7 @@ function usage() {
   echo "Arguments:"
   echo "Note: Source args in lowercase, destination in uppercase."
   echo "  -1    Use the source account details for the destination too"
-  echo "        (overrides -A and -T)."
+  echo "        (overrides -U and -A)."
   echo "  -a X  API Key (not token) of source account."
   echo "        Optional - If not provided, will prompt for input."
   echo "  -A X  API Key (not token) of destination account."
