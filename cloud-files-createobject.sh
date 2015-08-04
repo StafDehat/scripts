@@ -197,11 +197,16 @@ AUTHTOKEN=$( echo "$APITOKEN" |
                sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 VAULTNAME=$( echo "$APITOKEN" | 
                sed 's/endpoints/\n/g' | 
-               grep cloudFiles | grep tenantId | 
+               grep cloudFiles | grep tenantId | grep MossoCloudFS_ |
                tr '{},' '\n' | 
                grep tenantId | sort -u | head -n 1 | 
                cut -d\" -f4 )
-
+echo
+echo "Authentication info:"
+echo "Tenant ID: $TENANTID"
+echo "TokenData: $AUTHTOKEN"
+echo "VaultName: $VAULTNAME"
+echo
 
 function uploadSmallFile() {
   local FILE="$1"
@@ -212,13 +217,16 @@ function uploadSmallFile() {
   #      Because of this, I can't pass the file directly to curl - gotta
   #      cat it and pipe to curl, then use "-T -" to read from stdin with curl.
   DATA=$( cat "$FILE" | curl -I --write-out \\n%{http_code} --silent --output - \
-               $FILES_ENDPOINT/$VAULTNAME/"$CONTAINER"/"$CFNAME" \
+               "$FILES_ENDPOINT"/"$VAULTNAME"/"$CONTAINER"/"$CFNAME" \
                -X PUT \
                -T - \
                -H "X-Auth-Token: $AUTHTOKEN" \
             2>/dev/null )
   RETVAL=$?
   CODE=$( echo "$DATA" | tail -n 1 )
+  echo "Response:"
+  echo "$CODE"
+  echo "$DATA"
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
     echo "Unknown error while attempting to run curl command"
@@ -265,7 +273,8 @@ function uploadLargeFile() {
       if grep -q "$MD5" <<<$ETAG; then
         break
       fi
-      # MD5 error - loop to retry
+      # Else MD5 error - loop to retry
+      echo "MD5 mismatch - retrying upload."
       continue
     done #End for x(1-10)
   done #End for COUNT
