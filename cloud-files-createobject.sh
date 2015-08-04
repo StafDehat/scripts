@@ -5,6 +5,31 @@
 # Upload a file to Cloud Files.
 # If it's over the max size (-b MAXSIZE-BYTES), split into multiple
 #   segments and create a manifest file.
+#
+# Here's an example:
+# ahoward@phoenix[~]$ dd if=/dev/urandom of=tmpfile bs=4096 count=2560
+# 2560+0 records in
+# 2560+0 records out
+# 10485760 bytes (10 MB) copied, 1.07393 s, 9.8 MB/s
+# ahoward@phoenix[~]$ ll -h tmpfile
+# -rw-rw-r-- 1 ahoward ahoward 10M May 27 09:48 tmpfile
+# ahoward@phoenix[~]$ OneMeg=$((1024*1024))
+# ahoward@phoenix[~]$ cloud-files-createobject.sh -r dfw -c andr4596 -f tmpfile -b $OneMeg
+# Enter cloud account username: 
+# Enter cloud account API Key: 
+# Object 'tmpfile' >1048576 bytes.  Splitting into segments.
+# Creating object 'tmpfile-0'.
+# Creating object 'tmpfile-1'.
+# Creating object 'tmpfile-2'.
+# Creating object 'tmpfile-3'.
+# Creating object 'tmpfile-4'.
+# Creating object 'tmpfile-5'.
+# Creating object 'tmpfile-6'.
+# Creating object 'tmpfile-7'.
+# Creating object 'tmpfile-8'.
+# Creating object 'tmpfile-9'.
+# Creating manifest object 'tmpfile'.
+# ahoward@phoenix[~]$ 
 
 
 PREREQS="curl grep sed cut tr echo"
