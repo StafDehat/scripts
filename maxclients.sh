@@ -21,6 +21,9 @@
 # one apache instance.
 
 PARENTPIDS=`comm -12 <(ps -C httpd -C apache2 -o ppid | sort -u) <(ps -C httpd -C apache2 -o pid | sort -u)`
+# Bug discovered in Ubuntu - use this instead:
+# PARENTPIDS=$( comm -12 <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o ppid | sort -u) \
+#                        <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o pid | sort -u) )
  
 for ParPID in $PARENTPIDS; do
   SUM=0
