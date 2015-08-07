@@ -50,11 +50,12 @@ TMPDIR=$( mktemp -d )
 PIPE1="$TMPDIR/pipe1"
 PIPE2="$TMPDIR/pipe2"
 function cleanup {
- rm -f $PIPE1 $PIPE2
- if [ -d $TMPDIR ]; then
-   rmdir $TMPDIR
- fi
- exit
+  rm -f $PIPE1 $PIPE2
+  if [ -d $TMPDIR ]; then
+    rmdir $TMPDIR
+  fi
+  stty echo
+  exit
 }
 trap 'cleanup' 1 2 9 15 17 19 23 EXIT
 
