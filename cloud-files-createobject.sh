@@ -32,24 +32,6 @@
 # ahoward@phoenix[~]$ 
 
 
-# Non-concurrency wrapper
-# Since this uses hard-coded named pipes, it can't run concurrently with itself
-logger "$0: Starting execution"
-
-LOCK_FILE=/tmp/`basename $0`.lock
-function cleanup {
- logger "$0: Caught exit signal - deleting trap file"
- rm -f $LOCK_FILE
- exit 2
-}
-trap 'cleanup' 1 2 9 15 17 19 23 EXIT
-(set -C; : > $LOCK_FILE) 2> /dev/null
-if [ $? != "0" ]; then
- logger "$0: Lock File exists - exiting"
- exit 1
-fi
-
-
 PREREQS="curl grep sed cut tr echo"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
@@ -64,10 +46,14 @@ if [ $PREREQFLAG -ne 0 ]; then
 fi
 
 
-PIPE1="/tmp/cflf.pipe1"
-PIPE2="/tmp/cflf.pipe2"
+TMPDIR=$( mktemp -d )
+PIPE1="$TMPDIR/pipe1"
+PIPE2="$TMPDIR/pipe2"
 function cleanup {
  rm -f $PIPE1 $PIPE2
+ if [ -d $TMPDIR ]; then
+   rmdir $TMPDIR
+ fi
  exit
 }
 trap 'cleanup' 1 2 9 15 17 19 23 EXIT
@@ -297,6 +283,7 @@ function uploadLargeFile() {
     done #End for x(1-10)
   done #End for COUNT
   rm -f $PIPE1 $PIPE2
+  rmdir $TMPDIR
 
   # Create a dynamic manifest file
   # To-Do: Change this to a static manifest file
