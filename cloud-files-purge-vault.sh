@@ -35,7 +35,7 @@ while read CONTAINER; do
 
   # Wait for all the deletes to be done
   while [ $( jobs -p | wc -l ) -ne 0 ]; do
-    echo "Waiting for jobs to finish"
+    echo "Waiting for jobs to finish ($( jobs -p | wc -l ) remaining)"
     sleep 1
   done
 
