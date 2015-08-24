@@ -14,8 +14,7 @@ CONTAINERS="$( curl $FILES_ENDPOINT/$VAULTNAME?format=json \
                     -X GET \
                     -H "X-Auth-Token: $AUTHTOKEN" |
                 python -m json.tool | 
-                sed -n '/^\s*"name": /s/^\s*"name": "\(.*\)"\s*$/\1/p' |
-                sort -nr )"
+                sed -n '/^\s*"name": /s/^\s*"name": "\(.*\)"\s*$/\1/p' )"
 while read CONTAINER; do
   # Get a list of all objects in the container
   OBJECTS="$( curl $FILES_ENDPOINT/$VAULTNAME/$CONTAINER?format=json \
@@ -24,18 +23,27 @@ while read CONTAINER; do
                 python -m json.tool | 
                 sed -n '/^\s*"name": /s/^\s*"name": "\(.*\)"\s*$/\1/p' |
                 sort -nr )"
+
   # Delete all objects in the container
   while read OBJECT; do
     # Delete one object
     echo "Deleting object $OBJECT"
     curl "$FILES_ENDPOINT/$VAULTNAME/$CONTAINER/$OBJECT" \
          -X DELETE \
-         -H "X-Auth-Token: $AUTHTOKEN"
+         -H "X-Auth-Token: $AUTHTOKEN" &
   done <<<"$OBJECTS"
+
+  # Wait for all the deletes to be done
+  while true; do 
+    sleep 1
+    if [ $( jobs -p | wc -l ) -eq 0 ]; then
+      break
+    fi
+  done
+
   # Delete the container
   echo "Deleting container $CONTAINER"
   curl "$FILES_ENDPOINT/$VAULTNAME/$CONTAINER" \
        -X DELETE \
        -H "X-Auth-Token: $AUTHTOKEN"
 done <<<"$CONTAINERS"
-
