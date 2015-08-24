@@ -27,18 +27,16 @@ while read CONTAINER; do
   # Delete all objects in the container
   while read OBJECT; do
     # Delete one object
-    echo "Deleting object $OBJECT"
+    echo "Deleting object $CONTAINER/$OBJECT"
     curl "$FILES_ENDPOINT/$VAULTNAME/$CONTAINER/$OBJECT" \
          -X DELETE \
          -H "X-Auth-Token: $AUTHTOKEN" &
   done <<<"$OBJECTS"
 
   # Wait for all the deletes to be done
-  while true; do 
+  while [ $( jobs -p | wc -l ) -ne 0 ]; do
+    echo "Waiting for jobs to finish"
     sleep 1
-    if [ $( jobs -p | wc -l ) -eq 0 ]; then
-      break
-    fi
   done
 
   # Delete the container
