@@ -28,7 +28,7 @@ if [ ! -d $BACKUPDIR ]; then
   mkdir -p $BACKUPDIR
 fi
 
-find / -wholename '/proc' -prune -o -fprintf $BACKUPDIR/perms-backup.`date +%Y%m%d`.txt "chown %u:%g '%p'\nchmod %m '%p'\n"
+find / -wholename '/proc' -prune -o -fprintf $BACKUPDIR/perms-backup.`date +%Y%m%d`.txt "chown -h %u:%g '%p'\nchmod %m '%p'\n"
 getfacl --no-effective --recursive --skip-base --absolute-names / > $BACKUPDIR/facl-backup.`date +%Y%m%d`.txt
 
 tmpwatch -m ${RETENTIONDAYS}d $BACKUPDIR
