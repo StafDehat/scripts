@@ -13,7 +13,6 @@
 
 #
 # Hard-coded variables
-# To-Do: All of these could potentially become command-line args
 ROUTEFILE="/etc/sysconfig/network-scripts/route-eth0"
 
 
@@ -55,7 +54,7 @@ Arguments:
   -g X  Set new gateway address to X.
   -h    Optional.  Print this help.
   -n X  Set the gateway for network range X (CIDR).
-
+  
 EOF
 }
 
@@ -113,43 +112,61 @@ while getopts ":dg:hn:" arg; do
 done #End arguments
 shift $(($OPTIND - 1))
 
-# Verify required arguments were defined
-ARGUMENTS="NEWGW NETWORK"
-for ARGUMENT in $ARGUMENTS; do
-  if [ -z "${!ARGUMENT}" ]; then
-    echo "Error: Must define $ARGUMENT as argument." >&2
-    USAGEFLAG=1
-  fi
-done
-if [ $USAGEFLAG -ne 0 ]; then
-  usage && exit 2
-fi
 
-# Verify syntax validity of arguments
+#
+# Verify command-line arg NEWGW
+if [ -z "$NEWGW" ]; then
+  echo "Error: Must define NEWGW as argument." >&2
+  USAGEFLAG=1
 # Test that NEWGW is a valid IPv4 address
-if ! validIPv4 "$NEWGW"; then
+elif ! validIPv4 "$NEWGW"; then
   echo "Error: Specified gateway ($NEWGW) is not a valid IPv4 address." >&2
   USAGEFLAG=1
 fi
-# Split NETWORK into its network address, and its CIDR mask
-NETADDR="$( cut -d/ -f1 <<<"$NETWORK" )"
-CIDR="$( cut -d/ -f2- <<<"$NETWORK" )"
-# Test that NETADDR is a valid IPv4 address
-if ! validIPv4 "$NETADDR"; then
-  echo "Error: Specified network address ($NETADDR) is not a valid IPv4 address." >&2
+
+
+#
+# Verify command-line arg NETWORK
+# BEGIN null test
+if [ -z "$NETWORK" ]; then
+  echo "Error: Must define NETWORK as argument." >&2
   USAGEFLAG=1
-fi
-# Test that CIDR is numeric, and in the range {0..32}
-if ! grep -qP '^[0-9]+$' <<<"$CIDR"; then
-  echo "Error: Invalid CIDR mask ($CIDR) - must be numeric." >&2
-  USAGEFLAG=1
-elif [ $CIDR -gt 32 ]; then
-  echo "Error: Invalid CIDR mask ($CIDR) - must be between 0 and 32." >&2
-  USAGEFLAG=1
-fi
-# Exit if any invalid args set the USAGEFLAG
+else
+  # Check whether this is valid CIDR format (ie: foo/bar)
+  # BEGIN notation test
+  if ! grep -q / <<<"$NETWORK"; then
+    echo "Error: NETWORK ($NETWORK) is not a valid CIDR network." >&2
+    USAGEFLAG=1
+  else
+    # Split NETWORK into its network address, and its CIDR mask
+    NETADDR="$( cut -d/ -f1 <<<"$NETWORK" )"
+    CIDR="$( cut -d/ -f2- <<<"$NETWORK" )"
+
+    # Test that NETADDR is a valid IPv4 address
+    # BEGIN netaddr test
+    if ! validIPv4 "$NETADDR"; then
+      echo "Error: Address portion of NETWORK ($NETADDR) is not a valid IPv4 address." >&2
+      USAGEFLAG=1
+    fi # END netaddr test
+
+    # Test that CIDR is numeric, and in the range {0..32}
+    # BEGIN cidr test
+    if ! grep -qP '^[0-9]+$' <<<"$CIDR"; then
+      echo "Error: Invalid CIDR mask ($CIDR) - must be numeric." >&2
+      USAGEFLAG=1
+    elif [ $CIDR -gt 32 ]; then
+      echo "Error: Invalid CIDR mask ($CIDR) - must be between 0 and 32." >&2
+      USAGEFLAG=1
+    fi # END cidr test
+
+  fi # END notation test
+fi # END null test
+
+
+#
+# Exit if USAGEFLAG got set by any invalid args
 if [ $USAGEFLAG -ne 0 ]; then
-  exit 3
+  usage && exit 3
 fi
 
 
@@ -168,37 +185,39 @@ fi
 #
 # Read current content of route-eth0 into parallel arrays
 # Each route will be stored as "ADDRESS[x]/NETMASK[x] via GATEWAY[x]"
-ADDRESS=""
-NETMASK=""
-GATEWAY=""
+declare -a ADDRESS
+declare -a NETMASK
+declare -a GATEWAY
 INDEX=0
-while read LINE; do
-  if grep -qP '^\s*(#.*)?$' <<<"$LINE"; then
-    continue # Blank line or all-comment line - skip it
-  fi
-  case "$LINE" in
-    ADDRESS*)
-      INDEX="$( sed 's/^\s*ADDRESS\([0-9]*\).*/\1/' <<<"$LINE" )"
-      VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      ADDRESS[$INDEX]="$VALUE"
-      ;;
-    NETMASK*)
-      INDEX="$( sed 's/^\s*NETMASK\([0-9]*\).*/\1/' <<<"$LINE" )"
-      VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      NETMASK[$INDEX]="$VALUE"
-      ;;
-    GATEWAY*)
-      INDEX="$( sed 's/^\s*GATEWAY\([0-9]*\).*/\1/' <<<"$LINE" )"
-      VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      GATEWAY[$INDEX]="$VALUE"
-      ;;
-    *)
-      # It's possible the existing route-eth0 is using "1.2.3.4/24 via 1.2.3.4"
-      #   syntax.  We're going to consider that out-of-scope for this script.
-      echo "Warning: Unexpected content - skipping this line:" >&2
-      echo "  $LINE" >&2
-  esac
-done <"$ROUTEFILE"
+if [ -f "$ROUTEFILE" ]; then
+  while read LINE; do
+    if grep -qP '^\s*(#.*)?$' <<<"$LINE"; then
+      continue # Blank line or all-comment line - skip it
+    fi
+    case "$LINE" in
+      ADDRESS*)
+        INDEX="$( sed 's/^\s*ADDRESS\([0-9]*\).*/\1/' <<<"$LINE" )"
+        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+        ADDRESS[$INDEX]="$VALUE"
+        ;;
+      NETMASK*)
+        INDEX="$( sed 's/^\s*NETMASK\([0-9]*\).*/\1/' <<<"$LINE" )"
+        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+        NETMASK[$INDEX]="$VALUE"
+        ;;
+      GATEWAY*)
+        INDEX="$( sed 's/^\s*GATEWAY\([0-9]*\).*/\1/' <<<"$LINE" )"
+        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+        GATEWAY[$INDEX]="$VALUE"
+        ;;
+      *)
+        # It's possible the existing route-eth0 is using "1.2.3.4/24 via 1.2.3.4"
+        #   syntax.  We're going to consider that out-of-scope for this script.
+        echo "Warning: Unexpected content - skipping this line:" >&2
+        echo "  $LINE" >&2
+    esac
+  done <"$ROUTEFILE"
+fi
 
 
 #
@@ -236,25 +255,34 @@ done
 
 #
 # Add or adjust the specified route in our parallel arrays
-if [ $INDEXFLAG -eq 0 ]; then
-  # If route didn't already exist, append values to the parallel arrays
-  # First, find the largest index in our arrays
-  # Note: The sorting isn't strictly necessary - it will already be sorted
-  #   due to how we defined INDICES.  This just future-proofs it.
-  INDEX=$( echo "$INDICES" | 
-             sed 's/\s\s*/\n/g' | # Sub whitespace with newlines
-             sort -n | tail -n 1 )
-  # An increment by 1 to give us our new/next slot
-  INDEX=$(( $INDEX + 1 ))
-  # Insert the new element at the end of our arrays
+if [ $INDEXFLAG -eq 1 ]; then
+  # If INDEXFLAG is set, we found an existing definition for the specified
+  #   route - we'll need to edit the GATEWAY at that INDEX.
+  GATEWAY[$INDEX]="$NEWGW"
+else
+  # If INDEXFLAG is unset, then we didn't find the specified network in any
+  #   existing route definitions.  That means we're adding, not editing.
+  if [ -z "$INDICES" ]; then
+    # If *no* valid routes already existed, that's a special case.
+    # Insert new route at index 0.
+    INDEX=0
+  else
+    # Otherwise, we'll need to find the highest-indexed route, add one
+    #   to that index, and insert the new route at that next index.
+    # Note: The sorting isn't strictly necessary - it will already be sorted
+    #   due to how we defined INDICES.  This just future-proofs it.
+    INDEX=$( echo "$INDICES" | 
+               sed 's/\s\s*/\n/g' | # Sub whitespace with newlines
+               sort -n | tail -n 1 )
+    INDEX=$(( $INDEX + 1 ))
+  fi
+  # Insert the new element
   ADDRESS[$INDEX]="$NETADDR"
   NETMASK[$INDEX]="$CIDR2NM"
   GATEWAY[$INDEX]="$NEWGW"
-  # And record the new index in our INDICES variable
+  # By adding that entry, we've now added a new valid-index, so update
+  #   INDICES with that new INDEX.
   INDICES="$INDICES $INDEX"
-else
-  # If route did exist, overwrite the GATEWAY entry with NEWGW
-  GATEWAY[$INDEX]="$NEWGW"
 fi
 # Parallel arrays should now contain all desired network information.
 
