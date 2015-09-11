@@ -18,7 +18,7 @@ ROUTEFILE="/etc/sysconfig/network-scripts/route-eth0"
 
 #
 # Verify the existence of pre-req's
-PREREQS="cut awk"
+PREREQS="awk cat cut echo grep id sed sort uniq"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ &>/dev/null
@@ -215,6 +215,7 @@ if [ -f "$ROUTEFILE" ]; then
         #   syntax.  We're going to consider that out-of-scope for this script.
         echo "Warning: Unexpected content - skipping this line:" >&2
         echo "  $LINE" >&2
+        ;;
     esac
   done <"$ROUTEFILE"
 fi
