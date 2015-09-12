@@ -2,14 +2,12 @@
 
 # Author: Andrew Howard
 # Purpose: Update gateway address for specified network within route-eth0.
-# Limitation: Currently unsafe if server is using routes of this format:
-#   10.0.0.0/24 via 10.0.0.15
 # Last updated: 2015-09-09
 
 # To-Do:
-# Take "1.2.3.0/24 via 1.2.3.4" syntax as input.
 # Take ROUTEFILE (or just interface name) as command-line arg
-# Make errSkipLine a helper function
+# largestIndex helper function?
+
 
 #
 # Hard-coded variables
@@ -60,8 +58,9 @@ EOF
 }
 
 
-#
-# Helper function - test if argument is a valid IPv4 address
+# ----- Begin Helper Functions ----- #
+
+# Test if argument is a valid IPv4 address
 function validIPv4() {
   if grep -qP '^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$' <<<"$1"; then
     return 0
@@ -69,9 +68,7 @@ function validIPv4() {
   return 1
 }
 
-
-#
-# Helper function - test if argument is a valid CIDR range
+# Test if argument is a valid CIDR range
 function validCIDR() {
   if grep -qP '^\d+$' <<<"$1"; then
     if [ "$1" -le 32 ]; then
@@ -81,9 +78,7 @@ function validCIDR() {
   return 1
 }
 
-
-#
-# Helper function - convert a CIDR to subnet mask
+# Convert a CIDR to subnet mask
 # This isn't the most efficient implementation, but I wanted to write
 #   my own rather than steal something from the internet.
 function cidr2nm() {
@@ -102,6 +97,23 @@ function cidr2nm() {
   NETMASK="$( cut -d\. -f2- <<<"$NETMASK" )" # Trim the leading '.'
   echo "$NETMASK"
 }
+
+# From a list of array indices, return the next available slot
+function nextUnusedIndex() {
+  local INDICES="$@"
+  local INDEX=0
+  if [ -z "$INDICES" ]; then
+    echo 0
+  else
+    INDEX=$( echo "$INDICES" | 
+               sed 's/\s\s*/\n/g' | # Sub whitespace with newlines
+               sort -n | tail -n 1 )
+    INDEX=$(( $INDEX + 1 ))
+    echo $INDEX
+  fi
+}
+
+# ----- End Helper Functions ----- #
 
 
 #
@@ -205,7 +217,7 @@ IPROUTES=""
 # That means we need to parse all the "var=val" lines first, since those are
 #   positional (ie: ADDRESS0, ADDRESS1, etc).
 if [ -f "$ROUTEFILE" ]; then
-  while read LINE; do
+  while read LINE; do  # <"$ROUTEFILE"
     SYNTAXFLAG=0
     if grep -qP '^\s*(#.*)?$' <<<"$LINE"; then
       continue # Blank line or all-comment line - skip it
@@ -265,13 +277,13 @@ if [ -f "$ROUTEFILE" ]; then
         SYNTAXFLAG=1
       fi
       # If all is well, save the route for later
-      [ "$SYNTAXFLAG" -eq 0 ] && IPROUTES="$IPROUTES\n$ONEADDR $ONEMASK $ONEGW"
+      [ "$SYNTAXFLAG" -eq 0 ] && IPROUTES="${IPROUTES}$ONEADDR $ONEMASK $ONEGW\n"
     elif grep -qP '^\s*default\s+(\d+\.){3}\d+(\s+dev\s+'"$INTERFACE"')?\s*(#.*)?$' <<<"$LINE"; then
     # Regex help:      default   ^-----IP----^[   dev    ^---eth0---^ ]    [#..] 
       # Line is "default X.X.X.X dev interface" format
-      VALUE="$( awk 'print $2' <<<"$LINE" )"
+      VALUE="$( awk '{print $2}' <<<"$LINE" )"
       if validIPv4 "$VALUE"; then
-        IPROUTES="$IPROUTES\n0.0.0.0 0.0.0.0 $VALUE"
+        IPROUTES="${IPROUTES}0.0.0.0 0.0.0.0 $VALUE\n"
       else
         echo "Error: '$VALUE' is not a valid IPv4 address:" >&2
         SYNTAXFLAG=1
@@ -309,9 +321,18 @@ fi
 
 #
 # Now that we definitely know the last index of the valid "var=val" routes,
-#   we can now append the non-positional "x/y via z" routes to the end.
-echo "IP-based Routes:"
-echo "$IPROUTES"
+#   we can append the non-positional "x/y via z" routes to the end.
+INDEX="$( nextUnusedIndex $INDICES )"
+# Now INDEX is pointing at the "end" of the array.  Add our non-
+#   positional routes, starting at that INDEX.
+while read LINE; do  # <<<"$( echo -e "$IPROUTES" )"
+  read ADDRESS[$INDEX]="$ONEADDR" \
+       NETMASK[$INDEX]="$CIDR2NM" \
+       GATEWAY[$INDEX]="$NEWGW" <<<"$LINE"
+  INDICES="$INDICES $INDEX"
+  INDEX=$(( $INDEX + 1 ))
+done <<<"$( echo -e "$IPROUTES" )"
+
 
 
 #
@@ -340,20 +361,8 @@ if [ $INDEXFLAG -eq 1 ]; then
 else
   # If INDEXFLAG is unset, then we didn't find the specified network in any
   #   existing route definitions.  That means we're adding, not editing.
-  if [ -z "$INDICES" ]; then
-    # If *no* valid routes already existed, that's a special case.
-    # Insert new route at index 0.
-    INDEX=0
-  else
-    # Otherwise, we'll need to find the highest-indexed route, add one
-    #   to that index, and insert the new route at that next index.
-    # Note: The sorting isn't strictly necessary - it will already be sorted
-    #   due to how we defined INDICES.  This just future-proofs it.
-    INDEX=$( echo "$INDICES" | 
-               sed 's/\s\s*/\n/g' | # Sub whitespace with newlines
-               sort -n | tail -n 1 )
-    INDEX=$(( $INDEX + 1 ))
-  fi
+  # First find the "end" of the array:
+  INDEX="$( nextUnusedIndex $INDICES )"
   # Insert the new element
   ADDRESS[$INDEX]="$NETADDR"
   NETMASK[$INDEX]="$CIDR2NM"
