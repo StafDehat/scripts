@@ -10,7 +10,6 @@
 # Take "1.2.3.0/24 via 1.2.3.4" syntax as input.
 # Take ROUTEFILE (or just interface name) as command-line arg
 # Make errSkipLine a helper function
-# Use validCIDR helper function
 
 #
 # Hard-coded variables
