@@ -9,7 +9,7 @@
 
 #
 # Verify the existence of pre-req's
-PREREQS="awk cat cut echo grep id sed sort uniq"
+PREREQS="awk cat cp cut date echo grep id sed sort uniq"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ &>/dev/null
@@ -392,10 +392,12 @@ OUTPUT=$(
 #
 # Clobber route-INTERFACE with the data from our parallel arrays
 #   unless "-d" was passed, then just echo the data instead.
-if [ $DRYRUN -eq 0 ]; then
-  echo "$OUTPUT" >"$ROUTEFILE"
-else
+if [ $DRYRUN -ne 0 ]; then
   echo "$OUTPUT"
+else
+  # Backup the route file, then clobber it
+  [ -f "$ROUTEFILE" ] && cp -p "$ROUTEFILE" "$ROUTEFILE.$(date '+%F-%T')"
+  echo "$OUTPUT" >"$ROUTEFILE"
 fi
 
 
