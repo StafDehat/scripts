@@ -1,17 +1,11 @@
 #!/bin/bash
 
 # Author: Andrew Howard
-# Purpose: Update gateway address for specified network within route-eth0.
+# Purpose: Update gateway address for specified network within route-INTERFACE.
 # Last updated: 2015-09-09
 
 # To-Do:
-# Take ROUTEFILE (or just interface name) as command-line arg
-
-
-#
-# Hard-coded variables
-ROUTEFILE="/etc/sysconfig/network-scripts/route-eth0"
-INTERFACE="eth0"
+# When editing an empty route file, a null route0 is created. Fix that.
 
 
 #
@@ -35,12 +29,12 @@ fi
 function usage() {
   cat <<EOF
 
-Usage: setGW.sh [-d] [-h] -n NETWORK -g NEWGW
+Usage: setGW.sh [-d] [-h] -n NETWORK -g NEWGW [-i INTERFACE]
 
 Examples:
 # ./setGW.sh -h
 # ./setGW.sh -d -n 10.3.4.0/26 -g 10.3.4.5
-# ./setGW.sh -n 10.3.4.0/26 -g 10.3.4.5
+# ./setGW.sh -n 10.3.4.0/26 -g 10.3.4.5 -i wlan0
 
 This script sets a static route for NETWORK via the gateway NEWGW.
 If a route already exists for the given NETWORK, the gateway will be changed.
@@ -48,9 +42,10 @@ If a route does not already exist, it will be added.
 
 Arguments:
   -d    Optional.  Dry-run.  Don't change files - just print to STDOUT
-        the data we *would* output into route-eth0.
+        the data we *would* output into route-INTERFACE.
   -g X  Set new gateway address to X.
   -h    Optional.  Print this help.
+  -i X  Optional.  Set routes for interface X.
   -n X  Set the gateway for network range X (CIDR).
   
 EOF
@@ -119,13 +114,15 @@ function nextUnusedIndex() {
 # Handle command-line arguments
 NEWGW=""
 NETWORK=""
+INTERFACE="eth0"
 DRYRUN=0
 USAGEFLAG=0
-while getopts ":dg:hn:" arg; do
+while getopts ":dg:hi:n:" arg; do
   case $arg in
     d) DRYRUN=1;;
     g) NEWGW="$OPTARG";;
     h) usage && exit 0;;
+    i) INTERFACE="$OPTARG";;
     n) NETWORK="$OPTARG";;
     :) echo "Error: Option -$OPTARG requires an argument." >&2
        USAGEFLAG=1;;
@@ -183,6 +180,16 @@ fi # END null test
 
 
 #
+# Confirm specified network interface exists
+if ! grep -qP '^\s*'"$INTERFACE"':' /proc/net/dev; then
+  echo "Error: Network interface '$INTERFACE' does not exist." >&2
+  USAGEFLAG=1
+else
+  ROUTEFILE="/etc/sysconfig/network-scripts/route-$INTERFACE"
+fi
+
+
+#
 # Exit if USAGEFLAG got set by any invalid args
 if [ $USAGEFLAG -ne 0 ]; then
   usage && exit 3
@@ -202,7 +209,7 @@ fi
 
 
 #
-# Read current content of route-eth0 into parallel arrays
+# Read current content of route-INTERFACE into parallel arrays
 # Each route will be stored as "ADDRESS[x]/NETMASK[x] via GATEWAY[x]"
 declare -a ADDRESS
 declare -a NETMASK
@@ -374,7 +381,7 @@ fi
 
 
 #
-# Write out the array data to route-eth0 format
+# Write out the array data to route-INTERFACE format
 OUTPUT=$( 
   for INDEX in $INDICES; do
     echo "ADDRESS${INDEX}=${ADDRESS[$INDEX]}"
@@ -384,7 +391,7 @@ OUTPUT=$(
 
 
 #
-# Clobber route-eth0 with the data from our parallel arrays
+# Clobber route-INTERFACE with the data from our parallel arrays
 #   unless "-d" was passed, then just echo the data instead.
 if [ $DRYRUN -eq 0 ]; then
   echo "$OUTPUT" >"$ROUTEFILE"
