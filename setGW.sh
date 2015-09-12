@@ -9,7 +9,7 @@
 # To-Do:
 # Take "1.2.3.0/24 via 1.2.3.4" syntax as input.
 # Take ROUTEFILE (or just interface name) as command-line arg
-
+# Make errSkipLine a helper function
 
 #
 # Hard-coded variables
@@ -189,34 +189,53 @@ declare -a ADDRESS
 declare -a NETMASK
 declare -a GATEWAY
 INDEX=0
+IPROUTES=""
+# This file could contain entries in one of two formats.  I'm honestly not
+#   certain if mixing those two formats is legal, so I'll just assume it is
+#   for my input.
+# "x/y via z" lines are non-positional, so we'll just append those to the end.
+# That means we need to parse all the "var=val" lines first, since those are
+#   positional (ie: ADDRESS0, ADDRESS1, etc).
 if [ -f "$ROUTEFILE" ]; then
   while read LINE; do
+    SYNTAXFLAG=0
     if grep -qP '^\s*(#.*)?$' <<<"$LINE"; then
       continue # Blank line or all-comment line - skip it
     fi
-    case "$LINE" in
-      ADDRESS*)
-        INDEX="$( sed 's/^\s*ADDRESS\([0-9]*\).*/\1/' <<<"$LINE" )"
-        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-        ADDRESS[$INDEX]="$VALUE"
-        ;;
-      NETMASK*)
-        INDEX="$( sed 's/^\s*NETMASK\([0-9]*\).*/\1/' <<<"$LINE" )"
-        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-        NETMASK[$INDEX]="$VALUE"
-        ;;
-      GATEWAY*)
-        INDEX="$( sed 's/^\s*GATEWAY\([0-9]*\).*/\1/' <<<"$LINE" )"
-        VALUE="$( cut -d= -f2 <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-        GATEWAY[$INDEX]="$VALUE"
-        ;;
-      *)
-        # It's possible the existing route-eth0 is using "1.2.3.4/24 via 1.2.3.4"
-        #   syntax.  We're going to consider that out-of-scope for this script.
-        echo "Warning: Unexpected content - skipping this line:" >&2
-        echo "  $LINE" >&2
-        ;;
-    esac
+    if grep -qP '^\s*ADDRESS' <<<"$LINE"; then
+      # Seems to be "ADDRESSx=y.y.y.y" format - confirm
+      INDEX="$( sed 's/^\s*ADDRESS\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
+      VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+      validIPv4 "$VALUE" && 
+        ADDRESS[$INDEX]="$VALUE" || 
+        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
+    elif grep -qP '^\s*NETMASK' <<<"$LINE"; then
+      # Seems to be "NETMASKx=y.y.y.y" format - confirm
+      INDEX="$( sed 's/^\s*NETMASK\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
+      VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+      validIPv4 "$VALUE" && 
+        NETMASK[$INDEX]="$VALUE" ||
+        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
+    elif grep -qP '^\s*GATEWAY' <<<"$LINE"; then
+      # Seems to be "GATEWAYx=y.y.y.y" format - confirm
+      INDEX="$( sed 's/^\s*GATEWAY\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
+      VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
+      validIPv4 "$VALUE" && 
+        GATEWAY[$INDEX]="$VALUE" ||
+        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
+    elif grep -qP '^\s*\d+' <<<"$LINE"; then
+      # Must be "x/y via z" format - confirm, then save for later
+      ### Validate syntax of this line
+      ### If invalid, print error
+      ### Else:
+      IPROUTES="$IPROUTES\n$LINE"
+    else
+      # This line *must* be a syntax error.  That means we can't possibly hurt
+      #   anything by ignoring it and regenerating the file with known-good
+      #   syntax.  Print a warning and move on.
+      echo "Warning: Unexpected content - skipping this line:" >&2
+      echo "  $LINE" >&2
+    fi
   done <"$ROUTEFILE"
 fi
 
@@ -235,6 +254,13 @@ INDICES="$( awk '$1 ~ /^3$/ {print $2}' <<<"$INDEXCOUNT" )"
 if [ $(wc -l <<<"$INDEXCOUNT") -ne $(wc -l <<<"$INDICES") ]; then
   echo "Warning: Some routes were partially defined, and were omitted." >&2
 fi
+
+
+#
+# Now that we definitely know the last index of the valid "var=val" routes,
+#   we can now append the non-positional "x/y via z" routes to the end.
+echo "CIDR-based Routes:"
+echo "$IPROUTES"
 
 
 #
