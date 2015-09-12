@@ -62,7 +62,7 @@ EOF
 #
 # Helper function - test if argument is a valid IPv4 address
 function validIPv4() {
-  grep -qP '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$' <<<"$1"
+  grep -qP '^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$' <<<"$1"
   if [ $? -eq 0 ]; then
     return 0
   fi
@@ -151,7 +151,7 @@ else
 
     # Test that CIDR is numeric, and in the range {0..32}
     # BEGIN cidr test
-    if ! grep -qP '^[0-9]+$' <<<"$CIDR"; then
+    if ! grep -qP '^\d+$' <<<"$CIDR"; then
       echo "Error: Invalid CIDR mask ($CIDR) - must be numeric." >&2
       USAGEFLAG=1
     elif [ $CIDR -gt 32 ]; then
@@ -225,6 +225,7 @@ if [ -f "$ROUTEFILE" ]; then
         echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
     elif grep -qP '^\s*\d+' <<<"$LINE"; then
       # Must be "x/y via z" format - confirm, then save for later
+      grep -qP '' <<<"$LINE"
       ### Validate syntax of this line
       ### If invalid, print error
       ### Else:
@@ -233,8 +234,7 @@ if [ -f "$ROUTEFILE" ]; then
       # This line *must* be a syntax error.  That means we can't possibly hurt
       #   anything by ignoring it and regenerating the file with known-good
       #   syntax.  Print a warning and move on.
-      echo "Warning: Unexpected content - skipping this line:" >&2
-      echo "  $LINE" >&2
+      echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
     fi
   done <"$ROUTEFILE"
 fi
