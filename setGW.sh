@@ -6,7 +6,6 @@
 
 # To-Do:
 # Take ROUTEFILE (or just interface name) as command-line arg
-# largestIndex helper function?
 
 
 #
