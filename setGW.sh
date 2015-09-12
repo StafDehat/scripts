@@ -10,10 +10,12 @@
 # Take "1.2.3.0/24 via 1.2.3.4" syntax as input.
 # Take ROUTEFILE (or just interface name) as command-line arg
 # Make errSkipLine a helper function
+# Use validCIDR helper function
 
 #
 # Hard-coded variables
 ROUTEFILE="/etc/sysconfig/network-scripts/route-eth0"
+INTERFACE="eth0"
 
 
 #
@@ -62,9 +64,20 @@ EOF
 #
 # Helper function - test if argument is a valid IPv4 address
 function validIPv4() {
-  grep -qP '^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$' <<<"$1"
-  if [ $? -eq 0 ]; then
+  if grep -qP '^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$' <<<"$1"; then
     return 0
+  fi
+  return 1
+}
+
+
+#
+# Helper function - test if argument is a valid CIDR range
+function validCIDR() {
+  if grep -qP '^\d+$' <<<"$1"; then
+    if [ "$1" -le 32 ]; then
+      return 0
+    fi
   fi
   return 1
 }
@@ -149,13 +162,9 @@ else
       USAGEFLAG=1
     fi # END netaddr test
 
-    # Test that CIDR is numeric, and in the range {0..32}
     # BEGIN cidr test
-    if ! grep -qP '^\d+$' <<<"$CIDR"; then
-      echo "Error: Invalid CIDR mask ($CIDR) - must be numeric." >&2
-      USAGEFLAG=1
-    elif [ $CIDR -gt 32 ]; then
-      echo "Error: Invalid CIDR mask ($CIDR) - must be between 0 and 32." >&2
+    if ! validCIDR "$CIDR"; then
+      echo "Error: '$CIDR' is not a valid CIDR mask (0-32)." >&2
       USAGEFLAG=1
     fi # END cidr test
 
@@ -202,39 +211,82 @@ if [ -f "$ROUTEFILE" ]; then
     if grep -qP '^\s*(#.*)?$' <<<"$LINE"; then
       continue # Blank line or all-comment line - skip it
     fi
-    if grep -qP '^\s*ADDRESS' <<<"$LINE"; then
-      # Seems to be "ADDRESSx=y.y.y.y" format - confirm
+    if grep -qP '^\s*ADDRESS\d+\s*=\s*(\d+\.){3}\d+\s*(#.*)?$' <<<"$LINE"; then
+    # Regex help:    ADDRESSxxx   =   ^-----IP----^   [#..]
       INDEX="$( sed 's/^\s*ADDRESS\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
       VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      validIPv4 "$VALUE" && 
-        ADDRESS[$INDEX]="$VALUE" || 
-        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
-    elif grep -qP '^\s*NETMASK' <<<"$LINE"; then
-      # Seems to be "NETMASKx=y.y.y.y" format - confirm
+      if validIPv4 "$VALUE"; then
+        ADDRESS[$INDEX]="$VALUE"
+      else
+        echo "Error: '$VALUE' is not a valid IPv4 address." >&2
+        SYNTAXFLAG=1
+      fi
+    elif grep -qP '^\s*NETMASK\d+\s*=\s*(\d+\.){3}\d+\s*(#.*)?$' <<<"$LINE"; then
+    # Regex help:      NETMASKxxx   =   ^-----IP----^   [#..]
       INDEX="$( sed 's/^\s*NETMASK\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
       VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      validIPv4 "$VALUE" && 
-        NETMASK[$INDEX]="$VALUE" ||
-        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
-    elif grep -qP '^\s*GATEWAY' <<<"$LINE"; then
-      # Seems to be "GATEWAYx=y.y.y.y" format - confirm
+      if validIPv4 "$VALUE"; then
+        NETMASK[$INDEX]="$VALUE"
+      else
+        echo "Error: '$VALUE' is not a valid IPv4 address." >&2
+        SYNTAXFLAG=1
+      fi
+    elif grep -qP '^\s*GATEWAY\d+\s*=\s*(\d+\.){3}\d+\s*(#.*)?$' <<<"$LINE"; then
+    # Regex help:      GATEWAYxxx   =   ^-----IP----^   [#..]
       INDEX="$( sed 's/^\s*GATEWAY\([0-9]*\)\s*=.*/\1/' <<<"$LINE" )"
       VALUE="$( cut -d= -f2- <<<"$LINE" | sed 's/\s*(#.*)?$//' )"
-      validIPv4 "$VALUE" && 
-        GATEWAY[$INDEX]="$VALUE" ||
-        echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
-    elif grep -qP '^\s*\d+' <<<"$LINE"; then
-      # Must be "x/y via z" format - confirm, then save for later
-      grep -qP '' <<<"$LINE"
-      ### Validate syntax of this line
-      ### If invalid, print error
-      ### Else:
-      IPROUTES="$IPROUTES\n$LINE"
+      if validIPv4 "$VALUE"; then
+        GATEWAY[$INDEX]="$VALUE"
+      else
+        echo "Error: '$VALUE' is not a valid IPv4 address." >&2
+        SYNTAXFLAG=1
+      fi
+    elif grep -qP '^\s*(\d+\.){3}\d+/\d+\s+via\s+(\d+\.){3}\d+(\s+dev\s+'"$INTERFACE"')?\s*(#.*)?$' <<<"$LINE"; then
+    #Regex help:       ^-----IP----^/xx    via   ^-----IP----^[   dev    ^---eth0---^ ]    [#..]
+      # Line is "x/y via z" format - save the details for later
+      # Note: The regex that got us into this conditional branch was so
+      #   explicit that it's save to make some assumptions on $LINE now.
+      # We only did lazy IPv4 & CIDR verification though, so we can test again
+      #   within this conditional, and print more specific/helpful errors.
+      ONEADDR="$( awk '{print $1}' <<<"$LINE" | cut -d/ -f1 )"
+      ONEMASK="$( awk '{print $1}' <<<"$LINE" | cut -d/ -f2 )"
+      ONEGW="$( awk '{print $3}' <<<"$LINE" )"
+      if ! validIPv4 "$ONEADDR"; then
+        echo "Error: '$ONEADDR' is not a valid IPv4 address." >&2
+        SYNTAXFLAG=1
+      fi
+      if ! validCIDR "$ONEMASK"; then
+        echo "Error: '$ONEMASK' is not a valid CIDR range (0-32)." >&2
+        SYNTAXFLAG=1
+      else
+        ONEMASK="$( cidr2nm $ONEMASK )"
+      fi
+      if ! validIPv4 "$ONEGW"; then
+        echo "Error: '$ONEADDR' is not a valid IPv4 address." >&2
+        SYNTAXFLAG=1
+      fi
+      # If all is well, save the route for later
+      [ "$SYNTAXFLAG" -eq 0 ] && IPROUTES="$IPROUTES\n$ONEADDR $ONEMASK $ONEGW"
+    elif grep -qP '^\s*default\s+(\d+\.){3}\d+(\s+dev\s+'"$INTERFACE"')?\s*(#.*)?$' <<<"$LINE"; then
+    # Regex help:      default   ^-----IP----^[   dev    ^---eth0---^ ]    [#..] 
+      # Line is "default X.X.X.X dev interface" format
+      VALUE="$( awk 'print $2' <<<"$LINE" )"
+      if validIPv4 "$VALUE"; then
+        IPROUTES="$IPROUTES\n0.0.0.0 0.0.0.0 $VALUE"
+      else
+        echo "Error: '$VALUE' is not a valid IPv4 address:" >&2
+        SYNTAXFLAG=1
+      fi
     else
       # This line *must* be a syntax error.  That means we can't possibly hurt
       #   anything by ignoring it and regenerating the file with known-good
       #   syntax.  Print a warning and move on.
-      echo -e "Warning: Unexpected content - skipping this line:\n  $LINE" >&2
+      SYNTAXFLAG=1
+    fi
+    # If anything caused SYNTAXFLAG to get set, inform that we're skipping
+    #   this line.
+    if [ $SYNTAXFLAG -ne 0 ]; then
+      echo -e "Warning: Skipping this line due to syntax error:\n  $LINE" >&2
     fi
   done <"$ROUTEFILE"
 fi
@@ -259,7 +311,7 @@ fi
 #
 # Now that we definitely know the last index of the valid "var=val" routes,
 #   we can now append the non-positional "x/y via z" routes to the end.
-echo "CIDR-based Routes:"
+echo "IP-based Routes:"
 echo "$IPROUTES"
 
 
