@@ -5,8 +5,7 @@
 # Last updated: 2015-09-09
 
 # To-Do:
-# When editing an empty route file, a null route0 is created. Fix that.
-
+# Nothing
 
 #
 # Verify the existence of pre-req's
@@ -313,7 +312,7 @@ fi
 # Do a quick check that all three arrays have the exact same indices filled
 # First we count how many times each index occurred:
 INDEXCOUNT="$( echo "${!ADDRESS[@]} ${!NETMASK[@]} ${!GATEWAY[@]}" |
-               sed 's/\s\s*/\n/g' | #Sub whitespace with newlines
+               sed -e '/^\s*$/d' -e 's/\s\s*/\n/g' | 
                sort -n | 
                uniq -c | 
                sort -n )"
@@ -332,13 +331,13 @@ INDEX="$( nextUnusedIndex $INDICES )"
 # Now INDEX is pointing at the "end" of the array.  Add our non-
 #   positional routes, starting at that INDEX.
 while read LINE; do  # <<<"$( echo -e "$IPROUTES" )"
+  [ -z "$LINE" ] && continue  # Prevent the addition of a null route
   read ADDRESS[$INDEX]="$ONEADDR" \
        NETMASK[$INDEX]="$CIDR2NM" \
        GATEWAY[$INDEX]="$NEWGW" <<<"$LINE"
   INDICES="$INDICES $INDEX"
   INDEX=$(( $INDEX + 1 ))
 done <<<"$( echo -e "$IPROUTES" )"
-
 
 
 #
