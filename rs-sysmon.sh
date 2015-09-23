@@ -76,8 +76,8 @@ top -bn 1 >> $LOGDIR/resource.log.$DATE
 if [[ -f /usr/bin/tmpwatch || \
       -f /bin/tmpwatch ]]; then
   tmpwatch --mtime $HOURRETENTION $LOGDIR
-elif [[ /usr/bin/tmpreaper || \
-        /bin/tmpreaper ]]; then
+elif [[ -f /usr/bin/tmpreaper || \
+        -f /bin/tmpreaper ]]; then
   tmpreaper --mtime $HOURRETENTION $LOGDIR
 else
   find $LOGDIR -maxdepth 1 -type f -mtime +$(( $HOURRETENTION / 24 )) -exec rm -f {} \;
