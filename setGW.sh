@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # Author: Andrew Howard
-# Purpose: Update gateway address for specified network within route-INTERFACE.
-# Last updated: 2015-09-09
+# Purpose: Edit /etc/sysconfig/network-scripts/route-INTERFACE to ensure static
+#   route exists for the specified network via the specified gateway.
+# Last updated: 2015-09-14
 
 # To-Do:
 # Nothing
