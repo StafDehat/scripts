@@ -23,6 +23,7 @@ fi
 
 BACKUPDIR=/home/rack/perms-backup
 RETENTIONDAYS=7
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 if [ ! -d $BACKUPDIR ]; then
   mkdir -p $BACKUPDIR
@@ -31,5 +32,15 @@ fi
 find / -wholename '/proc' -prune -o -fprintf $BACKUPDIR/perms-backup.`date +%Y%m%d`.txt "chown -h %u:%g '%p'\nchmod %m '%p'\n"
 getfacl --no-effective --recursive --skip-base --absolute-names / > $BACKUPDIR/facl-backup.`date +%Y%m%d`.txt
 
-tmpwatch -m ${RETENTIONDAYS}d $BACKUPDIR
+#
+# Clean-up
+if which tmpwatch &>/dev/null; then
+  tmpwatch -m ${RETENTIONDAYS}d $BACKUPDIR
+elif which tmpreaper &>/dev/null; then
+  tmpreaper --mtime ${RETENTIONDAYS}d $BACKUPDIR
+else
+  find $LOGDIR -maxdepth 1 -type f -mtime +$(( $HOURRETENTION / 24 )) -exec rm -f {} \;
+fi
+
+
 

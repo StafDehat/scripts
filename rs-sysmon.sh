@@ -20,6 +20,7 @@ fi
 # LOGDIR must end in "/rs-sysmon"
 LOGDIR=/var/log/rs-sysmon
 HOURRETENTION=12
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 
 # Verify LOGDIR is something named rs-sysmon
@@ -73,11 +74,9 @@ top -bn 1 >> $LOGDIR/resource.log.$DATE
 
 #
 # Clean-up
-if [[ -f /usr/bin/tmpwatch || \
-      -f /bin/tmpwatch ]]; then
+if which tmpwatch &>/dev/null; then
   tmpwatch --mtime $HOURRETENTION $LOGDIR
-elif [[ -f /usr/bin/tmpreaper || \
-        -f /bin/tmpreaper ]]; then
+elif which tmpreaper &>/dev/null; then
   tmpreaper --mtime $HOURRETENTION $LOGDIR
 else
   find $LOGDIR -maxdepth 1 -type f -mtime +$(( $HOURRETENTION / 24 )) -exec rm -f {} \;
