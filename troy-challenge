@@ -1,4 +1,13 @@
-sed -e '/^\s*devices\s*{/,/^\s*}/{/^\s*filter\s*=/s/^\(\s*\)/\1# /}'            # Comment out any existing filter= lines inside devices{} block.
-    -e '/^[\s# ]*filter\s*\=/!{1h;1!H};/^[\s# ]*filter\s*\=/{x;1!p};$!d;g;s/\n\(\s*\)/\n\1BLAHBLAH\n\1/' # Append indented BLAHBLAH after last occurrence of filter=
+#sed -e '/^\s*devices\s*{/,/^\s*}/{/^\s*filter\s*=/s/^\(\s*\)/\1# /}'            # Comment out any existing filter= lines inside devices{} block.
+#    -e '/^[\s# ]*filter\s*\=/!{1h;1!H};/^[\s# ]*filter\s*\=/{x;1!p};$!d;g;s/\n\(\s*\)/\n\1BLAHBLAH\n\1/' # Append indented BLAHBLAH after last occurrence of filter=
+#
+#    -e '/^\s*devices\s*{/,/^\s*}/{/^\s*# filter\s*\=/s/$/\nYOUR NEW CONTENT/}'  # Append 
 
-    -e '/^\s*devices\s*{/,/^\s*}/{/^\s*# filter\s*\=/s/$/\nYOUR NEW CONTENT/}'  # Append 
+
+# First expression comments out any uncommented filter= lines
+# Second appends this line after the last filter= line (Note: filter= is only valid within the devices{} block)
+#   filter = [ "a|^/dev/sda[0-9]+$|", "a|^/dev/emcpower|", "r|.*|" ]
+sed -i \
+    -e '/^\s*filter\s*=/s/^\(\s*\)/\1# /' \
+    -e '/^[\s# ]*filter\s*\=/!{1h;1!H};/^[\s# ]*filter\s*\=/{x;1!p};$!d;g;s/\n\(\s*\)/\n\1filter = [ "a|^\/dev\/sda[0-9]+$|", "a|^\/dev\/emcpower|", "r|.*|" ]\n\1/' \
+  /etc/lvm/lvm.conf
