@@ -714,6 +714,8 @@ for x in $( seq 1 3 ); do
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
     echo "Unknown error encountered when trying to run curl command." && cleanup
+  elif [[ $(echo "$CODE" | grep -cE '^5..$') -ne 0 ]]; then
+    echo "Received 500-level HTTP response.  That... happens sometimes.  We'll retry."
   elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to get details of container."
     echo "  Raw response data from API is as follows:"
@@ -776,11 +778,14 @@ for SEGMENT in $SEGMENTS; do
     RETVAL=$?
     CODE=$( echo "$DATA" | tail -n 1 )
     # Code 422 indicates checksum validation failure
-    if [ $RETVAL -ne 0 ]; then
+    if [[ $RETVAL -ne 0 ]]; then
       echo "Unknown error encountered when trying to run curl command." && cleanup
     fi
-    if [ $CODE -eq 422 ]; then
+    if [[ "$CODE" -eq 422 ]]; then
       echo "$(date +'%F %T') ($COUNT/$TOTAL) Error: Checksum validation failed.  Retrying."
+      continue
+    elif [[ $(echo "$CODE" | grep -cE '^5..$') -ne 0 ]]; then
+      echo "Received 500-level HTTP response.  That... happens sometimes.  We'll retry."
       continue
     else
       if [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
