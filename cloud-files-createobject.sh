@@ -32,7 +32,7 @@
 # ahoward@phoenix[~]$ 
 
 
-PREREQS="curl grep sed cut tr echo"
+PREREQS="curl grep sed cut tr echo dd"
 PREREQFLAG=0
 for PREREQ in $PREREQS; do
   which $PREREQ &>/dev/null

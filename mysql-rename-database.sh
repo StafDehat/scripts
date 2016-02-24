@@ -8,6 +8,8 @@
 # For safety reasons, the script does not delete anything - you'll have to delete
 # the old DB yourself.
 
+# To-do: Handle views
+
 function usage {
   echo "Usage: $0 OldName NewName"
   echo "Note:  This script assumes you have ~/.my.cnf configured correctly."
