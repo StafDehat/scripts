@@ -549,6 +549,8 @@ while true; do
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
     echo "Unknown error encountered when trying to run curl command." && cleanup
+  elif [[ $(echo "$CODE" | grep -cE '^5..$') -ne 0 ]]; then
+    echo "Received 500-level HTTP response.  That... happens sometimes.  We'll retry."
   elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to query task details - maybe API is unavailable?"
     echo "       Maybe your API token just expired?"
@@ -967,6 +969,8 @@ while true; do
   # Check for failed API call
   if [ $RETVAL -ne 0 ]; then
     echo "Unknown error encountered when trying to run curl command." && cleanup
+  elif [[ $(echo "$CODE" | grep -cE '^5..$') -ne 0 ]]; then
+    echo "Received 500-level HTTP response.  That... happens sometimes.  We'll retry."
   elif [[ $(echo "$CODE" | grep -cE '^2..$') -eq 0 ]]; then
     echo "Error: Unable to query task details - maybe API is unavailable?"
     echo "       Maybe your API token just expired?"
