@@ -181,6 +181,12 @@ sortDumps | while read LINE; do
   debug "Importing ${dumpFile}"
   zcat ${backupDir}/${dumpFile} | $MYSQL ${dumpFile/.sql.gz/}
 
+  if [[ "${dumpFile/.sql.gz/}" == "mysql" ]]; then
+    debug "We just clobbered our own auth, so re-granting our own user now."
+    sqlUser="$( $MYSQL -e "SELECT USER();" )"
+    $MYSQL -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/' | $MYSQL
+  fi
+
   debug "Adding DB ${dumpFile/.sql.gz/} to replication"
   echo "replicate-wild-do-table=${dumpFile/.sql.gz/}.%" >> "${tmpFile}"
 done
