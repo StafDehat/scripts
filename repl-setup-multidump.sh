@@ -139,6 +139,7 @@ sed -i '/^\s*\[mysqld\]/s_$_\n!include '"${tmpFile}"'_' /etc/my.cnf
 
 debug "Creating global-ignore tmpFile config"
 echo '[mysqld]' >"${tmpFile}"
+echo 'skip-slave-start' >>"${tmpFile}"
 echo 'replicate-wild-ignore-table=%.%' >>"${tmpFile}"
 
 firstRun=true
