@@ -21,7 +21,7 @@ function usage() {
   echo "      -U repl \\"
   echo "      -P abc123def \\"
   echo "      -u root \\"
-  echo "      -u turbographics"
+  echo "      -p turbographics"
   echo "Arguments:"
   echo "  -d X  Local directory containing *.sql.gz mysqldumps."
   echo "  -h    Print this help"
@@ -110,11 +110,11 @@ if [[ -z "${masterVersion}" ]]; then
   output "ERROR: Unable to connect to remote MySQL master instance."
   exit
 fi
-
 if [[ ! -d "${backupDir}" ]]; then
   output "ERROR: backupDir does not exist"
   exit
 fi
+# Test if slave thread already exists - bail if it does.
 
 
 function sortDumps() {
@@ -149,6 +149,8 @@ sortDumps | while read LINE; do
 
   if $firstRun; then
     debug "Initializing master to ${binFile}:${binPos}"
+    $MYSQL -e "STOP SLAVE;"
+    $MYSQL -e "RESET SLAVE;"
     $MYSQL -e "CHANGE MASTER TO MASTER_HOST='${masterHost}',
                                 MASTER_USER='${masterUser}',
                                 MASTER_PASSWORD='${masterPass}',
@@ -169,6 +171,9 @@ sortDumps | while read LINE; do
   debug "Starting slave until ${binFile}:${binPos}"
   $MYSQL -e "START SLAVE UNTIL MASTER_LOG_FILE='${binFile}',
                                MASTER_LOG_POS=${binPos};"
+
+  debug "Creating database ${dumpFile/.sql.gz/}"
+  $MYSQL -e 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `'"${dumpFile/.sql.gz/}"'`;'
 
   debug "Importing ${dumpFile}"
   zcat ${backupDir}/${dumpFile} | $MYSQL ${dumpFile/.sql.gz/}
