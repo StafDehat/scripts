@@ -114,7 +114,20 @@ if [[ ! -d "${backupDir}" ]]; then
   output "ERROR: backupDir does not exist"
   exit
 fi
-# Test if slave thread already exists - bail if it does.
+# Make sure we're not already a slave.  Don't want to accidentally clobber things.
+binFile=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
+             awk '$1 ~ /Master_Log_File:/ {print $2}' )
+if [[ -n "$binFile" ]]; then
+  output "ERROR: Server is already a slave!  Stop and reset slave threads first."
+  exit
+fi
+sqlUser="$( ${MYSQL} -e "SELECT USER();" )"
+if ! grep -qi 'with grant option' <(${MYSQL} -e "SHOW GRANTS FOR ${sqlUser}"); then
+  output "ERROR: Your slave user doesn't have GRANT OPTION on this server."
+  output "  When we import the 'mysql' dump, we lock ourselves out, so I'll"
+  output "  need GRANT OPTION to re-grant myself access."
+  exit
+fi
 
 
 function sortDumps() {
@@ -199,7 +212,6 @@ sortDumps | while read LINE; do
   # By importing mysql, we're potentially deleting our own user.
   if [[ "${dumpFile/.sql.gz/}" == "mysql" ]]; then
     debug "Importing ${dumpFile} and re-granting our user"
-    sqlUser="$( ${MYSQL} -e "SELECT USER();" )"
     (
       zcat "${backupDir}/${dumpFile}"
       ${MYSQL} -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/'
