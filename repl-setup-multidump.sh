@@ -189,6 +189,9 @@ debug "Removing temporary !include from my.cnf"
 grep -vP "^\!include ${tmpFile}" /etc/my.cnf > "${tmpFile}"
 mv -f "${tmpFile}" /etc/my.cnf
 
+debug "Restarting one last time to remove all our custom configs"
+service mysqld restart
+
 #debug "Starting slave threads"
 #$MYSQL -e "START SLAVE;"
 
