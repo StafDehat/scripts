@@ -111,8 +111,14 @@ if [[ -z "${masterVersion}" ]]; then
   exit
 fi
 
+if [[ ! -d "${backupDir}" ]]; then
+  output "ERROR: backupDir does not exist"
+  exit
+fi
+
 
 function sortDumps() {
+  cd "${backupDir}"
   for dumpFile in *.sql.gz; do
     local changeMaster="$( zcat $dumpFile | head -n 50 | grep CHANGE )"
     if [[ -z "$changeMaster" ]]; then
@@ -165,7 +171,7 @@ sortDumps | while read LINE; do
                                MASTER_LOG_POS=${binPos};"
 
   debug "Importing ${dumpFile}"
-  zcat ${dumpFile} | $MYSQL ${dumpFile/.sql.gz/}
+  zcat ${backupDir}/${dumpFile} | $MYSQL ${dumpFile/.sql.gz/}
 
   debug "Adding DB ${dumpFile/.sql.gz/} to replication"
   echo "replicate-wild-do-table=${dumpFile/.sql.gz/}.%" >> "${tmpFile}"
