@@ -175,6 +175,23 @@ sortDumps | while read LINE; do
   $MYSQL -e "START SLAVE UNTIL MASTER_LOG_FILE='${binFile}',
                                MASTER_LOG_POS=${binPos};"
 
+  debug "Waiting for slave thread to catch up"
+  while true; do
+    slaveFile=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+                   awk '$1 ~ /Relay_Master_Log_File:/ {print $2}' )
+    slavePos=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+                  awk '$1 ~ /Exec_Master_Log_Pos:/ {print $2}' )
+    untilFile=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+                   awk '$1 ~ /Until_Log_File:/ {print $2}' )
+    untilPos=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+                  awk '$1 ~ /Until_Log_Pos:/ {print $2}' )
+    if [[ "$slaveFile" == "$untilFile" ]] &&
+       [[ $slavePos -eq $untilPos ]]; then
+      break
+    fi
+    sleep 5
+  done
+
   debug "Creating database ${dumpFile/.sql.gz/}"
   $MYSQL -e 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `'"${dumpFile/.sql.gz/}"'`;'
 
