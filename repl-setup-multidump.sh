@@ -49,56 +49,56 @@ masterPort=3306
 slaveUser=""
 slavePass=""
 while getopts ":d:hH:p:P:T:u:U:" arg; do
-  case $arg in
-    d) backupDir="$OPTARG";;
+  case ${arg} in
+    d) backupDir="${OPTARG}";;
     h) usage && exit 0;;
-    H) masterHost="$OPTARG";;
-    p) slavePass="$OPTARG";;
-    P) masterPass="$OPTARG";;
-    T) masterPort="$OPTARG";;
-    u) slaveUser="$OPTARG";;
-    U) masterUser="$OPTARG";;
-    :) output "ERROR: Option -$OPTARG requires an argument."
+    H) masterHost="${OPTARG}";;
+    p) slavePass="${OPTARG}";;
+    P) masterPass="${OPTARG}";;
+    T) masterPort="${OPTARG}";;
+    u) slaveUser="${OPTARG}";;
+    U) masterUser="${OPTARG}";;
+    :) output "ERROR: Option -${OPTARG} requires an argument."
        invalidUsage=true;;
-    *) output "ERROR: Invalid option: -$OPTARG"
+    *) output "ERROR: Invalid option: -${OPTARG}"
        invalidUsage=true;;
   esac
 done #End arguments
-shift $(($OPTIND - 1))
+shift $((${OPTIND} - 1))
 
 for ARG in backupDir masterHost masterUser masterPass slaveUser slavePass; do
   if [ -z "${!ARG}" ]; then
-    output "ERROR: Must define $ARG as argument"
+    output "ERROR: Must define ${ARG} as argument"
     invalidUsage=true
   fi
 done
-if ! grep -qP '^[0-9]+$' <<<"$masterPort"; then
+if ! grep -qP '^[0-9]+$' <<<"${masterPort}"; then
   output "ERROR: masterPort must be numeric"
   invalidUsage=true
-elif [[ $masterPort -gt 65535 ]]; then
+elif [[ ${masterPort} -gt 65535 ]]; then
   output "ERROR: masterPort must be >=1 and <=65535"
   invalidUsage=true
 fi
-if $invalidUsage; then
+if ${invalidUsage}; then
   usage && exit 1
 fi
 
 
 tmpFile="$( mktemp )"
 function cleanup {
-  rm -f $tmpFile
+  rm -f "${tmpFile}"
   stty echo
   exit
 }
 trap 'cleanup' 1 2 9 15 17 19 23 EXIT
 
 
-MYSQL="mysql -u${slaveUser} -p${slavePass} --skip-column-names"
-slaveVersion=$( $MYSQL -e "select @@version;" )
-masterVersion=$( mysql -u${masterUser} \
-                       -p${masterPass} \
+MYSQL="mysql -u"${slaveUser}" -p"${slavePass}" --skip-column-names"
+slaveVersion=$( ${MYSQL} -e "select @@version;" )
+masterVersion=$( mysql -u"${masterUser}" \
+                       -p"${masterPass}" \
                        --protocol=TCP \
-                       -h ${masterHost} \
+                       -h "${masterHost}" \
                        -P ${masterPort} \
                        --skip-column-names \
                        -e "select @@version;" )
@@ -120,21 +120,21 @@ fi
 function sortDumps() {
   cd "${backupDir}"
   for dumpFile in *.sql.gz; do
-    local changeMaster="$( zcat $dumpFile | head -n 50 | grep CHANGE )"
-    if [[ -z "$changeMaster" ]]; then
-      output "ERROR: Unable to find CHANGE MASTER line in $dumpFile"
+    local changeMaster="$( zcat "${dumpFile}" | head -n 50 | grep "CHANGE MASTER" )"
+    if [[ -z "${changeMaster}" ]]; then
+      output "ERROR: Unable to find CHANGE MASTER line in ${dumpFile}"
       exit 2
     fi
-    local binFile=$( cut -d\' -f2 <<<"$changeMaster" )
-    local binPos=$( cut -d\= -f3 <<<"$changeMaster" | tr -d ';' )
-    echo "$binFile $binPos $dumpFile"
+    local binFile=$( cut -d\' -f2 <<<"${changeMaster}" )
+    local binPos=$( cut -d\= -f3 <<<"${changeMaster}" | tr -d ';' )
+    echo "${binFile} ${binPos} ${dumpFile}"
   done | sort -n -k1,1 -k2,2
 }
 
 debug "Creating backup of my.cnf"
-cp /etc/my.cnf{,.$(date +%F_%T)}
+cp /etc/my.cnf{,."$(date +%F_%T)"}
 
-debug "Adding \!include to my.cnf"
+debug 'Adding !include to my.cnf'
 sed -i '/^\s*\[mysqld\]/s_$_\n!include '"${tmpFile}"'_' /etc/my.cnf
 
 debug "Creating global-ignore tmpFile config"
@@ -144,22 +144,22 @@ echo 'replicate-wild-ignore-table=%.%' >>"${tmpFile}"
 
 firstRun=true
 sortDumps | while read LINE; do
-  binFile=$( awk '{print $1}' <<<"$LINE" )
-  binPos=$( awk '{print $2}' <<<"$LINE" )
-  dumpFile=$( awk '{print $3}' <<<"$LINE" )
+  binFile=$( awk '{print $1}' <<<"${LINE}" )
+  binPos=$( awk '{print $2}' <<<"${LINE}" )
+  dumpFile=$( awk '{print $3}' <<<"${LINE}" )
 
-  if $firstRun; then
+  if ${firstRun}; then
     debug "Tearing down existing slave configuration."
-    $MYSQL -e "STOP SLAVE;"
-    $MYSQL -e "RESET SLAVE;"
+    ${MYSQL} -e "STOP SLAVE;"
+    ${MYSQL} -e "RESET SLAVE;"
 
     debug "Initializing master to ${binFile}:${binPos}"
-    $MYSQL -e "CHANGE MASTER TO MASTER_HOST='${masterHost}',
-                                MASTER_USER='${masterUser}',
-                                MASTER_PASSWORD='${masterPass}',
-                                MASTER_PORT=${masterPort},
-                                MASTER_LOG_FILE='${binFile}',
-                                MASTER_LOG_POS=${binPos};"
+    ${MYSQL} -e "CHANGE MASTER TO MASTER_HOST='${masterHost}',
+                                  MASTER_USER='${masterUser}',
+                                  MASTER_PASSWORD='${masterPass}',
+                                  MASTER_PORT=${masterPort},
+                                  MASTER_LOG_FILE='${binFile}',
+                                  MASTER_LOG_POS=${binPos};"
     firstRun=false
   fi
 
@@ -168,40 +168,41 @@ sortDumps | while read LINE; do
 
   doDBs=$( grep replicate-wild-do-table "${tmpFile}" | 
              cut -d\= -f2 |
-             cut -d\. -f1 )
-  debug "Included DBS: "${doDBs}
+             cut -d\. -f1 |
+             tr '\n' ' ' )
+  debug "Included DBS: ${doDBs}"
 
   debug "Starting slave until ${binFile}:${binPos}"
-  $MYSQL -e "START SLAVE UNTIL MASTER_LOG_FILE='${binFile}',
-                               MASTER_LOG_POS=${binPos};"
+  ${MYSQL} -e "START SLAVE UNTIL MASTER_LOG_FILE='${binFile}',
+                                 MASTER_LOG_POS=${binPos};"
 
   debug "Waiting for slave thread to catch up"
   while true; do
-    slaveFile=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+    slaveFile=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
                    awk '$1 ~ /Relay_Master_Log_File:/ {print $2}' )
-    slavePos=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+    slavePos=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
                   awk '$1 ~ /Exec_Master_Log_Pos:/ {print $2}' )
-    untilFile=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+    untilFile=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
                    awk '$1 ~ /Until_Log_File:/ {print $2}' )
-    untilPos=$( $MYSQL -e "SHOW SLAVE STATUS\G" |
+    untilPos=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
                   awk '$1 ~ /Until_Log_Pos:/ {print $2}' )
-    if [[ "$slaveFile" == "$untilFile" ]] &&
-       [[ $slavePos -eq $untilPos ]]; then
+    if [[ "${slaveFile}" == "${untilFile}" ]] &&
+       [[ ${slavePos} -eq ${untilPos} ]]; then
       break
     fi
     sleep 5
   done
 
   debug "Creating database ${dumpFile/.sql.gz/}"
-  $MYSQL -e 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `'"${dumpFile/.sql.gz/}"'`;'
+  ${MYSQL} -e 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `'"${dumpFile/.sql.gz/}"'`;'
 
   debug "Importing ${dumpFile}"
-  zcat ${backupDir}/${dumpFile} | $MYSQL ${dumpFile/.sql.gz/}
+  zcat ${backupDir}/${dumpFile} | ${MYSQL} ${dumpFile/.sql.gz/}
 
   if [[ "${dumpFile/.sql.gz/}" == "mysql" ]]; then
     debug "We just clobbered our own auth, so re-granting our own user now."
-    sqlUser="$( $MYSQL -e "SELECT USER();" )"
-    $MYSQL -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/' | $MYSQL
+    sqlUser="$( ${MYSQL} -e "SELECT USER();" )"
+    ${MYSQL} -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/' | ${MYSQL}
   fi
 
   debug "Adding DB ${dumpFile/.sql.gz/} to replication"
