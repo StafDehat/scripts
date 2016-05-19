@@ -148,9 +148,11 @@ sortDumps | while read LINE; do
   dumpFile=$( awk '{print $3}' <<<"$LINE" )
 
   if $firstRun; then
-    debug "Initializing master to ${binFile}:${binPos}"
+    debug "Tearing down existing slave configuration."
     $MYSQL -e "STOP SLAVE;"
     $MYSQL -e "RESET SLAVE;"
+
+    debug "Initializing master to ${binFile}:${binPos}"
     $MYSQL -e "CHANGE MASTER TO MASTER_HOST='${masterHost}',
                                 MASTER_USER='${masterUser}',
                                 MASTER_PASSWORD='${masterPass}',
