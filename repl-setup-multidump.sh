@@ -196,13 +196,17 @@ sortDumps | while read LINE; do
   debug "Creating database ${dumpFile/.sql.gz/}"
   ${MYSQL} -e 'CREATE DATABASE /*!32312 IF NOT EXISTS*/ `'"${dumpFile/.sql.gz/}"'`;'
 
-  debug "Importing ${dumpFile}"
-  zcat ${backupDir}/${dumpFile} | ${MYSQL} ${dumpFile/.sql.gz/}
-
   if [[ "${dumpFile/.sql.gz/}" == "mysql" ]]; then
-    debug "We just clobbered our own auth, so re-granting our own user now."
+    debug "Backing up GRANTS for current user."
     sqlUser="$( ${MYSQL} -e "SELECT USER();" )"
-    ${MYSQL} -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/' | ${MYSQL}
+    ${MYSQL} -e "SHOW GRANTS FOR ${sqlUser}" | sed 's/$/;/' | gzip > "${backupDir}/mysql.perms.sql.gz"
+
+    debug "Importing ${dumpFile} and re-granting our user"
+    zcat ${backupDir}/${dumpFile} \
+         ${backupDir}/mysql.perms.sql.gz | ${MYSQL} ${dumpFile/.sql.gz/}
+  else
+    debug "Importing ${dumpFile}"
+    zcat ${backupDir}/${dumpFile} | ${MYSQL} ${dumpFile/.sql.gz/}
   fi
 
   debug "Adding DB ${dumpFile/.sql.gz/} to replication"
