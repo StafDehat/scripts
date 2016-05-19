@@ -10,14 +10,18 @@
 
 
 function usage() {
-  echo "Usage: cloud-files-upload.sh [-h] [-u USERNAME] [-k APIKEY] \\"
-  echo "                             [-s] [-b BYTES] [-n OBJECTNAME] \\"
-  echo "                             -r REGION -f LOCALFILE -c CONTAINER"
+  echo "Usage: $0 \\"
+  echo "  [-h] -d backupDir \\"
+  echo "  -H masterHost -U masterUser -P masterPass [-T masterPort] \\"
+  echo "  -u slaveUser -p slavePass"
   echo "Example:"
-  echo "  # cloud-files-upload.sh -r dfw \\"
-  echo "                          -f /home/user/pbjt.jpg \\"
-  echo "                          -c jpegs"
-
+  echo "  # $0 \\"
+  echo "      -d /var/spool/holland/mysqldump/newest/backup_data \\"
+  echo "      -H 1.2.3.4 \\"
+  echo "      -U repl \\"
+  echo "      -P abc123def \\"
+  echo "      -u root \\"
+  echo "      -u turbographics"
   echo "Arguments:"
   echo "  -d X  Local directory containing *.sql.gz mysqldumps."
   echo "  -h    Print this help"
