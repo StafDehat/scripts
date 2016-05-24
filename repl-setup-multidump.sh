@@ -115,8 +115,13 @@ if [[ ! -d "${backupDir}" ]]; then
   exit
 fi
 # Make sure we're not already a slave.  Don't want to accidentally clobber things.
-binFile=$( ${MYSQL} -e "SHOW SLAVE STATUS\G" |
-             awk '$1 ~ /Master_Log_File:/ {print $2}' )
+slaveStatus=$( ${MYSQL} --column-names -e "SHOW SLAVE STATUS\G" )
+if [[ -n "$slaveStatus" ]] &&
+   ! grep -q "Master_Log_File:" <<<"$slaveStatus"; then
+  echo "Unable to determine slave status.  Exiting to be safe."
+  exit
+fi
+binFile=$( awk '$1 ~ /Master_Log_File:/ {print $2}' <<<"$slaveStatus" )
 if [[ -n "$binFile" ]]; then
   output "ERROR: Server is already a slave!  Stop and reset slave threads first."
   exit
