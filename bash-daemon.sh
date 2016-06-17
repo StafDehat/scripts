@@ -1,6 +1,5 @@
 #!/bin/bash
 # Author: Andrew Howard
-# https://github.rackspace.com/SupportTools/tvs
 
 script=/root/iot-control.sh
 project=$( basename "${script}" )
