@@ -2,6 +2,9 @@
 
 # Author: Andrew Howard
 
+# Exit if non-interactive
+[ -z "$PS1" ] && return
+
 # Set the terminal, so people stop complaining about the hash as their prompt
 # regular colors
 K="\[\033[0;30m\]"    # black
