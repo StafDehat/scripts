@@ -22,7 +22,7 @@ while [[ $FORE != $AFT ]]; do
   mv $TMPDIR/newfinds $TMPDIR/grepping
  
   for x in `sort -u $TMPDIR/grepping`; do
-    grep -Ei '^\s*include\s' "$x" |
+    grep -Pi '^\s*include(optional)?\s' "$x" |
       awk '{print $2}' |
       sed "s/['\"]//g" >> $TMPDIR/newfinds
   done
