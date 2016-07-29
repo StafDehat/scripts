@@ -29,7 +29,7 @@ timeout 300 strace -crfp ${ParPID} &> "${LOGDIR}/strace-sum.${DATE}" &
 # Test if any apache procs are in D state
 DPIDS=$( ps u -C httpd | awk '$8 ~ /D/ {print $2}' )
 if [[ -n "${DPIDS}" &&
-      "${DPIDS}" -gt 5 ]]; then
+      $( wc -l <<<"${DPIDS}" ) -gt 5 ]]; then
   # If so, log way more stuff
 
   # Force a stack trace to /var/log/messages
