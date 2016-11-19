@@ -48,7 +48,7 @@ IMAGEDATES=$( tr ',' '\n' <<<"${IMAGES}" |
               grep -Po '"created_at":.*' |
               cut -d\" -f4 )
 echo "Previous images:"
-paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") | sort -nr
+paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") | sort -n
 echo "Plus the one that's being created right now"
 IMAGEDATES=$( while read DATE; do
                date -d "${DATE}" +%s
