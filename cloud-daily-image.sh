@@ -48,7 +48,7 @@ IMAGEDATES=$( tr ',' '\n' <<<"${IMAGES}" |
               grep -Po '"created_at":.*' |
               cut -d\" -f4 )
 echo "Previous images:"
-paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS")
+paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") | sort -nr
 echo "Plus the one that's being created right now"
 IMAGEDATES=$( while read DATE; do
                date -d "${DATE}" +%s
@@ -56,7 +56,7 @@ IMAGEDATES=$( while read DATE; do
 
 # Sort by date, and grab all but ${RETENTION} images
 DELETABLE=$( paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") |
-               sort -n |
+               sort -nr |
                tail -n +${RETENTION} |
                awk '{print $2}' )
 
