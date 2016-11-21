@@ -16,6 +16,7 @@ if [[ -f "${HOME}"/.cloud-daily-image.cfg ]]; then
 fi
 
 #TODO: Take arguments
+#TODO: Integrate with Cloud Monitorings... somehow.
 
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
 
