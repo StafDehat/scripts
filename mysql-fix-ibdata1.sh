@@ -4,6 +4,9 @@
 mysql -e "select engine,count(*),sum(index_length+data_length)/1024/1024 from information_schema.tables group by engine;"
 
 
+# Get a list of DBs
+DBS=$( mysql -Ne "show databases;" )
+
 # Get a list of all the InnoDB stuff
 for DB in $DBS; do
   TABLES=$( mysql $DB -Ne "show table status where engine like 'InnoDB';" | awk '{print $1}' )
