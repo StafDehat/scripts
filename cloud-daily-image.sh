@@ -1,10 +1,22 @@
 #!/bin/bash
 
+# Author: Andrew Howard
+# Purpose: Take an image, then delete the oldest images until only $RETENTION
+#   images remain.  This script is intended to be cron'd, probably daily.
+
+# Note: User must have 'Admin' access to both "Images" and "Next Generation Servers"
 CLOUD_USERNAME=
 CLOUD_API_KEY=
 SERVER_ID=
-REGION=ord
-RETENTION=2
+REGION=iad
+RETENTION=3
+
+if [[ -f "${HOME}"/.cloud-daily-image.cfg ]]; then
+  source "${HOME}"/.cloud-daily-image.cfg
+fi
+
+#TODO: Take arguments
+
 IDENTITY_ENDPOINT="https://identity.api.rackspacecloud.com/v2.0"
 
 # Get an Auth token
@@ -18,6 +30,9 @@ TOKEN=$( curl -s $IDENTITY_ENDPOINT/tokens \
 AUTHTOKEN=$( echo "$TOKEN" | perl -pe 's/.*"token":.*?"id":"(.*?)".*$/\1/' )
 TENANTID=$( echo "$TOKEN" | perl -pe 's/.*"token":.*?"tenant":.*?"id":"(.*?)".*$/\1/' )
 IMGURL=$( echo "$TOKEN" | tr '"' '\n' | grep "$REGION.images.api.rackspacecloud.com" | tr -d '\\' )
+# TODO: Detect authentication failures, print a meaningful error, and exit
+
+#TODO: Verify server's not already imaging.  If so, bail, or wait-loop.
 
 # Create a new image
 echo "Creating new image"
@@ -28,6 +43,7 @@ curl -s https://${REGION}.servers.api.rackspacecloud.com/v2/${TENANTID}/servers/
   -H "Accept: application/json" \
   -H "X-Auth-Token: $AUTHTOKEN" \
   -d '{ "createImage" : { "name" : "'"${IMAGE_NAME}"'" } }'
+#TODO: Capture the image ID of the new one
 
 # List existing images
 echo "Retrieving list of images"
@@ -49,6 +65,7 @@ IMAGEDATES=$( tr ',' '\n' <<<"${IMAGES}" |
               cut -d\" -f4 )
 echo "Previous images:"
 paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") | sort -n
+# TODO: Print image currently being imaging
 echo "Plus the one that's being created right now"
 IMAGEDATES=$( while read DATE; do
                date -d "${DATE}" +%s
@@ -59,6 +76,8 @@ DELETABLE=$( paste <(echo "$IMAGEDATES")  <(echo "$IMAGEIDS") |
                sort -nr |
                tail -n +${RETENTION} |
                awk '{print $2}' )
+
+#TODO: Wait for image to finish successfully before reaping old
 
 # Delete the old ones
 echo "Deleting down to ${RETENTION} images"
