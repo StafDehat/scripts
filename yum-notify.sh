@@ -3,7 +3,7 @@
 # Author: Andrew Howard
 
 #TO="user@domain.tld"
-TO="andrew.howard@rackspace.com"
+TO=""
 CC=""
 HOSTNAME=$( hostname )
 FROM="root@$HOSTNAME"
