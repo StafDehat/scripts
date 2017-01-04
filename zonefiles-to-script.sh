@@ -11,6 +11,11 @@
 # Currently does not handle 'origin' syntax at all.  This is a huge
 #   failing of this script, but will rarely come into play.
 
+# "$ORIGIN values must be 'qualified' (they end with a 'dot')."
+# http://www.zytrax.com/books/dns/ch8/origin.html
+
+# Note: Still need to account for blank substitution:
+# http://www.zytrax.com/books/dns/apa/origin.html
 
 function usage() {
   echo
@@ -73,8 +78,6 @@ if [ $USAGEFLAG -ne 0 ]; then
 fi
 
 
-#
-# This gets run if argument $1 was '1'
 function addzones() {
   #
   # Attempt to create the zones on ACCT
@@ -111,187 +114,236 @@ function addzones() {
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=$NUMZONES&records=0" &) &>/dev/null
 }
 
-#
-# This gets run if argument $1 was '2'
 function addrecords() {
   NUMRECORDS=0
   for ZONE in $ZONES; do
-    #
-    # A records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qP '\.$' <<<$RECORD; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      echo "add_address_record $ZONE $RECORD $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?A\s+' $ZONE |
-                sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
-                sed '/^\s*$/d' )
-    
-    #
-    # AAAA records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qP '\.$' <<<"$RECORD"; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      echo "add_aaaa_record $ZONE $RECORD $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?AAAA\s+' $ZONE |
-                sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
-                sed '/^\s*$/d' )
-    
-    #
-    # CNAME records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qP '\.$' <<<"$RECORD"; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qP '\.$' <<<"$TARGET"; then
-        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
-      else
-        TARGET="$TARGET.$ZONE"
-      fi
-      echo "add_cname_record $ZONE $RECORD $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?CNAME\s+' $ZONE |
-                sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
-                sed '/^\s*$/d' )
-    
-    #
-    # MX records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' | sed 's/\s*$//' )
-      if grep -qP '\.$' <<<"$RECORD"; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qP '\.$' <<<"$TARGET"; then
-        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
-      else
-        TARGET="$TARGET.$ZONE"
-      fi
-      PRIORITY=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-1)}' )
-      echo "add_mx_record $ZONE $RECORD $PRIORITY $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?MX\s+\d+\s+' $ZONE |
-                  sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
-                  sed '/^\s*$/d' )
-    
-    #
-    # TXT/SPF records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      if grep -qP '\.$' <<<"$RECORD"; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      TARGET=$( echo "$LINE" | sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' )
-      echo "add_txt_record $ZONE $RECORD $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' $ZONE |
-                  sed "s/^\(\([^\"';]*|\"[^\"]*\"\|'[^']*'\)*\);.*$/\1/" | # Scrub trailing comments
-                  sed "s/@/$ZONE./" | # Sub out @ for the zone name
-                  sed '/^\s*$/d' )
-  
-    #
-    # SRV records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' | cut -d. -f3- )
-      if [ -z "$RECORD" ]; then
-        RECORD="$ZONE"
-      elif grep -qP '\.$' <<<"$RECORD"; then
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        RECORD="$RECORD.$ZONE"
-      fi
-      SERVICE=$( echo "$LINE" | awk '{print $1}' | cut -d. -f1 )
-      PROTOCOL=$( echo "$LINE" | awk '{print $1}' | cut -d. -f2 )
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qP '\.$' <<<"$TARGET"; then
-        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
-      else
-        TARGET="$TARGET.$ZONE"
-      fi
-      PORT=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-1)}' )
-      WEIGHT=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-2)}' )
-      PRIORITY=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $(NF-3)}' )
-      echo "add_srv_record $ZONE $RECORD $TARGET $SERVICE $PROTOCOL $PORT $WEIGHT $PRIORITY"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?SRV\s+\d+\s+\d+\s+\d+\s+' $ZONE |
-                  sed -e 's/\s*\(;.*\)\?$//' -e "s/@/$ZONE./" |
-                  sed '/^\s*$/d' )
-  
-    #
-    # PTR records
-    while read LINE; do
-      RECORD=$( echo "$LINE" | awk '{print $1}' )
-      if [ -z "$RECORD" ]; then
-        continue  # Totally not okay
-      elif grep -qP '\.$' <<<"$RECORD"; then
-        # ie: 155.0.16.10.in-addr.arpa.
-        RECORD=$( echo "$RECORD" | sed 's/\.$//' )
-      else
-        # ie: 155
-        RECORD="$RECORD.$ZONE"
-      fi
-      RECORD=$( echo "$RECORD" | sed 's/\.in-addr\.arpa.*//' |
-                  tr '.' '\n' | tac | tr '\n' '.' | sed 's/\.\s*$//' )
-      TARGET=$( echo "$LINE" | sed 's/\s*$//' | awk '{print $NF}' )
-      if grep -qP '\.$' <<<"$TARGET"; then
-        TARGET=$( echo "$TARGET" | sed 's/\.$//' )
-      else
-        TARGET="$TARGET.$ZONE"
-      fi
-      echo "add_ptr_record $ZONE $RECORD $TARGET"
-      NUMRECORDS=$(( $NUMRECORDS + 1 ))
-    done < <( grep -iP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' $ZONE |
-                sed -e 's/\s*\(;.*\)\?$//' |
-                sed '/^\s*$/d' | # Delete empty lines
-                sort -n )
-  
-    #
-    # Print a newline
     echo
-  
-  done
+
+    # ORIGIN initializes to the zonefile name
+    ORIGIN="${ZONE}"
+
+    # Parse file line-by-line
+    while read LINE; do
+      # If it's an ORIGIN line, redefine ORIGIN.  ZONE stays the same.
+      if grep -qP '^\s*\$ORIGIN\s' <<<"${LINE}"; then
+        ORIGIN="$( sed 's/;.*//' <<<"${LINE}" |
+                     awk '{print $2}' |
+                     sed 's/\.$//' )"
+        continue
+      fi
+
+      #
+      # A record
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?A\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          # If that leaves us with a blank line, just skip to the next line.
+          continue
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
+        if grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="$RECORD.$ORIGIN"
+        fi
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        echo "add_address_record $ZONE $RECORD $TARGET"
+        NUMRECORDS=$(( $NUMRECORDS + 1 ))
+        continue
+      fi
+ 
+      #
+      # AAAA record
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?AAAA\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          # If that leaves us with a blank line, just skip to the next line.
+          continue
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
+        if grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="$RECORD.$ORIGIN"
+        fi
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        echo "add_aaaa_record $ZONE $RECORD $TARGET"
+        NUMRECORDS=$(( $NUMRECORDS + 1 ))
+        continue
+      fi
+
+      #
+      # CNAME records
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?CNAME\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          # If that leaves us with a blank line, just skip to the next line.
+          continue
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
+        if grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="$RECORD.$ORIGIN"
+        fi
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        if grep -qP '\.$' <<<"${TARGET}"; then
+          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
+        else
+          TARGET="${TARGET}.${ORIGIN}"
+        fi
+        echo "add_cname_record $ZONE $RECORD $TARGET"
+        NUMRECORDS=$(( $NUMRECORDS + 1 ))
+        continue
+      fi
+
+      # 
+      # MX records
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?MX\s+\d+\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          # If that leaves us with a blank line, just skip to the next line.
+          continue
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
+        if grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="$RECORD.$ORIGIN"
+        fi
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        if grep -qP '\.$' <<<"${TARGET}"; then
+          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
+        else
+          TARGET="${TARGET}.${ORIGIN}"
+        fi
+        PRIORITY=$( awk '{print $(NF-1)}' <<<"${LINE}" )
+        echo "add_mx_record $ZONE $RECORD $PRIORITY $TARGET"
+        NUMRECORDS=$(( $NUMRECORDS + 1 ))
+        continue
+      fi
+
+      #
+      # TXT/SPF records
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' <<<"${LINE}"; then
+        # Strip trailing comments - this is trickier than normal, 'cause ';'
+        #   inside quotes doesn't mean comment - only outside quotes.
+        LINE=$( sed "s/^\(\([^\"';]*|\"[^\"]*\"\|'[^']*'\)*\);.*$/\1/" <<<"${LINE}" )
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          # If that leaves us with a blank line, just skip to the next line.
+          continue
+        fi
+        LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" ) # Fix this - it hits @ inside quotes
+        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
+        if grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="${RECORD}.${ORIGIN}"
+        fi
+        TARGET=$( sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' <<<"${LINE}" )
+        echo "add_txt_record ${ZONE} ${RECORD} ${TARGET}"
+        NUMRECORDS=$(( ${NUMRECORDS} + 1 ))
+        continue
+      fi
+
+      #
+      # SRV records
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          continue # If that leaves us with a blank line, just skip to the next line.
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f3- ) # Warning: Fails if using blank substitution
+        if [[ -z "${RECORD}" ]]; then
+          RECORD="${ORIGIN}"
+        elif grep -qP '\.$' <<<"${RECORD}"; then
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else
+          RECORD="${RECORD}.${ORIGIN}"
+        fi
+        SERVICE=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f1 )
+        PROTOCOL=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f2 )
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        if grep -qP '\.$' <<<"${TARGET}"; then
+          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
+        else
+          TARGET="${TARGET}.${ORIGIN}"
+        fi
+        PORT=$( awk '{print $(NF-1)}' <<<"${LINE}" )
+        WEIGHT=$( awk '{print $(NF-2)}' <<<"${LINE}" )
+        PRIORITY=$( awk '{print $(NF-3)}' <<<"${LINE}" )
+        echo "add_srv_record ${ZONE} ${RECORD} ${TARGET} ${SERVICE} ${PROTOCOL} ${PORT} ${WEIGHT} ${PRIORITY}"
+        NUMRECORDS=$(( ${NUMRECORDS} + 1 ))
+        continue
+      fi
+
+      #
+      # PTR records
+      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+        LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
+        if grep -qP '^\s*$' <<<"${LINE}"; then
+          continue # If that leaves us with a blank line, just skip to the next line.
+        fi
+        # Substitute '@' with the ORIGIN.  We want FQDNs.
+        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
+        RECORD=$( awk '{print $1}' <<<"${LINE}" )
+        if [ -z "$RECORD" ]; then
+          continue  # Totally not okay
+        elif grep -qP '\.$' <<<"$RECORD"; then
+          # ie: 155.0.16.10.in-addr.arpa.
+          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        else # ie: 155
+          RECORD="${RECORD}.${ORIGIN}"
+        fi
+        RECORD=$( sed 's/\.in-addr\.arpa.*//' <<<"${RECORD}" |
+                    tr '.' '\n' | tac | tr '\n' '.' | sed 's/\.\s*$//' )
+        TARGET=$( awk '{print $NF}' <<<"${LINE}" )
+        if grep -qP '\.$' <<<"${TARGET}"; then
+          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
+        else
+          TARGET="${TARGET}.${ORIGIN}"
+        fi
+        echo "add_ptr_record ${ZONE} ${RECORD} ${TARGET}"
+        NUMRECORDS=$(( $NUMRECORDS + 1 ))
+        continue
+      fi
+    done < "${ZONE}" #End LINE loop
+  done #End ZONE loop
 
   #
   # Record in appstats that this was executed.
-  ( curl -s https://appstats.rackspace.com/appstats/event/ \
-         -X POST \
-         -H "Content-Type: application/json" \
-         -d '{ "username": "andrew.howard",
-               "status": "SUCCESS",
-               "bizunit": "Enterprise",
-               "OS": "Linux",
-               "functionid": "Part2-Records",
-               "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
-               "version": "1.0",
-               "appid": "zonefiles-to-script.sh",
-               "device": "N/A",
-               "ip": "",
-               "datey": "'$(date +%Y)'",
-               "datem": "'$(date +%-m)'",
-               "dated": "'$(date +%-d)'",
-               "dateh": "'$(date +%-H)'",
-               "datemin": "'$(date +%-M)'",
-               "dates": "'$(date +%-S)'"
-               }' &) &>/dev/null
+  #( curl -s https://appstats.rackspace.com/appstats/event/ \
+  #       -X POST \
+  #       -H "Content-Type: application/json" \
+  #       -d '{ "username": "andrew.howard",
+  #             "status": "SUCCESS",
+  #             "bizunit": "Enterprise",
+  #             "OS": "Linux",
+  #             "functionid": "Part2-Records",
+  #             "source": "https://github.com/StafDehat/scripts/blob/master/zonefiles-to-script.sh",
+  #             "version": "1.0",
+  #             "appid": "zonefiles-to-script.sh",
+  #             "device": "N/A",
+  #             "ip": "",
+  #             "datey": "'$(date +%Y)'",
+  #             "datem": "'$(date +%-m)'",
+  #             "dated": "'$(date +%-d)'",
+  #             "dateh": "'$(date +%-H)'",
+  #             "datemin": "'$(date +%-M)'",
+  #             "dates": "'$(date +%-S)'"
+  #             }' &) &>/dev/null
   #
   # Report usage stats to author's tracking tool
   (curl -k "https://stats.rootmypc.net/dnsstats.php?zones=0&records=$NUMRECORDS" &) &>/dev/null
