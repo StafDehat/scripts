@@ -8,8 +8,6 @@
 # Only handles A, AAAA, CNAME, MX, PTR, SRV, and TXT/SPF records,
 #   because ScriptRunner doesn't handle anything else.
 # Custom TTLs are ignored
-# Currently does not handle 'origin' syntax at all.  This is a huge
-#   failing of this script, but will rarely come into play.
 
 # "$ORIGIN values must be 'qualified' (they end with a 'dot')."
 # http://www.zytrax.com/books/dns/ch8/origin.html
@@ -242,8 +240,9 @@ function addrecords() {
           continue
         fi
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" ) # Fix this - it hits @ inside quotes
+        # This sed is a beast, but what it's doing, is to replace all '@' with the ORIGIN,
+        #   but only when that '@' symbol is *not* inside quotes.
+        LINE=$( sed ":loop; s/^\(\([^\"'@]*\)\?\(\"[^\"]*\"\)\?\('[^']*'\)\?\)*@/\1${ORIGIN}./g; t loop" <<<"${LINE}" )
         RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
         if grep -qP '\.$' <<<"${RECORD}"; then
           RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
