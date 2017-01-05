@@ -76,6 +76,24 @@ if [ $USAGEFLAG -ne 0 ]; then
 fi
 
 
+# Convert a possibly-unqualified, bind9-format name into a FQDN.
+# Strip the trailing '.' too, since DNS Tool doesn't want those.
+function qualifyName() {
+  local NAME="${1}"
+  local ORIGIN="${2}"
+  # Swap '@' for ORIGIN, if it appears
+  NAME=$( sed 's/@/'"${ORIGIN}"'./' <<<"${NAME}" )
+  # Test for unqualified names
+  if grep -qP '\.$' <<<"${NAME}"; then
+    # Qualified - just strip the '.'
+    NAME=$( sed 's/\.$//' <<<"${NAME}" )
+  else
+    # Unqualified - append ORIGIN
+    NAME="${NAME}.${ORIGIN}"
+  fi
+  echo "${NAME}"
+}
+
 function addzones() {
   #
   # Attempt to create the zones on ACCT
@@ -119,6 +137,9 @@ function addrecords() {
 
     # ORIGIN initializes to the zonefile name
     ORIGIN="${ZONE}"
+    # Initialize LASTRECORD, for use with blank substitution:
+    # http://www.zytrax.com/books/dns/apa/origin.html
+    LASTRECORD=""
 
     # Parse file line-by-line
     while read LINE; do
@@ -132,19 +153,23 @@ function addrecords() {
 
       #
       # A record
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?A\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+A\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
-        if grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+A\s+' <<<"${LINE}"; then
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="$RECORD.$ORIGIN"
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
         echo "add_address_record $ZONE $RECORD $TARGET"
@@ -154,19 +179,23 @@ function addrecords() {
  
       #
       # AAAA record
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?AAAA\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
-        if grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="$RECORD.$ORIGIN"
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
         echo "add_aaaa_record $ZONE $RECORD $TARGET"
@@ -176,26 +205,26 @@ function addrecords() {
 
       #
       # CNAME records
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?CNAME\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
-        if grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="$RECORD.$ORIGIN"
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
-        if grep -qP '\.$' <<<"${TARGET}"; then
-          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
-        else
-          TARGET="${TARGET}.${ORIGIN}"
-        fi
+        TARGET=$( qualifyName "${TARGET}" "${ORIGIN}" )
         echo "add_cname_record $ZONE $RECORD $TARGET"
         NUMRECORDS=$(( $NUMRECORDS + 1 ))
         continue
@@ -203,26 +232,28 @@ function addrecords() {
 
       # 
       # MX records
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?MX\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
-        if grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
+          # No explicit name.  Use blank substitution.
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="$RECORD.$ORIGIN"
+          # There's an explicit name - qualify it
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
-        if grep -qP '\.$' <<<"${TARGET}"; then
-          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
-        else
-          TARGET="${TARGET}.${ORIGIN}"
-        fi
+        TARGET=$( qualifyName "${TARGET}" "${ORIGIN}" )
         PRIORITY=$( awk '{print $(NF-1)}' <<<"${LINE}" )
         echo "add_mx_record $ZONE $RECORD $PRIORITY $TARGET"
         NUMRECORDS=$(( $NUMRECORDS + 1 ))
@@ -231,7 +262,7 @@ function addrecords() {
 
       #
       # TXT/SPF records
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
         # Strip trailing comments - this is trickier than normal, 'cause ';'
         #   inside quotes doesn't mean comment - only outside quotes.
         LINE=$( sed 's/^\(\([^";]*\|"[^"]*"\)*\);.*$/\1/' <<<"${LINE}" )
@@ -240,17 +271,22 @@ function addrecords() {
           continue
         fi
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
-        # This sed is a beast, but what it's doing, is to replace all '@' with the ORIGIN,
-        #   but only when that '@' symbol is *not* inside quotes.
-        LINE=$( sed ':loop; s/^\(\([^"]*\)\|\("[^"]*"\)\)*@/\1${ORIGIN}./g; t loop' <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
-        if grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
+          # No explicit name.  Use blank substitution.
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="${RECORD}.${ORIGIN}"
+          # There's an explicit name - qualify it
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
-        TARGET=$( sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' <<<"${LINE}" )
         # Rules for TXT are annoying: http://www.zytrax.com/books/dns/ch8/txt.html
+        TARGET=$( sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' <<<"${LINE}" )
         if grep -qP '^\(' <<<"${TARGET}"; then 
           # If TARGET starts with a paren, it's a multi-line TXT.  Handle appropriately.
           # ie: Read next line, check for unquoted closing paren, end or repeat
@@ -267,6 +303,9 @@ function addrecords() {
           # Strip the outer parens, since we've got it all on one line now
           TARGET=$( sed 's/^\s*(\(.*\))\s*$/\1/' <<<"${TARGET}" )
         fi
+        # This sed is a beast, but what it's doing, is to replace all '@' with the ORIGIN,
+        #   but only when that '@' symbol is *not* inside quotes.
+        TARGET=$( sed ':loop; s/^\(\([^"]*\)\|\("[^"]*"\)\)*@/\1${ORIGIN}./g; t loop' <<<"${TARGET}" )
         # If there are quoted strings, strip the unquoted whitespace, and
         #   condense to a single quoted string
         TARGET=$( sed 's/"\([^"]*\)"\s*/\1/g; s/\(^\|$\)/"/g' <<<"${TARGET}" )
@@ -277,63 +316,63 @@ function addrecords() {
 
       #
       # SRV records
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f3- ) # Warning: Fails if using blank substitution
-        if [[ -z "${RECORD}" ]]; then
-          RECORD="${ORIGIN}"
-        elif grep -qP '\.$' <<<"${RECORD}"; then
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
+        # Test to see if they used "blank substitution"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+          # No explicit name.  Use blank substitution.
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
         else
-          RECORD="${RECORD}.${ORIGIN}"
+          # There's an explicit name - qualify it
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
-        SERVICE=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f1 )
-        PROTOCOL=$( awk '{print $1}' <<<"${LINE}" | cut -d. -f2 )
+        NAME=$( cut -d\. -f3- <<<"${RECORD}" )
+        SERVICE=$( cut -d. -f1 <<<"${RECORD}" )
+        PROTOCOL=$( cut -d. -f2 <<<"${RECORD}" )
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
-        if grep -qP '\.$' <<<"${TARGET}"; then
-          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
-        else
-          TARGET="${TARGET}.${ORIGIN}"
-        fi
+        TARGET=$( qualifyName "${TARGET}" "${ORIGIN}" )
         PORT=$( awk '{print $(NF-1)}' <<<"${LINE}" )
         WEIGHT=$( awk '{print $(NF-2)}' <<<"${LINE}" )
         PRIORITY=$( awk '{print $(NF-3)}' <<<"${LINE}" )
-        echo "add_srv_record ${ZONE} ${RECORD} ${TARGET} ${SERVICE} ${PROTOCOL} ${PORT} ${WEIGHT} ${PRIORITY}"
+        echo "add_srv_record ${ZONE} ${NAME} ${TARGET} ${SERVICE} ${PROTOCOL} ${PORT} ${WEIGHT} ${PRIORITY}"
         NUMRECORDS=$(( ${NUMRECORDS} + 1 ))
         continue
       fi
 
       #
       # PTR records
-      if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
-        # Substitute '@' with the ORIGIN.  We want FQDNs.
-        LINE=$( sed "s/@/$ORIGIN./" <<<"${LINE}" )
-        RECORD=$( awk '{print $1}' <<<"${LINE}" )
-        if [ -z "$RECORD" ]; then
-          continue  # Totally not okay
-        elif grep -qP '\.$' <<<"$RECORD"; then
-          # ie: 155.0.16.10.in-addr.arpa.
-          RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
-        else # ie: 155
-          RECORD="${RECORD}.${ORIGIN}"
+        if grep -qiP '^\s*(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+          # No explicit name.  Use blank substitution.
+          if [[ -n "${LASTRECORD}" ]]; then
+            RECORD="${LASTRECORD}"
+          else
+            RECORD="${ORIGIN}"
+          fi
+        else
+          # There's an explicit name - qualify it
+          RECORD=$( awk '{print $1}' <<<"${LINE}" )
+          RECORD=$( qualifyName "${RECORD}" "${ORIGIN}" )
+          LASTRECORD="${RECORD}"
         fi
-        RECORD=$( sed 's/\.in-addr\.arpa.*//' <<<"${RECORD}" |
+        # DNS Tool needs the full IP, not the ARPA FQDN.
+        RECORD=$( sed 's/\.in-addr\.arpa\s*$//' <<<"${RECORD}" |
                     tr '.' '\n' | tac | tr '\n' '.' | sed 's/\.\s*$//' )
         TARGET=$( awk '{print $NF}' <<<"${LINE}" )
-        if grep -qP '\.$' <<<"${TARGET}"; then
-          TARGET=$( sed 's/\.$//' <<<"${TARGET}" )
-        else
-          TARGET="${TARGET}.${ORIGIN}"
-        fi
+        TARGET=$( qualifyName "${TARGET}" "${ORIGIN}" )
         echo "add_ptr_record ${ZONE} ${RECORD} ${TARGET}"
         NUMRECORDS=$(( $NUMRECORDS + 1 ))
         continue
