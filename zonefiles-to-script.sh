@@ -234,7 +234,7 @@ function addrecords() {
       if grep -qiP '^\s*[^\s]+\s+(\d+[^\s]*\s+)?(IN\s+)?(TXT|SPF)\s+' <<<"${LINE}"; then
         # Strip trailing comments - this is trickier than normal, 'cause ';'
         #   inside quotes doesn't mean comment - only outside quotes.
-        LINE=$( sed "s/^\(\([^\"';]*|\"[^\"]*\"\|'[^']*'\)*\);.*$/\1/" <<<"${LINE}" )
+        LINE=$( sed 's/^\(\([^";]*\|"[^"]*"\)*\);.*$/\1/' <<<"${LINE}" )
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
@@ -242,7 +242,7 @@ function addrecords() {
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
         # This sed is a beast, but what it's doing, is to replace all '@' with the ORIGIN,
         #   but only when that '@' symbol is *not* inside quotes.
-        LINE=$( sed ":loop; s/^\(\([^\"']*\)\|\(\"[^\"]*\"\)\|\('[^']*'\)\)*@/\1${ORIGIN}./g; t loop" <<<"${LINE}" )
+        LINE=$( sed ':loop; s/^\(\([^"]*\)\|\("[^"]*"\)\)*@/\1${ORIGIN}./g; t loop' <<<"${LINE}" )
         RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
         if grep -qP '\.$' <<<"${RECORD}"; then
           RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
@@ -250,6 +250,26 @@ function addrecords() {
           RECORD="${RECORD}.${ORIGIN}"
         fi
         TARGET=$( sed 's/.*\s\(TXT\|SPF\)\s\s*\(.*\)\s*$/\2/i' <<<"${LINE}" )
+        # Rules for TXT are annoying: http://www.zytrax.com/books/dns/ch8/txt.html
+        if grep -qP '^\(' <<<"${TARGET}"; then 
+          # If TARGET starts with a paren, it's a multi-line TXT.  Handle appropriately.
+          # ie: Read next line, check for unquoted closing paren, end or repeat
+          while read LINE; do
+            # Strip trailing comments
+            LINE=$( sed 's/^\(\([^";]*|"[^"]*"\)*\);.*$/\1/' <<<"${LINE}" )
+            # Append the next line to TARGET
+            TARGET="${TARGET}${LINE}"
+            if grep -qP '\)\s*$' <<<"${TARGET}"; then
+              # If the paren closed, we're done
+              break
+            fi
+          done
+          # Strip the outer parens, since we've got it all on one line now
+          TARGET=$( sed 's/^\s*(\(.*\))\s*$/\1/' <<<"${TARGET}" )
+        fi
+        # If there are quoted strings, strip the unquoted whitespace, and
+        #   condense to a single quoted string
+        TARGET=$( sed 's/"\([^"]*\)"\s*/\1/g; s/\(^\|$\)/"/g' <<<"${TARGET}" )
         echo "add_txt_record ${ZONE} ${RECORD} ${TARGET}"
         NUMRECORDS=$(( ${NUMRECORDS} + 1 ))
         continue
