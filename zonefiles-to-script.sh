@@ -10,10 +10,8 @@
 # Custom TTLs are ignored
 
 # "$ORIGIN values must be 'qualified' (they end with a 'dot')."
+# That's why I'm not runnin' 'em through qualifyName()
 # http://www.zytrax.com/books/dns/ch8/origin.html
-
-# Note: Still need to account for blank substitution:
-# http://www.zytrax.com/books/dns/apa/origin.html
 
 function usage() {
   echo
@@ -411,7 +409,7 @@ function addrecords() {
 
 cd $ZONEDIR
 # Do at least a tiny bit of verification to see if these files are, in fact, DNS zones
-ZONES=$( grep -li soa * )
+ZONES=$( grep -liP 'in\s+soa' * )
 
 if [ $DOZONES -eq 1 ]; then
   addzones
