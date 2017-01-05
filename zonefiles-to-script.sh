@@ -242,7 +242,7 @@ function addrecords() {
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
         # This sed is a beast, but what it's doing, is to replace all '@' with the ORIGIN,
         #   but only when that '@' symbol is *not* inside quotes.
-        LINE=$( sed ":loop; s/^\(\([^\"'@]*\)\?\(\"[^\"]*\"\)\?\('[^']*'\)\?\)*@/\1${ORIGIN}./g; t loop" <<<"${LINE}" )
+        LINE=$( sed ":loop; s/^\(\([^\"']*\)\|\(\"[^\"]*\"\)\|\('[^']*'\)\)*@/\1${ORIGIN}./g; t loop" <<<"${LINE}" )
         RECORD=$( awk '{print $1}' <<<"${LINE}" ) # Warning: Fails if using blank substitution
         if grep -qP '\.$' <<<"${RECORD}"; then
           RECORD=$( sed 's/\.$//' <<<"${RECORD}" )
