@@ -129,6 +129,19 @@ function addzones() {
 }
 
 function addrecords() {
+  # Define a regex that describes what a resource-record starts with:
+  # Ref: https://tools.ietf.org/html/rfc1035
+  # If an entry for an RR begins with a blank, then the RR is assumed to be
+  #   owned by the last stated owner.  If an RR entry begins with a
+  #   <domain-name>, then the owner name is reset.
+  RRName='([a-z_\-\.\d\*]+)?'
+  # <rr> contents take one of the following forms:
+  #   [<TTL>] [<class>] <type> <RDATA>
+  #   [<class>] [<TTL>] <type> <RDATA>
+  RRTypeClass='((\d+[a-z]?\s+)?(IN\s+)?|(IN\s+)?(\d+[a-z]?\s+)?)'
+  #            ^^^^^^^^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^
+  #                    "TTL IN"       or        "IN TTL"
+
   NUMRECORDS=0
   for ZONE in $ZONES; do
     echo
@@ -151,14 +164,14 @@ function addrecords() {
 
       #
       # A record
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+A\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}A\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+A\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}A\s+" <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -177,14 +190,14 @@ function addrecords() {
  
       #
       # AAAA record
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}AAAA\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}AAAA\s+" <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -203,14 +216,14 @@ function addrecords() {
 
       #
       # CNAME records
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}CNAME\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}CNAME\s+" <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -230,14 +243,14 @@ function addrecords() {
 
       # 
       # MX records
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}MX\s+\d+\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}MX\s+\d+\s+" <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -260,7 +273,7 @@ function addrecords() {
 
       #
       # TXT/SPF records
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}(TXT|SPF)\s+" <<<"${LINE}"; then
         # Strip trailing comments - this is trickier than normal, 'cause ';'
         #   inside quotes doesn't mean comment - only outside quotes.
         LINE=$( sed 's/^\(\([^";]*\|"[^"]*"\)*\);.*$/\1/' <<<"${LINE}" )
@@ -270,7 +283,7 @@ function addrecords() {
         fi
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}(TXT|SPF)\s+" <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -314,13 +327,13 @@ function addrecords() {
 
       #
       # SRV records
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}SRV\s+\d+\s+\d+\s+\d+\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}SRV\s+\d+\s+\d+\s+\d+\s+" <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -348,12 +361,12 @@ function addrecords() {
 
       #
       # PTR records
-      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+      if grep -qiP "^${RRName}\s+${RRTypeClass}PTR\s+" <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
-        if grep -qiP '^\s+(\d+[a-z]?\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+        if grep -qiP "^\s+${RRTypeClass}PTR\s+" <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
