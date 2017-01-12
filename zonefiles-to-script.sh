@@ -65,7 +65,7 @@ fi
 if [ -z "$ACCT" ]; then
   echo "ERROR: Must define ACCOUNT as argument (-a)"
   USAGEFLAG=1
-elif [ $( grep -cE '^[0-9][0-9]*$' <<<"$ACCT" ) -ne 1 ]; then
+elif [ $( grep -cP '^\d+$' <<<"$ACCT" ) -ne 1 ]; then
   echo "ERROR: Specified accout must be numeric."
   USAGEFLAG=1
 fi
@@ -151,14 +151,14 @@ function addrecords() {
 
       #
       # A record
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+A\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+A\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+A\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+A\s+' <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -177,14 +177,14 @@ function addrecords() {
  
       #
       # AAAA record
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+AAAA\s+' <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -203,14 +203,14 @@ function addrecords() {
 
       #
       # CNAME records
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+CNAME\s+' <<<"${LINE}"; then
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
           else
@@ -230,14 +230,14 @@ function addrecords() {
 
       # 
       # MX records
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           # If that leaves us with a blank line, just skip to the next line.
           continue
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+MX\s+\d+\s+' <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -260,7 +260,7 @@ function addrecords() {
 
       #
       # TXT/SPF records
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
         # Strip trailing comments - this is trickier than normal, 'cause ';'
         #   inside quotes doesn't mean comment - only outside quotes.
         LINE=$( sed 's/^\(\([^";]*\|"[^"]*"\)*\);.*$/\1/' <<<"${LINE}" )
@@ -270,7 +270,7 @@ function addrecords() {
         fi
         LINE=$( sed 's/\s*$//' <<<"${LINE}" ) # Strip trailing whitespace
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+(TXT|SPF)\s+' <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -314,13 +314,13 @@ function addrecords() {
 
       #
       # SRV records
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
         # Test to see if they used "blank substitution"
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?IN\s+SRV\s+\d+\s+\d+\s+\d+\s+' <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
@@ -348,12 +348,12 @@ function addrecords() {
 
       #
       # PTR records
-      if grep -qiP '^\s*([^\s]+\s+)?(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+      if grep -qiP '^\s*([a-z\-\d\.]+\s+)?(\d+[a-z]?\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
         LINE=$( sed 's/\s*\(;.*\)\?$//' <<<"${LINE}" ) # Strip trailing whitespace/comments
         if grep -qP '^\s*$' <<<"${LINE}"; then
           continue # If that leaves us with a blank line, just skip to the next line.
         fi
-        if grep -qiP '^\s*(\d+[^\s]*\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
+        if grep -qiP '^\s+(\d+[a-z]?\s+)?(IN\s+)?PTR\s+' <<<"${LINE}"; then
           # No explicit name.  Use blank substitution.
           if [[ -n "${LASTRECORD}" ]]; then
             RECORD="${LASTRECORD}"
