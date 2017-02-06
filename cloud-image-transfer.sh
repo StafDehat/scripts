@@ -205,15 +205,11 @@ echo "Successfully authenticated using provided SRCUSERNAME and SRCAPIKEY."
 echo
 SRCTOKEN=$( echo "$DATA" | sed '$d' )
 SRCTENANTID=$( echo "$SRCTOKEN" |
-                 tr ',' '\n' |
-                 sed -n '/token/,/APIKEY/p' |
-                 sed -n '/tenant/,/}/p' |
+                 grep -Po 'token.*tenant([^}]*}){2}' |
                  sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 SRCAUTHTOKEN=$( echo "$SRCTOKEN" |
-                  tr ',' '\n' |
-                  sed -n '/token/,/APIKEY/p' |
-                  sed -n '/token/,/}/p' |
-                  grep -v \"id\":\"$SRCTENANTID\" |
+                  grep -Po 'token.*tenant([^}]*}){2}' |
+                  sed 's/tenant[^}]*//' |
                   sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
 unset SRCAPIKEY
 
