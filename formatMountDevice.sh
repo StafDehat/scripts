@@ -1,10 +1,78 @@
 #!/bin/bash
 
-B_DEVICE=/dev/xvdc
-B_DIR=/data
+#
+# Verify the existence of pre-req's
+PREREQS="parted partprobe"
+PREREQFLAG=0
+for PREREQ in $PREREQS; do
+  which $PREREQ &>/dev/null
+  if [ $? -ne 0 ]; then
+    echo "Error: Gotta have '$PREREQ' binary to run."
+    PREREQFLAG=1
+  fi
+done
+if [ $PREREQFLAG -ne 0 ]; then
+  exit 1
+fi
+
+#
+# Define a usage statement
+function usage() {
+  echo "Usage: $0 [-h]\\"
+  echo "          -b BlockDevice \\"
+  echo "          -d Directory \\"
+  echo "          [-f Filesystem] \\"
+  echo "          -l LVName \\"
+  echo "          -v VGName"
+  echo
+  echo "Example: $0 -b /dev/sdb -d /data -v vg00 -l lv00 -f ext4"
+  echo
+  echo "Arguments:"
+  echo "  -b X  Block device to partition/pvcreate/format."
+  echo "        WARNING: All data on this device will be lost."
+  echo "  -d X  Mountpoint for newly-created LVM logical volume."
+  echo "  -f X  Filesystem to use for mkfs on the newly-created LVM logical volume."
+  echo "  -h    Print this help."
+  echo "  -l X  LVM Logical volume name."
+  echo "  -v X  LVM Volume group name."
+}
+
+#
+# Handle command-line args
+B_DEVICE=""
+B_DIR=""
 B_FS=ext4
-B_VG="vglocal$(date "+%Y%m%d")"
-B_LV=lv00
+B_VG=""
+B_LV=""
+USAGEFLAG=0
+while getopts ":b:d:f:hl:v:" arg; do
+  case $arg in
+    b) B_DEVICE="${OPTARG}";;
+    d) B_DIR="${OPTARG}";;
+    f) B_FS="${OPTARG}";;
+    h) usage && exit 0;;
+    l) B_LV="${OPTARG}";;
+    v) B_VG="${OPTARG}";;
+    :) echo "ERROR: Option -$OPTARG requires an argument."
+       USAGEFLAG=1;;
+    *) echo "ERROR: Invalid option: -$OPTARG"
+       USAGEFLAG=1;;
+  esac
+done #End arguments
+shift $(($OPTIND - 1))
+# Verify required arguments were passed
+ReqArgs="B_DEVICE B_DIR B_VG B_LV"
+for ARGUMENT in ${ReqArgs}; do
+  if [ -z "${!ARGUMENT}" ]; then
+    echo "ERROR: Must define $ARGUMENT as argument."
+    USAGEFLAG=1
+  fi
+done
+# Bail, maybe
+if [ "$USAGEFLAG" -ne 0 ]; then
+  usage && exit 1
+fi
+
 
 
 #
@@ -56,6 +124,7 @@ function totalDataLoss() {
   for CHILD in ${CHILDREN}; do
     dd if=/dev/zero of="${DEVICE}" bs=4096 count=256
   done
+  partprobe
 }
 
 
@@ -79,6 +148,27 @@ if [[ ${BAIL} -ne 0 ]]; then
   else
     exit 1
   fi
+fi
+
+#
+# Test for conflicting VG
+VGS=$( vgs --noheadings -o vgname )
+if grep -qP "^\s*${B_VG}\s*$" <<<"${VGS}"; then
+  echo
+  echo "ERROR: You're attempting to create a new LVM Volume Group named '${B_VG}',"
+  echo "  but that already exists:"
+  vgs
+  exit 2
+fi
+
+#
+# Test for conflicting mountpoint
+if mountpoint "${B_DIR}" &>/dev/null; then
+  echo
+  echo "ERROR: You're attempting to mount the new LV at '${B_DIR}'"
+  echo "  but something is already mounted there:"
+  df -h "${B_DIR}"
+  exit 3
 fi
 
 #
@@ -118,5 +208,4 @@ fi
 sed -i "/^\s*\/dev\/mapper\/${B_VG}-${B_LV}/s/^/#/" /etc/fstab
 grep "^\s*/dev/mapper/${B_VG}-${B_LV}" /proc/mounts |
   sed 's/[0-9]\+\s*$/2/' >> /etc/fstab
-
 
