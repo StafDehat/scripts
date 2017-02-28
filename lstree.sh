@@ -3,7 +3,7 @@
 # Author: Andrew Howard
 
 function dirlist() {
-  if ! grep -qP '^\s*/' <<<"$1"; then
+  if [ -z "$1" ]; then
     return
   elif [ "$1" == "/" ]; then
     echo -n "/"
