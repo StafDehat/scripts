@@ -3,7 +3,9 @@
 # Author: Andrew Howard
 
 function dirlist() {
-  if [ "$1" == "/" ]; then
+  if ! grep -qP '^\s*/' <<<"$1"; then
+    return
+  elif [ "$1" == "/" ]; then
     echo -n "/"
   else
     echo -n "$( dirlist $( dirname "$1" ) ) $1"
