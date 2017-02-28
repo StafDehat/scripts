@@ -3,8 +3,9 @@
 # Author: Andrew Howard
 
 function dirlist() {
-  if [ -z "$1" ]; then
-    return
+  if ! grep -qP '^\s*/' <<<"$1"; then
+    echo "Absolute paths only, please"
+    exit 1
   elif [ "$1" == "/" ]; then
     echo -n "/"
   else
