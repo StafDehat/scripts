@@ -3,14 +3,16 @@
 # Author: Andrew Howard
 
 # Force newlines around virtualhost tags
-sed 's/\(<\s*\/\?\s*virtualhost[^>]*>\)/\n\1\n/gI' blah > newblah
+sed 's/^[^#]*\(<\s*\/\?\s*virtualhost[^>]*>\)/\n\1\n/gI' blah > newblah
 
 # New file at every virtualhost tag
 awk 'IGNORECASE=1;/^\s*<\s*\/?\s*virtualhost/{n++} {print >"tmp/out"n".txt"}' newblah
 
-# Get out*.txt into just the Virtualhosts, one per file.
+# Delete the out*.txt files that don't contain a VirtualHost
 cd tmp
-comm -13 <( grep -lPi '<\s*virtualhost' * | sort ) <( for x in *; do echo "${x}"; done | sort ) | xargs rm -f
+comm -13 <( grep -lPi '^\s*<\s*virtualhost' * | sort ) <( for x in *; do echo "${x}"; done | sort ) | xargs rm -f
+
+# Add closing VirtualHost tags to what's left
 for x in *; do echo "</VirtualHost>" >> $x; done
 
 # Rename files to vhost names
@@ -20,7 +22,7 @@ for x in *; do
   rm -f "$x"
 done
 
-# Delete all virtualhosts
+# Pull all global config from original file, into newblah
 cd ..
 sed -i '/<\s*virtualhost/I,/<\s*\/\s*virtualhost/Id' newblah
 
