@@ -12,11 +12,11 @@ numParts=$(
 )
 
 cd $1.parts
-mv out.txt header.sql
+mv out.txt 000-header.sql
 
 # Pre-process the file containing the footer.
-sed -n '/SET TIME_ZONE=@OLD_TIME_ZONE/,//p' "out${numParts}.txt" > footer.sql
-head -n -$( wc -l <footer.sql ) "out${numParts}.txt" > tmp
+sed -n '/SET TIME_ZONE=@OLD_TIME_ZONE/,//p' "out${numParts}.txt" > 000-footer.sql
+head -n -$( wc -l <000-footer.sql ) "out${numParts}.txt" > tmp
 mv tmp "out${numParts}.txt"
 
 DB="."
