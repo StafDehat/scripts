@@ -20,10 +20,94 @@
 # almost never actually comes into effect.  In 99% of cases, there's only 
 # one apache instance.
 
-PARENTPIDS=`comm -12 <(ps -C httpd -C apache2 -o ppid | sort -u) <(ps -C httpd -C apache2 -o pid | sort -u)`
+
+declare -a ParPIDs
+declare -a ProcNames
+dataSrc="pmon"
+
+function error()  { echo "$(date +"%F %T"): $@" >&2; }
+function output() { echo "$(date +"%F %T"): $@"; }
+function debug()  { echo "$(date +"%F %T"): $@"; }
+
+function usage() {
+cat <<EOF
+Usage: $0 [-s] [-p]
+
+Example:
+
+Arguments:
+        -p	Parent PID of pstree
+        -n	Name of pstree executable (ie: apache2, or httpd)
+	-h	Print this help
+        -s SRC	Use 'SRC' for calculations. See SOURCES.
+
+SOURCES:
+	smem	
+	pmon	
+	ps	Pull per-process memory footprint from RSS column of 'ps'
+EOF
+}
+
+function parseArgs() {
+  local invalidUsage=false
+  while getopts ":hp:s:" arg; do
+    case ${arg} in
+      h) usage && exit 0;;
+      n) ProcNames+=( "${OPTARG}" );;
+      p) ParPIDs+=( "${OPTARG}" );;
+      s) dataSrc="${OPTARG}";;
+      :) error "ERROR: Option -${OPTARG} requires an argument."
+         invalidUsage=true;;
+      *) error "ERROR: Invalid option: -${OPTARG}"
+         invalidUsage=true;;
+    esac
+  done #End arguments
+  shift $((${OPTIND} - 1))
+  [[ "${invalidUsage}" != "false" ]] && exit 1 || exit 0
+}
+
+function sanitizeArgs() {
+  local invalidUsage=false
+  local -a validSources
+  validSources+=( "pmon" )
+  validSources+=( "smem" )
+  validSources+=( "ps" )
+  # Compare validSources[@] to validSources[@].remove(dataSrc)
+  # If identical, you didn't pick a valid source.  
+  if [[ "${validSources[@]##${dataSrc}}" == "${validSources[@]}" ]]; then
+    error "Specified SOURCE (${dataSrc}) not valid"
+    invalidUsage=true
+  fi
+
+  if [[ ${#ParPIDs[@]} -eq 0 ]] &&
+     [[ ${#ProcNames[@]} -eq 0 ]]; then
+    error 'Must define at least 1 process name or PID with -p or -n'
+    invalidUsage=true
+  fi
+  
+  [[ "${invalidUsage}" != "false" ]] && exit 1 || exit 0
+}
+
+
+
+PARENTPIDS=$( comm -12 <(ps -C httpd -C apache2 -o ppid | sort -u) \
+                       <(ps -C httpd -C apache2 -o pid | sort -u) )
+
 # Bug discovered in Ubuntu - use this instead:
-# PARENTPIDS=$( comm -12 <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o ppid | sort -u) \
-#                        <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o pid | sort -u) )
+PARENTPIDS=$( comm -12 <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o ppid | sort -u) \
+                       <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o pid | sort -u) )
+
+
+
+function pmonTree() {
+
+
+
+}
+
+
+
+
  
 for ParPID in $PARENTPIDS; do
   SUM=0
@@ -54,3 +138,4 @@ for ParPID in $PARENTPIDS; do
   echo
   )
 done
+
