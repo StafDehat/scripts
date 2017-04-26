@@ -63,7 +63,7 @@ function parseArgs() {
     esac
   done #End arguments
   shift $((${OPTIND} - 1))
-  [[ "${invalidUsage}" != "false" ]] && exit 1 || exit 0
+  [[ "${invalidUsage}" != "false" ]] && return 1 || return 0
 }
 
 function sanitizeArgs() {
@@ -79,28 +79,36 @@ function sanitizeArgs() {
     invalidUsage=true
   fi
 
-  if [[ ${#ParPIDs[@]} -eq 0 ]] &&
-     [[ ${#ProcNames[@]} -eq 0 ]]; then
-    error 'Must define at least 1 process name or PID with -p or -n'
+
+  # Verify specified PIDs are actually valid PIDs
+
+
+  # Identify parent PIDs of named executables
+  for ProcName in ${ProcNames[@]}; do
+    local childList=$( pidof ${ProcName} )
+    local parentList=$( comm -12 <( ps -o ppid= -p ${childList} 2>/dev/null ) \
+                                 <( ps -o pid= -p ${childList} 2>/dev/null ) )
+    if grep -q '^\s*$' <<<"${parentList}"; then
+      error "Unable to identify PID of ${ProcName} - skipping that one"
+    else
+      for parentPid in $parentList; do
+        ParPIDs+=( ${parentPid} )
+      done
+    fi
+  done
+
+  # Ensure at least 1x process tree was specified
+  if [[ ${#ParPIDs[@]} -eq 0 ]]; then
+    error 'Must define at least 1 valid process name or PID'
     invalidUsage=true
   fi
   
-  [[ "${invalidUsage}" != "false" ]] && exit 1 || exit 0
+  [[ "${invalidUsage}" != "false" ]] && return 1 || return 0
 }
 
 
-
-PARENTPIDS=$( comm -12 <(ps -C httpd -C apache2 -o ppid | sort -u) \
-                       <(ps -C httpd -C apache2 -o pid | sort -u) )
-
-# Bug discovered in Ubuntu - use this instead:
-PARENTPIDS=$( comm -12 <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o ppid | sort -u) \
-                       <(ps -C httpd,/usr/sbin/httpd,apache2,/usr/sbin/apache2 -o pid | sort -u) )
-
-
-
 function pmonTree() {
-
+  return 0
 
 
 }
@@ -112,7 +120,7 @@ function pmonTree() {
 for ParPID in $PARENTPIDS; do
   SUM=0
   COUNT=0
-  for x in `ps f --ppid $ParPID -o rss | tail -n +2`; do
+  for x in $( ps f --ppid $ParPID -o rss= ); do
     SUM=$(( $SUM + $x ))
     COUNT=$(( $COUNT + 1 ))
   done
