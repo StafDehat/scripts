@@ -25,22 +25,21 @@ declare -a ParPIDs
 declare -a ProcNames
 dataSrc="pmon"
 
-function error()  { echo "$(date +"%F %T"): $@" >&2; }
+function error()  { echo "$(date +"%F %T") ERROR: $@" >&2; }
 function output() { echo "$(date +"%F %T"): $@"; }
 function debug()  { echo "$(date +"%F %T"): $@"; }
 
 function usage() {
 cat <<EOF
-Usage: $0 [-s] [-p]
-
+Usage:
+	$0 [-s] [-p]
 Example:
-
+	$0 -s pmon -n apache2
 Arguments:
         -p	Parent PID of pstree
         -n	Name of pstree executable (ie: apache2, or httpd)
 	-h	Print this help
         -s SRC	Use 'SRC' for calculations. See SOURCES.
-
 SOURCES:
 	smem	
 	pmon	
@@ -50,15 +49,15 @@ EOF
 
 function parseArgs() {
   local invalidUsage=false
-  while getopts ":hp:s:" arg; do
+  while getopts ":hn:p:s:" arg; do
     case ${arg} in
       h) usage && exit 0;;
       n) ProcNames+=( "${OPTARG}" );;
       p) ParPIDs+=( "${OPTARG}" );;
       s) dataSrc="${OPTARG}";;
-      :) error "ERROR: Option -${OPTARG} requires an argument."
+      :) error "Option -${OPTARG} requires an argument."
          invalidUsage=true;;
-      *) error "ERROR: Invalid option: -${OPTARG}"
+      *) error "Invalid option: -${OPTARG}"
          invalidUsage=true;;
     esac
   done #End arguments
@@ -68,19 +67,9 @@ function parseArgs() {
 
 function sanitizeArgs() {
   local invalidUsage=false
-  local -a validSources
-  validSources+=( "pmon" )
-  validSources+=( "smem" )
-  validSources+=( "ps" )
-  # Compare validSources[@] to validSources[@].remove(dataSrc)
-  # If identical, you didn't pick a valid source.  
-  if [[ "${validSources[@]##${dataSrc}}" == "${validSources[@]}" ]]; then
-    error "Specified SOURCE (${dataSrc}) not valid"
-    invalidUsage=true
-  fi
 
 
-  # Verify specified PIDs are actually valid PIDs
+  # Verify specified PIDs are actually valid PIDs?
 
 
   # Identify parent PIDs of named executables
@@ -102,38 +91,46 @@ function sanitizeArgs() {
     error 'Must define at least 1 valid process name or PID'
     invalidUsage=true
   fi
-  
+
+  # Verify we've implemented the form of reporting they requested
+  if [[ "$( type -t ${dataSrc}Report )" != "function" ]]; then
+    error "Specified SOURCE (${dataSrc}) not valid"
+    invalidUsage=true
+  fi
+
   [[ "${invalidUsage}" != "false" ]] && return 1 || return 0
 }
 
 
-function pmonTree() {
+function pmonReport() {
+  echo "pmon!!!"
   return 0
-
-
 }
 
 
+function smemReport() {
+  echo "Smem!!!"
+  return 0
+}
 
 
- 
-for ParPID in $PARENTPIDS; do
+function psReport() {
+  rootPID="${1}"
   SUM=0
   COUNT=0
-  for x in $( ps f --ppid $ParPID -o rss= ); do
+  for x in $( ps f --ppid ${rootPID} -o rss= ); do
     SUM=$(( $SUM + $x ))
     COUNT=$(( $COUNT + 1 ))
   done
- 
+
   MEMPP=$(( $SUM / $COUNT / 1024 ))
   FREERAM=$(( `free | tail -2 | head -1 | awk '{print $4}'` / 1024 ))
   APACHERAM=$(( $SUM / 1024 ))
   APACHEMAX=$(( $APACHERAM + $FREERAM ))
- 
-  (
+
   echo
   echo "Info for the following parent apache process:"
-  echo "  "`ps f --pid $ParPID -o command | tail -n +2`
+  echo "  $( ps f --pid ${rootPID} -o command= )"
   echo
   echo "Current # of apache processes:        $COUNT"
   echo "Average memory per apache process:    $MEMPP MB"
@@ -144,6 +141,18 @@ for ParPID in $PARENTPIDS; do
   echo "Theoretical maximum MaxClients:  $(( $APACHEMAX / $MEMPP ))"
   echo "Recommended MaxClients:          $(( $APACHEMAX / 10 * 9 / $MEMPP ))"
   echo
-  )
+}
+
+ 
+invalidUsage=false
+parseArgs $@ || invalidUsage=true
+sanitizeArgs || invalidUsage=true
+if [[ "${invalidUsage}" != "false" ]]; then
+  echo "Failed usage."
+  usage && exit 1
+fi
+for aPID in ${ParPIDs[@]}; do
+  ${dataSrc}Report ${aPID}
 done
+
 
