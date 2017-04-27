@@ -1,25 +1,5 @@
 #!/bin/bash
 # Author: Andrew Howard
-# Apache only loads shared objects once, but every child process will 
-# report memory as if it loaded the object itself. This means every process 
-# is going to over-report its resident memory usage. This means you could 
-# have a 4GB system that appears to have 6GB RAM in-use by apache. There's 
-# no known way to get a precise value of actual RAM used by an apache 
-# process (if you know one, please lodge a git issue).
-# However, since the error is on both sides of the division, it cancels out. 
-# This means the error only comes into effect in calculating how many 
-# processes will use up the remaining, unused RAM, which means we'll err on 
-# the side of caution by setting the value too low.  The estimate gets more 
-# accurate as apache claims more RAM.
-# Also note, the script has been updated to support multiple apache 
-# instances on a single server. Each instance calculates its own MaxClients 
-# value completely unaware of the other instance configurations, save for 
-# the memory currently in use by those instances. If they were aware of each 
-# other, I'd have to give MaxClients recommendations as a function of the 
-# other, and it wouldn't make sense to any techs using the script.  This 
-# almost never actually comes into effect.  In 99% of cases, there's only 
-# one apache instance.
-
 
 declare -a ParPIDs
 declare -a ProcNames
@@ -101,20 +81,27 @@ function sanitizeArgs() {
   [[ "${invalidUsage}" != "false" ]] && return 1 || return 0
 }
 
-
-function pmonReport() {
-  echo "pmon!!!"
-  return 0
-}
-
-
-function smemReport() {
-  echo "Smem!!!"
-  return 0
-}
-
-
 function psReport() {
+  # Apache only loads shared objects once, but every child process will 
+  # report memory as if it loaded the object itself. This means every process 
+  # is going to over-report its resident memory usage. This means you could 
+  # have a 4GB system that appears to have 6GB RAM in-use by apache. There's 
+  # no known way to get a precise value of actual RAM used by an apache 
+  # process (if you know one, please lodge a git issue).
+  # However, since the error is on both sides of the division, it cancels out. 
+  # This means the error only comes into effect in calculating how many 
+  # processes will use up the remaining, unused RAM, which means we'll err on 
+  # the side of caution by setting the value too low.  The estimate gets more 
+  # accurate as apache claims more RAM.
+  # Also note, the script has been updated to support multiple apache 
+  # instances on a single server. Each instance calculates its own MaxClients 
+  # value completely unaware of the other instance configurations, save for 
+  # the memory currently in use by those instances. If they were aware of each 
+  # other, I'd have to give MaxClients recommendations as a function of the 
+  # other, and it wouldn't make sense to any techs using the script.  This 
+  # almost never actually comes into effect.  In 99% of cases, there's only 
+  # one apache instance.
+
   rootPID="${1}"
   SUM=0
   COUNT=0
@@ -143,7 +130,18 @@ function psReport() {
   echo
 }
 
- 
+function smemReport() {
+  echo "Smem!!!"
+  return 0
+}
+
+function pmonReport() {
+  echo "pmon!!!"
+  return 0
+}
+
+
+# Check for proper usage 
 invalidUsage=false
 parseArgs $@ || invalidUsage=true
 sanitizeArgs || invalidUsage=true
@@ -151,6 +149,8 @@ if [[ "${invalidUsage}" != "false" ]]; then
   echo "Failed usage."
   usage && exit 1
 fi
+
+# Report on each PID
 for aPID in ${ParPIDs[@]}; do
   ${dataSrc}Report ${aPID}
 done
