@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#Check if specified device exists
+#Check for existing mount point & vgname prior to deleting data
+
+
+
+
+
 #
 # Verify the existence of pre-req's
 PREREQS="parted partprobe"

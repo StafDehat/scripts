@@ -3,7 +3,7 @@
 
 declare -a ParPIDs
 declare -a ProcNames
-dataSrc="pmon"
+dataSrc="ps"
 
 function error()  { echo "$(date +"%F %T") ERROR: $@" >&2; }
 function output() { echo "$(date +"%F %T"): $@"; }
@@ -14,7 +14,7 @@ cat <<EOF
 Usage:
 	$0 [-s] [-p]
 Example:
-	$0 -s pmon -n apache2
+	$0 -s pmap -n apache2
 Arguments:
         -p	Parent PID of pstree
         -n	Name of pstree executable (ie: apache2, or httpd)
@@ -22,7 +22,7 @@ Arguments:
         -s SRC	Use 'SRC' for calculations. See SOURCES.
 SOURCES:
 	smem	
-	pmon	
+	pmap	
 	ps	Pull per-process memory footprint from RSS column of 'ps'
 EOF
 }
@@ -135,8 +135,61 @@ function smemReport() {
   return 0
 }
 
-function pmonReport() {
-  echo "pmon!!!"
+function pssReport() {
+  echo "PSS!!!"
+  rootPID="${1}"
+  childPIDs="$( ps f --ppid ${rootPID} -o pid= )"
+
+  for childPID in ${childPIDs}; do
+    awk '$1 ~ /^Pss:$/ {sum+=$2} END {print sum}' /proc/${childPID}/smaps 
+  done | awk '{sum+=$1} END {print sum}'
+  
+  return 0
+}
+
+function pmapReport() {
+  if ! which "${dataSrc}" &>/dev/null; then
+    error "Unable to find '${dataSrc}' binary."
+    exit 2
+  fi
+
+  rootPID="${1}"
+  childPIDs="$( ps f --ppid ${rootPID} -o pid= )"
+
+  #lsofAll="$( lsof )"
+  #lsofNotMe=$( awk '$1 !~ /^'"${commandName}"'$/ {print}' <<<"${lsofAll}" )
+  #commandName="$( ps f --ppid ${rootPID} -o comm= | awk '{print $1}' | sort -u )"
+
+  pidsAll=$( ps -A -o pid= | sed 's/\s\s*/\n/g' | sort -nu )
+  pidsMe=$( echo ${rootPID} ${childPIDs} | sed 's/\s\s*/\n/g' | sort -nu )
+  pidsNotMe=$( comm -13 <(sort <<<"${pidsMe}") <(sort <<<"${pidsAll}") | sort -n )
+
+  sharedLibsAll=$( pmap -d ${pidsNotMe} | sort -u | grep -P '\.so(\..*)?$' )
+  sharedLibsMeAlso=$( pmap -d ${pidsMe} | sort -u | grep -P '\.so(\..*)?$' )
+  sharedLibsMeOnly=$( comm -13 <( sort <<<"${sharedLibsAll}" ) \
+                               <( sort <<<"${sharedLibsMeAlso}" ) )
+
+  # RAM consumption by shared libs that I link to (other procs might too)
+  sharedRamMeAll=$( awk '$3 ~ /^r[w-][x-]--$/ {sum+=$2} END {print sum}' <<<"${sharedLibsMeAlso}" )
+  # RAM consumption by shared libs that *only* I link to
+  sharedRamMeOnly=$( awk '$3 ~ /^r[w-][x-]--$/ {sum+=$2} END {print sum}' <<<"${sharedLibsMeOnly}" )
+  # RAM consumption by shared libs that I use, but other procs also use
+  sharedRamMeAlso=$(( sharedRamMeAll - sharedRamMeOnly ))
+
+  rootProcMemTotal=$( pmap -d ${rootPID} | grep -oP 'writeable/private:[\s\d]+' | grep -oP '\d+' )
+  baseline=$(( ${rootProcMem} + ${sharedRamMeOnly} ))
+             # Exclusive memory of root proc:
+             $( pmap -d ${rootPID} | grep -oP 'writeable/private:[\s\d]+' | grep -oP '\d+' ) +
+             # Mem consumption from shared objects loaded by this pstree
+             $( { echo ${rootPID}; ps f --ppid ${rootPID} -o pid=; } | 
+                  xargs pmap -d | grep -oP 'shared:[\s\d]+' | grep -oP '\d+'
+             )
+           ))
+  
+
+  ps f --ppid ${rootPID} -o pid= | 
+    xargs pmap -d | grep -P '\.so(\..*)?$' | awk '{sum+=$2} END {print sum}'
+  
   return 0
 }
 
