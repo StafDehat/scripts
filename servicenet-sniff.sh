@@ -1,4 +1,5 @@
 #!/bin/bash
+# Author: Andrew Howard
 
 DATE=$( date +%F-%T )
 SNET_ADDR=$( simpana status | grep 'Client Hostname' | awk '{print $NF}' )
