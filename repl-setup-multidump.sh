@@ -7,6 +7,7 @@
 #   Holland, using the settings:
 #   bin-log-position = yes
 #   file-per-database = yes
+# Demo: https://gist.github.com/StafDehat/a4739da72e93ae08fd61b6308bc36383
 
 
 function usage() {
