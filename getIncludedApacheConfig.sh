@@ -14,109 +14,6 @@ function debug() {
   done < <(echo "${@}")
 }
 
-function checkApachePassphrase() {
-  # Verify it's installed first
-  local testBin=$( which apache2ctl apachectl 2>/dev/null | head -n 1 )
-  if [[ -z "${testBin}" ]]; then
-    debug "Unable to find apache[2]ctl binary in PATH - apache must not be installed."
-    return 0
-  fi
-  debug "Detected apache control binary at ${testBin}"
-
-  # Only check the config if it's actually running
-  if ! pidof httpd apache apache2 &>/dev/null; then
-    debug "Apache not running - Skipping SSL private key passphrase check."
-    return 0
-  fi
-  debug "Apache is running - searching for SSL private key files."
-
-  local allGood="True"
-  local allConfigFiles=""
-  local httpPids=$( getApacheRootPids )
-  local privateKeys=""
-  local -a encryptedKeys
-  local oldPwd=""
-  for httpPid in ${httpPids}; do
-    debug "Checking configuration for apache daemon PID=${httpPid}"
-
-    # Get the httpd.conf and SERVERROOT... somehow
-    rootDir=$( getApacheRootDir "${httpPid}" )
-    rootConf=$( getApacheConfigFile "${httpPid}" )
-
-    debug "Identified HTTPD_ROOT=${rootDir}, SERVER_CONFIG_FILE=${rootConf}"
-    allConfigFiles=$( getIncludedApacheConfig ${rootDir} ${rootConf} )
-
-    privateKeys=$(
-      while read configFile; do
-        debug "Searching for SSLCertificateKeyFile entries in: ${configFile}"
-        sed -n 's/^[[:space:]]*SSLCertificateKeyFile[[:space:]]*\([^#]\+\)\(#.*\)\?$/\1/Ip' "${configFile}" |
-          sed 's/[[:space:]]*$//'
-      done < <(echo "${allConfigFiles}")
-    )
-
-    oldPwd="$(pwd)"
-    cd "${rootDir}"
-    while read privateKey; do
-      [[ -z "${privateKey}" ]] && continue
-      # Trim leading/trailing quotes
-      privateKey=$( echo "${privateKey}" | sed -e "s/^[[:space:]]*['\"]//" \
-                                               -e "s/['\"][[:space:]]*$//" )
-      debug "Canonicalizing '${privateKey}' to absolute path."
-      privateKey=$( readlink -f "${privateKey}" )
-      debug "Checking Private Key '${privateKey}' for passphrase encryption."
-      result=$( openssl rsa -check -noout -passin pass:test -in "${privateKey}" 2>&1 )
-      if grep -q "RSA key ok" <(echo "${result}"); then
-        debug "Private Key file at '${privateKey}' is not encrypted."
-        continue
-      fi
-      if grep -q "no start line" <(echo "${result}"); then
-        debug "File at '${privateKey}' does not appear to contain a valid SSL Private Key."
-        continue
-      fi
-      if grep -q "No such file or directory" <(echo "${result}"); then
-        debug "Bug in audit script's detection of RSA keys."
-        encryptedKeys[${#encryptedKeys[@]}]="BUG:${privateKey}"
-        allGood="False"
-        continue
-      fi
-      # It's a key, and we failed to read it.  Must be encrypted.
-      debug "Private key at '${privateKey}' is likely protected by passphrase encryption."
-      encryptedKeys[${#encryptedKeys[@]}]="${privateKey}"
-      allGood="False"
-    done < <(echo "${privateKeys}")
-    cd "${oldPwd}"
-  done
-
-  if [[ "${allGood}" == "True" ]]; then
-    debug "No encrypted SSL Private Keys detected."
-    echo  "No encrypted SSL Private Keys detected."
-    return 0
-  fi
-
-  debug "Apache contains SSL Private Keys that are encrypted and password-protected: ${encryptedKeys[@]}"
-  for encryptedKey in ${encryptedKeys[@]}; do
-    echo -n "${encryptedKey}, "
-  done | sed 's/, $//'
-  return 1
-}
-
-#!/bin/bash
-function checkConfigApache() {
-  # Verity it's installed first
-  local testBin=$( which apache2ctl apachectl 2>/dev/null | head -n 1 )
-  if [[ -z "${testBin}" ]]; then
-    return 0
-  fi
-  debug "Detected apache control binary at ${testBin}"
-  # Only check the config if it's actually running
-  if pidof httpd apache apache2 &>/dev/null; then
-    debug "Apache is running - testing config"
-    "${testBin}" configtest &>/dev/null; return $?
-  fi
-  debug "Apache not running - skipping configtest"
-  return 0 # Not running
-}
-
 #!/bin/bash
 function getApacheConfigFile() {
   rootPid="${1}"
@@ -202,7 +99,7 @@ function getIncludedApacheConfig() {
     debug "${oldList}"
     # We're only checking the *new* stuff, to avoid endlessly grep'ing httpd.conf
     toSearch=$(
-      # If it's in oldList, we already checked it for includes
+      # If its in oldList, we already checked it for includes
       # If not, we need to note all its includes
       comm -13 <(echo "${oldList}" | sort) \
                <(echo "${newList}" | sort)
@@ -239,7 +136,7 @@ function getIncludedApacheConfig() {
     debug "(${iteration}) Canonicalized Include targets:"
     debug "${newFiles}"
 
-    # Save newList as oldList so we can diff 'em to see which ones we just found
+    # Save newList as oldList so we can diff em to see which ones we just found
     # ie: Which ones to grep
     oldList="${newList}"
     # And record newList as oldList+newFiles
