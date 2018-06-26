@@ -101,23 +101,6 @@ function checkApachePassphrase() {
 }
 
 #!/bin/bash
-function checkConfigApache() {
-  # Verity it's installed first
-  local testBin=$( which apache2ctl apachectl 2>/dev/null | head -n 1 )
-  if [[ -z "${testBin}" ]]; then
-    return 0
-  fi
-  debug "Detected apache control binary at ${testBin}"
-  # Only check the config if it's actually running
-  if pidof httpd apache apache2 &>/dev/null; then
-    debug "Apache is running - testing config"
-    "${testBin}" configtest &>/dev/null; return $?
-  fi
-  debug "Apache not running - skipping configtest"
-  return 0 # Not running
-}
-
-#!/bin/bash
 function getApacheConfigFile() {
   rootPid="${1}"
   ls -1 /etc/httpd/conf/httpd.conf /etc/apache2/apache2.conf 2>/dev/null | head -n 1
@@ -202,7 +185,7 @@ function getIncludedApacheConfig() {
     debug "${oldList}"
     # We're only checking the *new* stuff, to avoid endlessly grep'ing httpd.conf
     toSearch=$(
-      # If it's in oldList, we already checked it for includes
+      # If its in oldList, we already checked it for includes
       # If not, we need to note all its includes
       comm -13 <(echo "${oldList}" | sort) \
                <(echo "${newList}" | sort)
@@ -239,7 +222,7 @@ function getIncludedApacheConfig() {
     debug "(${iteration}) Canonicalized Include targets:"
     debug "${newFiles}"
 
-    # Save newList as oldList so we can diff 'em to see which ones we just found
+    # Save newList as oldList so we can diff em to see which ones we just found
     # ie: Which ones to grep
     oldList="${newList}"
     # And record newList as oldList+newFiles
