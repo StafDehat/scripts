@@ -65,7 +65,7 @@ fi
 if [ -z "$ACCT" ]; then
   echo "ERROR: Must define ACCOUNT as argument (-a)"
   USAGEFLAG=1
-elif [ $( grep -cP '^\d+$' <<<"$ACCT" ) -ne 1 ]; then
+elif [ "$( grep -cP '^\d+$' <<<"$ACCT" )" -ne 1 ]; then
   echo "ERROR: Specified accout must be numeric."
   USAGEFLAG=1
 fi
