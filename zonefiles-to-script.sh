@@ -35,6 +35,15 @@ function usage() {
   echo "  -z    Generate script commands to create empty zones."
 }
 
+if ! grep -qP '\d+' <<<"12345"; then
+  echo "Your grep binary does not appear to support the -P flag, which this script uses extensively."
+  echo "Note: You're probably using a Mac, which gave you a very old grep."
+  echo "Try using a linux VM or something instead."
+  exit 1
+fi
+
+
+
 USAGEFLAG=0
 ACCT=""
 DORECORDS=0
