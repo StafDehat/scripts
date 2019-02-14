@@ -16,7 +16,7 @@ if [ $? -ne 0 ]; then
  logger "$0 ($$): Lock File exists - exiting"
  exit 1
 else
-  trap 'cleanup' 1 2 15 17 19 23 EXIT
+  trap 'cleanup' 1 2 15 19 23 EXIT
 fi
  
 ######################################
