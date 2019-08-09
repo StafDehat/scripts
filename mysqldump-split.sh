@@ -2,8 +2,14 @@
  
 # Author: Andrew Howard
 
+function output() {
+  echo "OUTPUT ($(date +"%F %T")) ${@}"
+}
 function debug() {
-  echo "${@}" >&2
+  echo "DEBUG ($(date +"%F %T")) ${@}" >&2
+}
+function error() {
+  echo "ERROR ($(date +"%F %T")) ${@}" >&2
 }
 
 function usage() {
@@ -67,9 +73,9 @@ function isTar() {
   return $?
 }
 function errUnknownInput() {
-  echo "Error: Unable to identify how to extract this file." >&2
-  echo "Please give me ASCII - optionally gzip'd, tar'd, or tar'd then gzip'd." >&2
-  echo "Note: We can't handle gzip-then-tar.  Also, that's weird."
+  error "Unable to identify how to extract this file." >&2
+  error "Please give me ASCII - optionally gzip'd, tar'd, or tar'd then gzip'd." >&2
+  error "Note: We can't handle gzip-then-tar.  Also, that's weird."
 }
 
 
@@ -104,6 +110,7 @@ else
   fi
 fi
 
+
 if [[ -d "${SRC}.parts" ]]; then
   cat <<EOF
 ERROR: Directory "${SRC}.parts" already exists.
@@ -118,7 +125,10 @@ numParts=$(
     {print >"'${SRC}'.parts/out"n".txt"}
     END {print n}'
 )
+debug "Input file split into $((numParts+1)) segments"
 
+
+# Pre-process the header
 cd "${1}.parts"
 if ! isText $(file out.txt); then
   mv out.txt awk-result
@@ -130,18 +140,21 @@ As such, script aborts here.
 EOF
   exit 1
 fi
+debug "Renaming first segment to 000-header.sql"
 mv out.txt 000-header.sql
 
-# Pre-process the file containing the footer.
+
+# Pre-process the footer
+debug "Scraping footer constants from out${numParts}.txt into 000-footer.sql"
 sed -n '/SET TIME_ZONE=@OLD_TIME_ZONE/,//p' "out${numParts}.txt" > 000-footer.sql
 head -n -$( wc -l <000-footer.sql ) "out${numParts}.txt" > tmp
 mv tmp "out${numParts}.txt"
 
+
 DB="."
-match=""
 for x in $(seq 1 ${numParts} ); do
   COMMENT=$( head -n 1 "out${x}.txt" )
-  debug "Processing out${x}.txt with match: ${COMMENT}"
+  debug "Processing out${x}.txt with content: ${COMMENT}"
 
   # Branch 1:
   # DB-contextual content
@@ -215,4 +228,5 @@ for x in $(seq 1 ${numParts} ); do
     mv "out${x}.txt" "${DB}"/
   fi
 done
+
 
