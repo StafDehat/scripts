@@ -114,7 +114,7 @@ fi
 mkdir ${SRC}.parts
 numParts=$(
   ${catcmd} "${SRC}" |
-  awk '/-- (Current Database:|Dumping [^\s]+ for|Table structure)/{n++}
+  awk '/-- (Current Database:|Dumping (data|events|routines) for (table|database)|(Temporary t|T)able structure|Final view structure for view)/{n++}
     {print >"'${SRC}'.parts/out"n".txt"}
     END {print n}'
 )
@@ -138,30 +138,79 @@ head -n -$( wc -l <000-footer.sql ) "out${numParts}.txt" > tmp
 mv tmp "out${numParts}.txt"
 
 DB="."
+match=""
 for x in $(seq 1 ${numParts} ); do
   COMMENT=$( head -n 1 "out${x}.txt" )
+  debug "Processing out${x}.txt with match: ${COMMENT}"
+
+  # Branch 1:
+  # DB-contextual content
+  # If dump was created with "--databases, -B" or if dump contains
+  #  multiple DBs, there will be USE statements.  That's the only
+  #  reliable source of DB-name, so without it, we just initialize
+  #  $DB to ".", since we use $DB as a directory path.  In that case
+  #  though, "-- Current Databse" never occurs in the dump, and this
+  #  branch is skipped entirely.
   if grep -q '^-- Current Database:' <<<"${COMMENT}"; then
+    # Note: "USE $DB" often occurs twice in a dump:
+    #  1st: Create the DB, its tables, and populate table data
+    #  2nd: Use the DB, create routines/events/views (& triggers, kinda)
+    #       Must be second-pass, because creation of these metadata
+    #       requires tables to already exist.
+
+    # Remember which DB we're currently operating upon.
     DB=$( cut -d'`' -f2 <<<"${COMMENT}" )
+    # Prep metadata dumpfiles with USE statements
+    echo 'USE `'"${DB}"'`;' > "${DB}".events.sql
+    echo 'USE `'"${DB}"'`;' > "${DB}".routines.sql
+    echo 'USE `'"${DB}"'`;' > "${DB}".views.sql
+    echo 'USE `'"${DB}"'`;' > "${DB}".triggers.sql
+
     if [[ ! -d "${DB}" ]]; then
       # First occurrence - we must be creating the DB.
       mkdir "${DB}"
       mv "out${x}.txt" "${DB}.create.sql"
     else
-      # Subsequent occurrence - must be triggers/views/etc that require tables to have
-      #   already been created.
-      cat "out${x}.txt" >> "${DB}.post-tables.sql"
+      # Subsequent occurrence - must be routine/event/view/trigger.
+      # Each of those structures will have its own header, and will be caught
+      #  by other conditionals, so there's no obvious important syntax here.
+      # This file probably contains only a USE statement.
+      cat "out${x}.txt" >> "${DB}.excess.sql"
       rm -f "out${x}.txt"
     fi
-  elif grep -q '^-- Table structure' <<<"${COMMENT}"; then
+
+  # Branch Group 2:
+  # Table schema & data
+  # DB might be ".", but that's okay.
+  elif grep -q '^-- Table structure' <<<"${COMMENT}" ||
+       grep -q '^-- Temporary table structure for view' <<<"${COMMENT}"; then
     TBL=$( cut -d'`' -f2 <<<"${COMMENT}" )
     mv "out${x}.txt" "${DB}"/"${TBL}.schema.sql"
   elif grep -q '^-- Dumping data for table' <<<"${COMMENT}"; then
     TBL=$( cut -d'`' -f2 <<<"${COMMENT}" )
     mv "out${x}.txt" "${DB}"/"${TBL}.data.sql"
+
+  # Branch Group 3:
+  # Database-level entities (trigger/event/view/routine)
+  # $DB might be ".", and that'd be a problem
   elif grep -q '^-- Dumping events' <<<"${COMMENT}"; then
-    mv "out${x}.txt" "${DB}"/events.sql
+    [[ "${DB}" == "." ]] && 
+      cat "out${x}.txt" >> ./DB.events.sql ||
+      cat "out${x}.txt" >> "${DB}".events.sql
+    rm -f "out${x}.txt"
   elif grep -q '^-- Dumping routines' <<<"${COMMENT}"; then
-    mv "out${x}.txt" "${DB}"/routines.sql
+    [[ "${DB}" == "." ]] && 
+      cat "out${x}.txt" >> ./DB.routines.sql ||
+      cat "out${x}.txt" >> "${DB}".routines.sql
+    rm -f "out${x}.txt"
+  elif grep -q '^-- Final view structure for view' <<<"${COMMENT}"; then
+    [[ "${DB}" == "." ]] && 
+      cat "out${x}.txt" >> ./DB.views.sql ||
+      cat "out${x}.txt" >> "${DB}".views.sql
+    rm -f "out${x}.txt"
+
+  # Branch Group 4:
+  # Catch-all
   else
     mv "out${x}.txt" "${DB}"/
   fi
