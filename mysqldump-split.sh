@@ -150,6 +150,9 @@ head -n -$( wc -l <000-footer.sql ) "out${numParts}.txt" > tmp
 mv tmp "out${numParts}.txt"
 
 
+# ToDo: Initialize DB to the name from header:
+# -- Host: localhost    Database: XXX
+# That'll require if-branch refactoring though.
 DB="."
 for x in $(seq 1 ${numParts} ); do
   COMMENT=$( head -n 1 "out${x}.txt" )
