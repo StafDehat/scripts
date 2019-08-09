@@ -166,7 +166,7 @@ for x in $(seq 1 ${numParts} ); do
   if grep -q '^-- Current Database:' <<<"${COMMENT}"; then
     # Note: "USE $DB" often occurs twice in a dump:
     #  1st: Create the DB, its tables, and populate table data
-    #  2nd: Use the DB, create routines/events/views (& triggers, kinda)
+    #  2nd: Use the DB, create event/routine/view
     #       Must be second-pass, because creation of these metadata
     #       requires tables to already exist.
 
@@ -176,14 +176,15 @@ for x in $(seq 1 ${numParts} ); do
     echo 'USE `'"${DB}"'`;' > "${DB}".events.sql
     echo 'USE `'"${DB}"'`;' > "${DB}".routines.sql
     echo 'USE `'"${DB}"'`;' > "${DB}".views.sql
-    echo 'USE `'"${DB}"'`;' > "${DB}".triggers.sql
+    # Triggers will be included as a table's data.
+    #echo 'USE `'"${DB}"'`;' > "${DB}".triggers.sql
 
     if [[ ! -d "${DB}" ]]; then
       # First occurrence - we must be creating the DB.
       mkdir "${DB}"
       mv "out${x}.txt" "${DB}.create.sql"
     else
-      # Subsequent occurrence - must be routine/event/view/trigger.
+      # Subsequent occurrence - must be event/routine/view
       # Each of those structures will have its own header, and will be caught
       #  by other conditionals, so there's no obvious important syntax here.
       # This file probably contains only a USE statement.
@@ -203,7 +204,7 @@ for x in $(seq 1 ${numParts} ); do
     mv "out${x}.txt" "${DB}"/"${TBL}.data.sql"
 
   # Branch Group 3:
-  # Database-level entities (trigger/event/view/routine)
+  # Database-level entities (event/routine/view)
   # $DB might be ".", and that'd be a problem
   elif grep -q '^-- Dumping events' <<<"${COMMENT}"; then
     [[ "${DB}" == "." ]] && 
