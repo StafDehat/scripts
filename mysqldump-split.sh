@@ -61,7 +61,7 @@ EOF
 }
 
 function isText() {
-  grep -qP '(ASCII|Unicode) text' <<<"${@}"
+  grep -qP '(ASCII|Unicode)( .*)? text' <<<"${@}"
   return $?
 }
 function isZip() {
@@ -88,6 +88,7 @@ fi
 
 #
 # Try to identify the input file format:
+debug "Attempting to validate input file format."
 if isZip $(file "${SRC}"); then
   # Check what's inside the compression
   if isTar $(file -z "${SRC}"); then
@@ -109,16 +110,16 @@ else
     errUnknownInput; exit 1
   fi
 fi
+debug "Format validated."
 
 
 if [[ -d "${SRC}.parts" ]]; then
-  cat <<EOF
-ERROR: Directory "${SRC}.parts" already exists.
-Aborting script with no changes, to avoid clobbering something important.
-EOF
+  error "Directory "${SRC}.parts" already exists."
+  error "Aborting script with no changes, to avoid clobbering something important."
   exit 1
 fi
 mkdir ${SRC}.parts
+debug "Using awk to split input file into discrete segments."
 numParts=$(
   ${catcmd} "${SRC}" |
   awk '/-- (Current Database:|Dumping (data|events|routines) for (table|database)|(Temporary t|T)able structure|Final view structure for view)/{n++}
@@ -132,12 +133,10 @@ debug "Input file split into $((numParts+1)) segments"
 cd "${1}.parts"
 if ! isText $(file out.txt); then
   mv out.txt awk-result
-  cat <<EOF
-Whatever just came out of $(basename "${SRC}"), it wasn't text.
-Instead, we found:
-  $(file awk-result)
-As such, script aborts here.
-EOF
+  error "Whatever just came out of $(basename ${SRC}), it wasn't text."
+  error "Instead, we found:"
+  error "  $(file awk-result)"
+  error "As such, script aborts here."
   exit 1
 fi
 debug "Renaming first segment to 000-header.sql"
