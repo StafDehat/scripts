@@ -84,6 +84,88 @@ function usage() {
   echo "        then it must be provided interactively via prompts."
 }
 
+function getApiToken() {
+  local tokenData="${1}"
+  if which jq &>/dev/null; then
+    jq -r ".access.token.id" <<<"${tokenData}"
+  elif  which perl &>/dev/null; then
+    echo "${tokenData}" | perl -pe 's/.*"token":.*?"id":"(.*?)".*$/\1/'
+  else
+    # Pretty sure this method is broken:
+    echo "${tokenData}" | 
+      tr ',' '\n' |
+      sed -n '/token/,/APIKEY/p' |
+      sed -n '/token/,/}/p' |
+      grep -v \"id\":\"$TENANTID\" |
+      sed -n 's/.*"id":"\([^"]*\)".*/\1/p'
+  fi
+}
+
+function getTenantId() {
+  local tokenData="${1}"
+  if which jq &>/dev/null; then
+    jq -r ".access.token.tenant.id" <<<"${tokenData}"
+  elif which perl &>/dev/null; then
+    echo "${tokenData}" | perl -pe 's/.*"token":.*?"tenant":.*?"id":"(.*?)".*$/\1/'
+  else
+    # Pretty sure this method is broken:
+    echo "${tokenData}" |
+      tr ',' '\n' |
+      sed -n '/token/,/APIKEY/p' |
+      sed -n '/tenant/,/}/p' |
+      sed -n 's/.*"id":"\([^"]*\)".*/\1/p'
+  fi
+}
+
+function getVaultName() {
+  local REGION="${1}"
+  local tokenData="${2}"
+  if which jq &>/dev/null; then
+    local numKeys
+    local keyName
+    local keyType
+    local keyRegion
+    local filesIndex
+    local regionIndex
+    # Identify list item with:
+    # "name": "cloudFiles",
+    # "type": "object-store"
+    numKeys=$( jq -r ".access.serviceCatalog|length" <<<"${tokenData}" )
+    for x in $( seq 0 ${numKeys} ); do
+      keyName=$( jq -r ".access.serviceCatalog[${x}].name" <<<"${tokenData}" )
+      keyType=$( jq -r ".access.serviceCatalog[${x}].type" <<<"${tokenData}" )
+      if [[ "${keyName}" == "cloudFiles" ]] ||
+         [[ "${keyType}" == "object-store" ]]; then
+        filesIndex="${x}"
+        break # Short-circuit
+      fi
+    done
+    # Found Cloud Files index.  Now find the index of the right Region.
+    numKeys=$( jq ".access.serviceCatalog[${filesIndex}].endpoints|length" <<<"${tokenData}" )
+    for x in $( seq 0 ${numKeys} ); do
+      keyRegion=$( jq -r ".access.serviceCatalog[${filesIndex}].endpoints[${x}].region" <<<"${tokenData}" |
+                     tr 'A-Z' 'a-z' )
+      if [[ "${keyRegion}" == "${REGION}" ]]; then
+        regionIndex="${x}"
+        break # Short-circuit
+      fi
+    done
+    # Found the right Region.  Now grab its Vault name.
+    basename $( jq -r ".access.serviceCatalog[${filesIndex}].endpoints[${regionIndex}].publicURL" <<<"${tokenData}" )
+  elif which perl &>/dev/null; then
+    # Broken.  TODO item.
+    echo "Fail"
+  else
+    # Broken.  TODO item.
+    echo "${tokenData}" |
+      sed 's/endpoints/\n/g' | 
+      grep cloudFiles | grep tenantId | grep MossoCloudFS_ |
+      tr '{},' '\n' | 
+      grep tenantId | sort -u | head -n 1 | 
+      cut -d\" -f4
+  fi
+}
+
 
 USAGEFLAG=0
 USERNAME=""
@@ -94,7 +176,9 @@ OBJECTNAME=""
 REGION=""
 SNET=0
 MAXSIZE=$(( 1024 * 1024 * 1024 ))
-while getopts ":b:c:f:hk:n:r:su:" arg; do
+#MAXSIZE=$(( 1024 * 1024 * 256 ))
+COMPRESS="no"
+while getopts ":b:c:f:hk:n:r:su:z" arg; do
   case $arg in
     b) MAXSIZE="$OPTARG";;
     c) CONTAINER="$OPTARG";;
@@ -105,6 +189,7 @@ while getopts ":b:c:f:hk:n:r:su:" arg; do
     r) REGION="$OPTARG";;
     s) SNET=1;;
     u) USERNAME="$OPTARG";;
+    z) COMPRESS="yes";;
     :) echo "ERROR: Option -$OPTARG requires an argument."
        USAGEFLAG=1;;
     *) echo "ERROR: Invalid option: -$OPTARG"
@@ -189,23 +274,9 @@ fi
 unset USERNAME
 unset APIKEY
 APITOKEN=$( echo "$DATA" | sed '$d' )
-TENANTID=$( echo "$APITOKEN" |
-              tr ',' '\n' |
-              sed -n '/token/,/APIKEY/p' |
-              sed -n '/tenant/,/}/p' |
-              sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
-AUTHTOKEN=$( echo "$APITOKEN" |
-               tr ',' '\n' |
-               sed -n '/token/,/APIKEY/p' |
-               sed -n '/token/,/}/p' |
-               grep -v \"id\":\"$TENANTID\" |
-               sed -n 's/.*"id":"\([^"]*\)".*/\1/p' )
-VAULTNAME=$( echo "$APITOKEN" | 
-               sed 's/endpoints/\n/g' | 
-               grep cloudFiles | grep tenantId | grep MossoCloudFS_ |
-               tr '{},' '\n' | 
-               grep tenantId | sort -u | head -n 1 | 
-               cut -d\" -f4 )
+TENANTID=$( getTenantId "${APITOKEN}" )
+AUTHTOKEN=$( getApiToken "${APITOKEN}" )
+VAULTNAME=$( getVaultName "${REGION}" "${APITOKEN}" )
 echo
 echo "Authentication info:"
 echo "Tenant ID: $TENANTID"
