@@ -14,12 +14,41 @@ function average() {
 }
 
 
+# Take whitespace-separated input from either 
+#   arguments or STDIN, and calculate the product.
 function sum() {
-  SUM=0
-  while read LINE; do
-    SUM=$( printf "%.3f" $(bc -l <<< "$SUM + $LINE" ) )
-  done
-  echo $SUM
+  local input
+  if [[ "${#}" -gt 0 ]]; then
+    input=${@}
+  else
+    input=$( cat )
+  fi
+  {
+    echo -n "0";
+    for x in ${input}; do
+      echo -n " + ${x}"
+    done;
+    echo;
+  } | bc -l
+}
+
+
+# Take whitespace-separated input from either 
+#   arguments or STDIN, and calculate the product.
+function product() {
+  local input
+  if [[ "${#}" -gt 0 ]]; then
+    input=${@}
+  else
+    input=$( cat )
+  fi
+  {
+    echo -n "1";
+    for x in ${input}; do
+      echo -n " * ${x}"
+    done;
+    echo;
+  } | bc -l
 }
 
 
