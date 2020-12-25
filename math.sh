@@ -68,6 +68,29 @@ function factor() {
 }
 
 
+# Least-common multiple/factor
+function lcf() {
+  if (( ${#} == 2 )); then
+    echo $(( ${1} * ${2} / $( gcd ${1} ${2} ) ))
+    return
+  elif (( ${#} <= 1 )); then
+    echo ${1}
+    return
+  fi
+  local a=${1}
+  shift 1
+  lcf ${a} $( lcf ${@} )
+}
+
+# Greatest-common factor/divisor
+function gcd() {
+  if (( ${1} % ${2} == 0)); then
+    echo ${2}
+    return
+  fi
+  gcd ${2} $(( ${1} % ${2} ))
+}
+
 # All numbers < n with no factors in common with n
 function totient() {
   n=$1
