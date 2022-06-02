@@ -39,7 +39,7 @@ if which tmpwatch &>/dev/null; then
 elif which tmpreaper &>/dev/null; then
   tmpreaper --mtime ${RETENTIONDAYS}d $BACKUPDIR
 else
-  find $LOGDIR -maxdepth 1 -type f -mtime +$(( $HOURRETENTION / 24 )) -exec rm -f {} \;
+  find $LOGDIR -maxdepth 1 -type f -mtime +${RETENTIONDAYS} -exec rm -f {} \;
 fi
 
 

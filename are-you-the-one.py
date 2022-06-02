@@ -316,8 +316,8 @@ def wait():
 
 wait()
 
-#spoilers()
-#wait()
+spoilers()
+wait()
 
 jackpot = 1000
 for episode in range(0,episodes):
