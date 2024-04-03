@@ -91,7 +91,7 @@ function cleanup {
   stty echo
   exit
 }
-trap 'cleanup' 1 2 9 15 17 19 23 EXIT
+trap 'cleanup' 1 2 9 15 19 23 EXIT
 
 
 MYSQL="mysql -u"${slaveUser}" -p"${slavePass}" --skip-column-names"
