@@ -85,13 +85,13 @@ if ${invalidUsage}; then
 fi
 
 
-tmpFile="$( mktemp )"
+tmpFile="$( TMPDIR="/etc/my.cnf.d"; mktemp -t temp-repl-setup-XXXX.cnf )"
 function cleanup {
   rm -f "${tmpFile}"
   stty echo
   exit
 }
-trap 'cleanup' 1 2 9 15 17 19 23 EXIT
+trap 'cleanup' 1 2 9 15 19 23 EXIT
 
 
 MYSQL="mysql -u"${slaveUser}" -p"${slavePass}" --skip-column-names"
@@ -149,12 +149,6 @@ function sortDumps() {
     echo "${binFile} ${binPos} ${dumpFile}"
   done | sort -n -k1,1 -k2,2
 }
-
-debug "Creating backup of my.cnf"
-cp /etc/my.cnf{,."$(date +%F_%T)"}
-
-debug 'Adding !include to my.cnf'
-sed -i '/^\s*\[mysqld\]/s_$_\n!include '"${tmpFile}"'_' /etc/my.cnf
 
 debug "Creating global-ignore tmpFile config"
 echo '[mysqld]' >"${tmpFile}"
@@ -231,9 +225,8 @@ sortDumps | while read LINE; do
   echo "replicate-wild-do-table=${dumpFile/.sql.gz/}.%" >> "${tmpFile}"
 done
 
-debug "Removing temporary !include from my.cnf"
-grep -vP "^\!include ${tmpFile}" /etc/my.cnf > "${tmpFile}"
-mv -f "${tmpFile}" /etc/my.cnf
+debug "Removing temporary config file"
+rm -f "${tmpFile}"
 
 debug "Restarting one last time to remove all our custom configs"
 service mysqld restart
