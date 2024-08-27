@@ -18,7 +18,8 @@ function cleanup {
   rm -f rm $LOCK_FILE
   exit 2
 }
-trap 'cleanup' 1 2 9 15 17 19 23
+trap 'cleanup' 1 2 9 15 19 23
+trap 'cleanup' 1 2 9 15 19 23
 
 
 sendmail -t -f$FROM <<EOF

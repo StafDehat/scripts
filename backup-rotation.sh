@@ -25,7 +25,8 @@ function cleanup {
  rm -f $LOCK_FILE
  exit 2
 }
-trap 'cleanup' 1 2 9 15 17 19 23 EXIT
+trap 'cleanup' 1 2 9 15 19 23 EXIT
+trap 'cleanup' 1 2 9 15 19 23 EXIT
 (set -C; : > $LOCK_FILE) 2> /dev/null
 if [ $? != "0" ]; then
  echo "Lock File exists - exiting"

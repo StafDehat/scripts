@@ -79,7 +79,8 @@ function cleanup {
   echo "----------------------------------------"
   exit 1
 }
-trap 'cleanup' 1 2 9 15 17 19 23
+trap 'cleanup' 1 2 9 15 19 23
+trap 'cleanup' 1 2 9 15 19 23
 
 
 #

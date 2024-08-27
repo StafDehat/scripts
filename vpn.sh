@@ -12,7 +12,8 @@ HOST="vpnhost.example.com"
 function cleanup() {
   stty echo
 }
-trap 'cleanup && exit 0' 1 2 9 15 17 19 23
+trap 'cleanup && exit 0' 1 2 9 15 19 23
+trap 'cleanup && exit 0' 1 2 9 15 19 23
 
 function usage() {
   echo "Usage: $0 [connect|start|disconnect|stop|status]"
