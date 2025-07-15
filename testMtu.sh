@@ -36,3 +36,7 @@ function testMtu() {
   echo "${testSize}"
 }
 
+if [[ $# -gt 0 ]]; then
+  testMtu $1
+fi
+
