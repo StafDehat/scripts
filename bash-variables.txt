@@ -17,3 +17,6 @@ ${x/A/B}	Once.  s/A/B/ <<<$x
 ${x//A/B}	Global.  s/A/B/g <<<$x
 ${x/#A/B}	Prefix.  s/^A/B/ <<<$x
 ${x/%A/B}	Suffix.  s/A$/B/ <<<$x
+# Positional parameter substitution
+${var::-1}	Suffix.  s/.$// <<<$x
+
