@@ -17,6 +17,10 @@ ${x/A/B}	Once.  s/A/B/ <<<$x
 ${x//A/B}	Global.  s/A/B/g <<<$x
 ${x/#A/B}	Prefix.  s/^A/B/ <<<$x
 ${x/%A/B}	Suffix.  s/A$/B/ <<<$x
-# Positional parameter substitution
-${var::-1}	Suffix.  s/.$// <<<$x
+
+# Parameter expansion:
+# https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+${x::-1}	s/.$// <<<$x
+${x:5}		cut -d. -f5- <<<$x
+${x:5:10}	cut -d. -f5-10 <<<$x
 
